@@ -1,0 +1,11 @@
+.carousel-img {
+  height: 500px;
+  object-fit: cover;
+  border-radius: 15px;
+}
+
+.carousel-caption {
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 12px;
+  padding: 25px;
+}

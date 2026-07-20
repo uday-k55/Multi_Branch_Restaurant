@@ -1,0 +1,151 @@
+<!-- Register Section -->
+<section class="login-section">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <!-- Left Side -->
+      <div class="col-lg-6">
+        <div class="login-content">
+          <h1>Create Your Account</h1>
+          <p class="mt-3">
+            Join Beef With Chef Melbin and enjoy delicious food, QR ordering, home delivery, takeaway, and exclusive offers.
+          </p>
+          <img src="https://themewagon.github.io/restoran/img/hero.png" class="img-fluid mt-4" alt="Hero Food Plate">
+        </div>
+      </div>
+
+      <!-- Right Side -->
+      <div class="col-lg-6">
+        <div class="card login-card border-0 shadow-lg">
+          <div class="card-body p-5">
+            <div class="text-center mb-4">
+              <i class="fas fa-user-plus fa-4x text-warning"></i>
+              <h2 class="mt-3">Create Account</h2>
+              <p class="text-muted">
+                Register to continue
+              </p>
+            </div>
+
+            <form (ngSubmit)="onSubmit()" #registerForm="ngForm">
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label" for="firstName">
+                    First Name
+                  </label>
+                  <input type="text"
+                         id="firstName"
+                         name="firstName"
+                         class="form-control"
+                         placeholder="First Name"
+                         required
+                         [(ngModel)]="user.firstName"
+                         #firstInput="ngModel"
+                         [class.is-invalid]="firstInput.invalid && firstInput.touched">
+                </div>
+
+                <div class="col-md-6 mb-3">
+                  <label class="form-label" for="lastName">
+                    Last Name
+                  </label>
+                  <input type="text"
+                         id="lastName"
+                         name="lastName"
+                         class="form-control"
+                         placeholder="Last Name"
+                         required
+                         [(ngModel)]="user.lastName"
+                         #lastInput="ngModel"
+                         [class.is-invalid]="lastInput.invalid && lastInput.touched">
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="email">
+                  Email Address
+                </label>
+                <input type="email"
+                       id="email"
+                       name="email"
+                       class="form-control"
+                       placeholder="Enter Email"
+                       required
+                       email
+                       [(ngModel)]="user.email"
+                       #emailInput="ngModel"
+                       [class.is-invalid]="emailInput.invalid && emailInput.touched">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">
+                  Gender
+                </label>
+                <div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input"
+                           type="radio"
+                           name="gender"
+                           id="male"
+                           value="male"
+                           [(ngModel)]="user.gender">
+                    <label class="form-check-label" for="male">
+                      Male
+                    </label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input"
+                           type="radio"
+                           name="gender"
+                           id="female"
+                           value="female"
+                           [(ngModel)]="user.gender">
+                    <label class="form-check-label" for="female">
+                      Female
+                    </label>
+                  </div>
+                  <div class="form-check form-check-inline">
+                    <input class="form-check-input"
+                           type="radio"
+                           name="gender"
+                           id="other"
+                           value="other"
+                           [(ngModel)]="user.gender">
+                    <label class="form-check-label" for="other">
+                      Other
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mb-4">
+                <label class="form-label" for="password">
+                  Password
+                </label>
+                <input type="password"
+                       id="password"
+                       name="password"
+                       class="form-control"
+                       placeholder="Create Password"
+                       required
+                       [(ngModel)]="user.password"
+                       #passInput="ngModel"
+                       [class.is-invalid]="passInput.invalid && passInput.touched">
+              </div>
+
+              <button type="submit" class="btn btn-warning w-100 py-3" [disabled]="registerForm.invalid">
+                Create Account
+              </button>
+            </form>
+
+            <hr>
+
+            <p class="text-center mb-0">
+              Already have an account?
+              <a routerLink="/login" class="text-warning text-decoration-none fw-semibold">
+                Login
+              </a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

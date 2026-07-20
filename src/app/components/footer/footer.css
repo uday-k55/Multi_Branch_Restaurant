@@ -1,0 +1,22 @@
+.footer-link {
+  color: #ddd;
+  text-decoration: none;
+  display: block;
+  margin-bottom: 10px;
+  transition: 0.3s;
+}
+
+.footer-link:hover {
+  color: #FEA116;
+}
+
+footer .btn {
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  transition: 0.3s;
+  padding: 0;
+}

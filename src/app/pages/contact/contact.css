@@ -1,0 +1,98 @@
+/* ================= PAGE HEADER ================= */
+.page-header {
+  background: linear-gradient(rgba(15, 23, 43, 0.85), rgba(15, 23, 43, 0.85)),
+              url('https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1400') no-repeat center center;
+  background-size: cover;
+  padding: 100px 0 50px 0;
+  margin-top: 50px;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ================= CONTACT CARDS ================= */
+.contact-card {
+  background: #ffffff;
+  border-radius: 15px;
+  box-shadow: 0 5px 25px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 100%;
+}
+
+.contact-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.contact-icon {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto;
+  background: rgba(254, 161, 22, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+/* ================= FORM STYLING ================= */
+.form-container {
+  background: #ffffff;
+  border: 1px solid #f1f1f1;
+}
+
+.form-control {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 15px;
+}
+
+.form-control:focus {
+  border-color: #FEA116;
+  box-shadow: 0 0 0 0.25rem rgba(254, 161, 22, 0.25);
+}
+
+.form-floating > label {
+  color: #a0aec0;
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label {
+  color: #FEA116;
+}
+
+.btn-warning {
+  background: #FEA116;
+  border: none;
+  font-weight: 600;
+  letter-spacing: 1px;
+  transition: 0.3s;
+}
+
+.btn-warning:hover:not(:disabled) {
+  background: #e08a00;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(254, 161, 22, 0.4);
+}
+
+.btn-warning:disabled {
+  background: #cbd5e0;
+  cursor: not-allowed;
+}
+
+/* ================= SUCCESS BANNER ANIMATION ================= */
+.animate-success {
+  animation: slideInDown 0.5s ease-out;
+}
+
+@keyframes slideInDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
