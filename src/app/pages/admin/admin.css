@@ -1,0 +1,456 @@
+/* ================= ADMIN PAGE RESET & LAYOUT ================= */
+.admin-dashboard-section {
+  min-height: 100vh;
+  padding: 85px 0 0 0; /* Align right under fixed header */
+  background: linear-gradient(135deg, #0d111a 0%, #080a0f 100%);
+  color: #f8f9fa;
+  overflow-x: hidden;
+}
+
+.admin-container-fluid {
+  width: 100%;
+  min-height: calc(100vh - 85px);
+}
+
+/* ================= 1. SIDEBAR SYSTEM ================= */
+.admin-sidebar {
+  width: 280px;
+  background: rgba(15, 23, 43, 0.98);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(15px);
+}
+
+.sidebar-menu .nav-link {
+  color: rgba(255, 255, 255, 0.7) !important;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border-left: 3px solid transparent;
+  transition: all 0.25s ease;
+  background: transparent;
+  border-radius: 8px !important;
+  border: none;
+}
+
+.sidebar-menu .nav-link:hover {
+  color: #FEA116 !important;
+  background: rgba(254, 161, 22, 0.06);
+  transform: translateX(4px);
+}
+
+.sidebar-menu .nav-link.active {
+  color: #FEA116 !important;
+  background: rgba(254, 161, 22, 0.12);
+  border-left: 4px solid #FEA116;
+  font-weight: 600;
+  border-radius: 0 8px 8px 0 !important;
+}
+
+.sidebar-menu .nav-link.active i {
+  color: #FEA116 !important;
+  transform: scale(1.1);
+}
+
+.sidebar-menu .nav-link i {
+  transition: all 0.25s ease;
+}
+
+/* ================= 2. MAIN AREA & GENERAL INTERFACES ================= */
+.admin-main {
+  background: #0b0d13;
+  min-height: calc(100vh - 85px);
+  overflow-y: auto;
+}
+
+.bg-dark-card {
+  background: rgba(15, 23, 43, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+}
+
+/* Custom Gradients & Utilities */
+.btn-dark-gradient {
+  background: linear-gradient(145deg, #1b2336, #121824);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #fff;
+  transition: all 0.3s ease;
+}
+
+.btn-dark-gradient:hover {
+  background: linear-gradient(145deg, #222b40, #161e2e);
+  color: #FEA116;
+  border-color: rgba(254, 161, 22, 0.3);
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.text-sm {
+  font-size: 0.875rem;
+}
+
+.text-xs {
+  font-size: 0.75rem;
+}
+
+.font-xs {
+  font-size: 0.7rem;
+}
+
+/* Pulse Animation for alerts */
+.animate-pulse {
+  animation: pulse-ring 2s infinite ease-in-out;
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(220, 53, 69, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+  }
+}
+
+/* Fade in panels */
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ================= 3. STATS & KPI METRIC CARDS ================= */
+.stat-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  transition: all 0.35s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(254, 161, 22, 0.3);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3) !important;
+}
+
+.icon-box {
+  width: 55px;
+  height: 55px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover .icon-box {
+  background-color: #FEA116 !important;
+}
+
+.stat-card:hover .icon-box i {
+  color: #fff !important;
+}
+
+/* ================= 4. SVG CHART SYSTEM ================= */
+.chart-bar {
+  transition: fill 0.3s ease, opacity 0.3s ease;
+  cursor: pointer;
+}
+
+.chart-bar:hover {
+  fill: #fff !important;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 8px #FEA116);
+}
+
+.activity-timeline {
+  position: relative;
+  padding-left: 20px;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.activity-item {
+  position: relative;
+}
+
+.activity-icon-bullet {
+  position: absolute;
+  left: -26px;
+  top: 6px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid #0b0d13;
+}
+
+/* ================= 5. NOTIFICATION CENTER ================= */
+.notifications-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 1050;
+  width: 320px;
+  background: #141b29;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-top: 10px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+  animation: slideDown 0.25s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.notification-item {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  transition: background 0.2s;
+}
+
+.notification-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* ================= 6. RESERVATIONS & ACCORDION VIEWS ================= */
+.table-responsive {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(254, 161, 22, 0.3) rgba(255, 255, 255, 0.02);
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: rgba(254, 161, 22, 0.3);
+  border-radius: 3px;
+}
+
+.form-select, .form-control {
+  box-shadow: none !important;
+}
+
+.form-select:focus, .form-control:focus {
+  border-color: #FEA116 !important;
+  background-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+.form-switch .form-check-input {
+  width: 2.5em;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='rgba(255,255,255,.25)' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 10h10'/%3e%3c/svg%3e");
+  border-color: rgba(255,255,255,.25);
+}
+
+.form-switch .form-check-input:focus {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23FEA116' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M5 10h10'/%3e%3c/svg%3e");
+}
+
+.form-switch .form-check-input:checked {
+  background-color: #FEA116;
+  border-color: #FEA116;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3ccircle cx='10' cy='10' r='6' fill='%23fff'/%3e%3c/svg%3e");
+}
+
+/* ================= 7. PHYSICAL SEATING TABLE CARDS ================= */
+.table-grid-card {
+  border-width: 2px !important;
+  transition: all 0.3s ease;
+}
+
+.table-grid-card.border-available {
+  border-color: rgba(25, 135, 84, 0.25) !important;
+}
+
+.table-grid-card.border-occupied {
+  border-color: rgba(255, 193, 7, 0.25) !important;
+}
+
+.table-grid-card.border-reserved {
+  border-color: rgba(220, 53, 69, 0.25) !important;
+}
+
+.table-grid-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+.table-grid-card.border-available:hover {
+  border-color: #198754 !important;
+}
+
+.table-grid-card.border-occupied:hover {
+  border-color: #ffc107 !important;
+}
+
+.table-grid-card.border-reserved:hover {
+  border-color: #dc3545 !important;
+}
+
+.table-layout-graphic {
+  width: 90px;
+  height: 90px;
+  border: 4px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.table-layout-graphic.bg-success {
+  background: rgba(25, 135, 84, 0.1) !important;
+  border-color: rgba(25, 135, 84, 0.4);
+}
+
+.table-layout-graphic.bg-warning {
+  background: rgba(255, 193, 7, 0.1) !important;
+  border-color: rgba(255, 193, 7, 0.4);
+}
+
+.table-layout-graphic.bg-danger {
+  background: rgba(220, 53, 69, 0.1) !important;
+  border-color: rgba(220, 53, 69, 0.4);
+}
+
+.table-grid-card:hover .table-layout-graphic {
+  transform: rotate(15deg) scale(1.05);
+}
+
+/* ================= 8. MENU CATALOG IMAGES ================= */
+.menu-card-admin {
+  background: rgba(20, 27, 41, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.menu-card-admin:hover {
+  transform: translateY(-5px);
+  border-color: rgba(254, 161, 22, 0.3);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3) !important;
+}
+
+.menu-thumbnail-wrapper {
+  height: 180px;
+}
+
+.menu-admin-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.menu-card-admin:hover .menu-admin-img {
+  transform: scale(1.08);
+}
+
+.preset-image-selector {
+  border-width: 2px;
+  border-color: transparent;
+  opacity: 0.7;
+  transition: all 0.2s;
+  object-fit: cover;
+}
+
+.preset-image-selector:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+
+.preset-image-selector.border-warning {
+  opacity: 1;
+  border-color: #FEA116 !important;
+}
+
+/* ================= 9. MODALS BACKDROP & SCALE ================= */
+.modal-backdrop-custom {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 1060;
+  backdrop-filter: blur(8px);
+}
+
+.modal-dialog-custom {
+  width: 100%;
+  max-width: 550px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  animation: scaleIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.15);
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Hide Bootstrap default close background */
+.btn-close-white {
+  filter: invert(1) grayscale(1) brightness(2);
+}
+
+/* ================= 10. RESPONSIVE MEDIA QUERIES ================= */
+@media (max-width: 767.98px) {
+  .admin-dashboard-section {
+    padding-top: 75px;
+  }
+  
+  .admin-sidebar {
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  
+  .sidebar-menu .nav {
+    flex-direction: row !important;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    scrollbar-width: none; /* Hide scrollbar Firefox */
+  }
+  
+  .sidebar-menu .nav::-webkit-scrollbar {
+    display: none; /* Hide scrollbar Chrome/Safari */
+  }
+  
+  .sidebar-menu .nav-item {
+    flex-shrink: 0;
+  }
+  
+  .sidebar-menu .nav-link {
+    padding: 10px 15px !important;
+    white-space: nowrap;
+    border-left: none;
+    border-bottom: 3px solid transparent;
+  }
+  
+  .sidebar-menu .nav-link.active {
+    border-left: none;
+    border-bottom: 3px solid #FEA116;
+    border-radius: 8px !important;
+  }
+  
+  .sidebar-footer {
+    display: none;
+  }
+  
+  .admin-main {
+    padding: 20px !important;
+  }
+}

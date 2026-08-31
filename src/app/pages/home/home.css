@@ -1,0 +1,158 @@
+/* ================= HERO ================= */
+
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  background:
+    linear-gradient(rgba(15, 23, 43, .90), rgba(15, 23, 43, .90)),
+    url("/img/hero-bg.jpg");
+  background-size: cover;
+  background-position: center;
+  color: white;
+  padding-top: 90px;
+}
+
+.hero h1 {
+  font-size: 58px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.hero p {
+  font-size: 18px;
+  color: #ddd;
+}
+
+.hero-image {
+  max-width: 100%;
+  animation: rotate 35s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ================= SERVICES ================= */
+
+.service-card {
+  background: #fff;
+  padding: 40px 25px;
+  text-align: center;
+  border-radius: 15px;
+  transition: .4s;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, .08);
+  height: 100%;
+}
+
+.service-card i {
+  margin-bottom: 20px;
+}
+
+.service-card h4 {
+  margin-bottom: 15px;
+  font-weight: 600;
+}
+
+.service-card p {
+  color: var(--gray);
+}
+
+.service-card:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-10px);
+}
+
+.service-card:hover i,
+.service-card:hover h4,
+.service-card:hover p {
+  color: white !important;
+}
+
+/* ================= BRANCH ================= */
+
+.branch-section {
+  padding: 80px 0;
+  background: #f7f7f7;
+}
+
+.branch-box {
+  background: #fff;
+  border-radius: 15px;
+  padding: 50px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .08);
+}
+
+.branch-box h2 {
+  margin-bottom: 30px;
+  font-weight: 700;
+}
+
+.form-select {
+  height: 55px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.form-select:focus {
+  box-shadow: none;
+  border-color: var(--primary);
+}
+
+/* ================= SECTION ================= */
+
+section {
+  padding: 80px 0;
+}
+
+.section-title {
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--dark);
+}
+
+.text-warning {
+  color: var(--primary) !important;
+}
+
+.tracking-wider {
+  letter-spacing: 0.15em;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media(max-width: 992px) {
+  .hero {
+    text-align: center;
+    padding-top: 120px;
+  }
+  .hero h1 {
+    font-size: 42px;
+  }
+  .hero-image {
+    margin-top: 40px;
+    max-width: 70%;
+  }
+}
+
+@media(max-width: 768px) {
+  .hero h1 {
+    font-size: 34px;
+  }
+  .hero p {
+    font-size: 16px;
+  }
+  .branch-box {
+    padding: 30px;
+  }
+  .service-card {
+    margin-bottom: 20px;
+  }
+}

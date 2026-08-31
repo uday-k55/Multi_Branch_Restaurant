@@ -1,0 +1,130 @@
+<!-- ================= PAGE HEADER ================= -->
+<div class="page-header text-center">
+  <div class="container py-5">
+    <h1 class="display-3 text-white fw-bold mb-3">Contact Us</h1>
+    <nav aria-label="breadcrumb">
+      <ol class="breadcrumb justify-content-center">
+        <li class="breadcrumb-item"><a routerLink="/" class="text-warning text-decoration-none">Home</a></li>
+        <li class="breadcrumb-item active text-white" aria-current="page">Contact</li>
+      </ol>
+    </nav>
+  </div>
+</div>
+
+<!-- ================= CONTACT SECTION ================= -->
+<section class="py-5">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h5 class="text-warning text-uppercase tracking-wider">Contact Details</h5>
+      <h2 class="fw-bold">We'd Love To Hear From You</h2>
+    </div>
+
+    <!-- Contact Info Cards -->
+    <div class="row g-4 mb-5">
+      <div class="col-md-3 col-sm-6">
+        <div class="contact-card p-4 text-center">
+          <div class="contact-icon mb-3">
+            <i class="fas fa-phone fa-2x text-warning"></i>
+          </div>
+          <h5 class="fw-bold">Call Us</h5>
+          <p class="text-muted mb-0">+91 9876543210</p>
+          <p class="text-muted">+91 9876543211</p>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="contact-card p-4 text-center">
+          <div class="contact-icon mb-3">
+            <i class="fas fa-envelope fa-2x text-warning"></i>
+          </div>
+          <h5 class="fw-bold">Email Us</h5>
+          <p class="text-muted mb-0">info@chefmelbin.com</p>
+          <p class="text-muted">support@chefmelbin.com</p>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="contact-card p-4 text-center">
+          <div class="contact-icon mb-3">
+            <i class="fas fa-map-marker-alt fa-2x text-warning"></i>
+          </div>
+          <h5 class="fw-bold">Visit Us</h5>
+          <p class="text-muted mb-0">Chef Melbin Restaurant,</p>
+          <p class="text-muted">Kottayam, Kerala, India</p>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="contact-card p-4 text-center">
+          <div class="contact-icon mb-3">
+            <i class="fas fa-clock fa-2x text-warning"></i>
+          </div>
+          <h5 class="fw-bold">Working Hours</h5>
+          <p class="text-muted mb-0">Mon - Sat: 11AM - 11PM</p>
+          <p class="text-muted">Sunday: 12PM - 10PM</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact Form & Map Section -->
+    <div class="row g-5">
+      <div class="col-lg-6">
+        <div class="map-container rounded overflow-hidden shadow-sm h-100" style="min-height: 400px;">
+          <!-- Google Maps Embed Placeholder -->
+          <iframe 
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d125745.74853037968!2d76.44474753066374!3d9.591566835154378!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3b062ba16c6b4b9f%3A0xc405b2cd919eec8e!2sKottayam%2C%20Kerala!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin" 
+            width="100%" 
+            height="100%" 
+            style="border:0;" 
+            allowfullscreen="" 
+            loading="lazy" 
+            referrerpolicy="no-referrer-when-downgrade">
+          </iframe>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="form-container p-5 rounded shadow-sm bg-white">
+          <h4 class="fw-bold mb-4">Send Message</h4>
+          
+          <!-- Success Message -->
+          <div *ngIf="isSubmitted" class="alert alert-success alert-dismissible fade show animate-success" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <strong>Thank you!</strong> Your message has been sent successfully. We will get back to you shortly.
+          </div>
+
+          <form (ngSubmit)="onSubmit()" #contactForm="ngForm" *ngIf="!isSubmitted">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="text" class="form-control" id="name" name="name" placeholder="Your Name" required [(ngModel)]="formData.name" #nameInput="ngModel" [class.is-invalid]="nameInput.invalid && nameInput.touched">
+                  <label for="name">Your Name</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-floating">
+                  <input type="email" class="form-control" id="email" name="email" placeholder="Your Email" required email [(ngModel)]="formData.email" #emailInput="ngModel" [class.is-invalid]="emailInput.invalid && emailInput.touched">
+                  <label for="email">Your Email</label>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="form-floating">
+                  <input type="text" class="form-control" id="subject" name="subject" placeholder="Subject" required [(ngModel)]="formData.subject" #subjInput="ngModel" [class.is-invalid]="subjInput.invalid && subjInput.touched">
+                  <label for="subject">Subject</label>
+                </div>
+              </div>
+              <div class="col-12">
+                <div class="form-floating">
+                  <textarea class="form-control" placeholder="Leave a message here" id="message" name="message" style="height: 150px" required [(ngModel)]="formData.message" #msgInput="ngModel" [class.is-invalid]="msgInput.invalid && msgInput.touched"></textarea>
+                  <label for="message">Message</label>
+                </div>
+              </div>
+              <div class="col-12 mt-4">
+                <button class="btn btn-warning w-100 py-3 text-uppercase" type="submit" [disabled]="contactForm.invalid">
+                  Send Message <i class="fas fa-paper-plane ms-2"></i>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

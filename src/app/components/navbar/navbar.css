@@ -1,0 +1,30 @@
+.navbar {
+  background: rgba(15, 23, 43, .95);
+  padding: 18px 0;
+  transition: .4s;
+}
+
+.navbar-brand {
+  font-size: 30px;
+  color: var(--primary) !important;
+}
+
+.nav-link {
+  color: #fff !important;
+  margin-left: 20px;
+  font-weight: 500;
+  transition: .3s;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: var(--primary) !important;
+}
+
+/* Responsive adjustments */
+@media(max-width: 992px) {
+  .nav-link {
+    margin-left: 0;
+    padding: 10px 0;
+  }
+}

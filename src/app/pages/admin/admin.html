@@ -1,0 +1,1131 @@
+<section class="admin-dashboard-section">
+  <div class="admin-container-fluid d-flex flex-column flex-md-row">
+    
+    <!-- ================= SIDEBAR NAVIGATION ================= -->
+    <aside class="admin-sidebar shadow-lg">
+      <div class="sidebar-brand-wrapper p-4 text-center border-bottom border-secondary border-opacity-25">
+        <a routerLink="/" class="text-warning text-decoration-none d-flex align-items-center justify-content-center gap-2">
+          <i class="fas fa-utensils fs-3"></i>
+          <span class="fw-bold fs-4 tracking-wide">Chef Melbin</span>
+        </a>
+        <div class="badge bg-warning text-dark mt-2 px-3 py-1 text-uppercase fw-bold font-monospace" style="font-size: 0.75rem;">Admin Panel</div>
+      </div>
+      
+      <div class="sidebar-menu p-3">
+        <ul class="nav flex-column gap-2">
+          <li class="nav-item">
+            <button class="nav-link w-100 text-start d-flex align-items-center gap-3 px-3 py-3 rounded-3"
+                    [class.active]="activeTab === 'dashboard'" (click)="selectTab('dashboard')">
+              <i class="fas fa-chart-pie fs-5 text-warning"></i>
+              <span>Dashboard</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link w-100 text-start d-flex align-items-center gap-3 px-3 py-3 rounded-3"
+                    [class.active]="activeTab === 'reservations'" (click)="selectTab('reservations')">
+              <i class="fas fa-calendar-check fs-5 text-warning"></i>
+              <span>Reservations</span>
+              @if (adminService.getStats().pendingReservations > 0) {
+                <span class="badge bg-danger rounded-pill ms-auto animate-pulse">{{ adminService.getStats().pendingReservations }}</span>
+              }
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link w-100 text-start d-flex align-items-center gap-3 px-3 py-3 rounded-3"
+                    [class.active]="activeTab === 'users'" (click)="selectTab('users')">
+              <i class="fas fa-users fs-5 text-warning"></i>
+              <span>User Accounts</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link w-100 text-start d-flex align-items-center gap-3 px-3 py-3 rounded-3"
+                    [class.active]="activeTab === 'tables'" (click)="selectTab('tables')">
+              <i class="fas fa-chair fs-5 text-warning"></i>
+              <span>Table Layout</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link w-100 text-start d-flex align-items-center gap-3 px-3 py-3 rounded-3"
+                    [class.active]="activeTab === 'menu'" (click)="selectTab('menu')">
+              <i class="fas fa-hamburger fs-5 text-warning"></i>
+              <span>Menu Items</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link w-100 text-start d-flex align-items-center gap-3 px-3 py-3 rounded-3"
+                    [class.active]="activeTab === 'reviews'" (click)="selectTab('reviews')">
+              <i class="fas fa-star fs-5 text-warning"></i>
+              <span>Reviews / Ratings</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-link w-100 text-start d-flex align-items-center gap-3 px-3 py-3 rounded-3"
+                    [class.active]="activeTab === 'settings'" (click)="selectTab('settings')">
+              <i class="fas fa-user-cog fs-5 text-warning"></i>
+              <span>Profile Settings</span>
+            </button>
+          </li>
+        </ul>
+        
+        <div class="sidebar-footer mt-5 p-2">
+          <button class="btn btn-outline-danger w-100 py-2.5 rounded-3 d-flex align-items-center justify-content-center gap-2" (click)="logout()">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Secure Logout</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ================= MAIN CONTENT CONTAINER ================= -->
+    <main class="admin-main flex-grow-1 p-4 p-md-5">
+      
+      <!-- HEADER BAR -->
+      <header class="admin-header d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-secondary border-opacity-25">
+        <div>
+          <h2 class="text-white fw-bold mb-0 text-capitalize">{{ activeTab }} View</h2>
+          <p class="text-muted mb-0 d-none d-sm-block">Welcome back, Admin Chef. Managing Kottayam Head Branch.</p>
+        </div>
+        
+        <div class="d-flex align-items-center gap-3">
+          <!-- Notification Bell Dropdown Button -->
+          <div class="position-relative">
+            <button class="btn btn-dark-gradient position-relative p-2.5 rounded-circle shadow-sm" (click)="toggleNotifications()">
+              <i class="fas fa-bell text-warning fs-5"></i>
+              @if (unreadNotificationsCount > 0) {
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger animate-pulse" style="font-size: 0.65rem;">
+                  {{ unreadNotificationsCount }}
+                </span>
+              }
+            </button>
+
+            <!-- Notifications Drawer -->
+            @if (isNotificationsOpen) {
+              <div class="notifications-dropdown shadow-lg p-3 rounded-3">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                  <span class="fw-bold text-white">Notifications</span>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-link text-warning p-0 text-decoration-none font-xs" (click)="markAllNotificationsRead()">Mark Read</button>
+                    <button class="btn btn-sm btn-link text-danger p-0 text-decoration-none font-xs" (click)="clearAllNotifications()">Clear All</button>
+                  </div>
+                </div>
+                <div class="notification-list overflow-auto" style="max-height: 250px;">
+                  @if (adminService.notifications().length === 0) {
+                    <div class="text-muted text-center py-3">No system alerts</div>
+                  } @else {
+                    @for (notif of adminService.notifications(); track notif.id) {
+                      <div class="notification-item p-2 mb-2 rounded border-start border-3" 
+                           [class.border-success]="notif.type === 'success'"
+                           [class.border-warning]="notif.type === 'warning'"
+                           [class.border-danger]="notif.type === 'danger'"
+                           [class.border-info]="notif.type === 'info'"
+                           [class.opacity-50]="notif.read">
+                        <p class="text-white-50 text-sm mb-1">{{ notif.message }}</p>
+                        <small class="text-muted font-monospace">{{ notif.timestamp }}</small>
+                      </div>
+                    }
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Quick Actions Button -->
+          <div class="dropdown d-none d-md-block">
+            <button class="btn btn-warning py-2 px-3 dropdown-toggle d-flex align-items-center gap-2" type="button" id="quickActions" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="fas fa-bolt"></i> Quick Actions
+            </button>
+            <ul class="dropdown-menu dropdown-menu-dark dropdown-menu-end shadow" aria-labelledby="quickActions">
+              <li><button class="dropdown-item py-2" (click)="openAddTableModal()"><i class="fas fa-chair text-warning me-2"></i> Add Table</button></li>
+              <li><button class="dropdown-item py-2" (click)="openAddMenuModal()"><i class="fas fa-hamburger text-warning me-2"></i> Add Menu Item</button></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><button class="dropdown-item py-2" (click)="selectTab('reservations')"><i class="fas fa-calendar-check text-warning me-2"></i> View Bookings</button></li>
+            </ul>
+          </div>
+
+          <!-- Profile Thumbnail -->
+          <div class="d-flex align-items-center gap-2 cursor-pointer" (click)="selectTab('settings')">
+            <img src="https://images.unsplash.com/photo-1577219491135-ce391730fb2c?w=100" class="rounded-circle border border-warning" width="40" height="40" alt="Admin Avatar">
+            <span class="text-white fw-semibold d-none d-lg-block">Admin Chef</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- ================= 1. DASHBOARD VIEW ================= -->
+      @if (activeTab === 'dashboard') {
+        <section class="dashboard-panel animate-fade-in">
+          <!-- KPI Metric Cards -->
+          <div class="row g-4 mb-4">
+            <div class="col-sm-6 col-lg-3">
+              <div class="card stat-card shadow h-100">
+                <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                  <div>
+                    <h6 class="text-muted text-uppercase fw-bold mb-1">Customers</h6>
+                    <span class="display-6 fw-bold text-white">{{ adminService.getStats().totalUsers }}</span>
+                  </div>
+                  <div class="icon-box bg-primary bg-opacity-10 p-3 rounded-circle">
+                    <i class="fas fa-users fa-2x text-warning"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+              <div class="card stat-card shadow h-100">
+                <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                  <div>
+                    <h6 class="text-muted text-uppercase fw-bold mb-1">Total Bookings</h6>
+                    <span class="display-6 fw-bold text-white">{{ adminService.getStats().totalReservations }}</span>
+                  </div>
+                  <div class="icon-box bg-primary bg-opacity-10 p-3 rounded-circle">
+                    <i class="fas fa-book fa-2x text-warning"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+              <div class="card stat-card shadow h-100">
+                <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                  <div>
+                    <h6 class="text-muted text-uppercase fw-bold mb-1">Pending Reservations</h6>
+                    <span class="display-6 fw-bold text-white">{{ adminService.getStats().pendingReservations }}</span>
+                  </div>
+                  <div class="icon-box bg-danger bg-opacity-10 p-3 rounded-circle">
+                    <i class="fas fa-clock fa-2x text-danger animate-pulse"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+              <div class="card stat-card shadow h-100">
+                <div class="card-body p-4 d-flex align-items-center justify-content-between">
+                  <div>
+                    <h6 class="text-muted text-uppercase fw-bold mb-1">Available Tables</h6>
+                    <span class="display-6 fw-bold text-white">{{ adminService.getStats().availableTables }} / {{ adminService.getStats().totalTables }}</span>
+                  </div>
+                  <div class="icon-box bg-success bg-opacity-10 p-3 rounded-circle">
+                    <i class="fas fa-chair fa-2x text-success"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Charts & Activity Row -->
+          <div class="row g-4 mb-4">
+            <!-- Booking Statistics SVG Chart -->
+            <div class="col-lg-8">
+              <div class="card border-0 shadow-lg h-100 bg-dark-card text-white">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                  <h5 class="fw-bold mb-0">Booking Traffic</h5>
+                  <div class="badge bg-warning text-dark px-3 py-1 text-uppercase font-monospace">Weekly Report</div>
+                </div>
+                <div class="card-body px-4 pb-4">
+                  <div class="chart-container text-center">
+                    <!-- SVG bar chart representing Monday to Sunday traffic statistics -->
+                    <svg viewBox="0 0 600 280" class="w-100 h-auto">
+                      <!-- Grid lines -->
+                      <line x1="50" y1="50" x2="550" y2="50" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
+                      <line x1="50" y1="100" x2="550" y2="100" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
+                      <line x1="50" y1="150" x2="550" y2="150" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
+                      <line x1="50" y1="200" x2="550" y2="200" stroke="rgba(255,255,255,0.05)" stroke-width="1" />
+                      <line x1="50" y1="230" x2="550" y2="230" stroke="rgba(255,255,255,0.2)" stroke-width="2" />
+                      
+                      <!-- Bar Gradients -->
+                      <defs>
+                        <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stop-color="#FEA116" />
+                          <stop offset="100%" stop-color="#e08a00" stop-opacity="0.3" />
+                        </linearGradient>
+                      </defs>
+
+                      <!-- Bar Monday: Height = 80px -->
+                      <rect x="75" y="150" width="30" height="80" rx="6" fill="url(#barGradient)" class="chart-bar" />
+                      <text x="90" y="140" fill="#FEA116" font-size="11" text-anchor="middle" font-weight="bold">8</text>
+                      
+                      <!-- Bar Tuesday: Height = 60px -->
+                      <rect x="145" y="170" width="30" height="60" rx="6" fill="url(#barGradient)" class="chart-bar" />
+                      <text x="160" y="160" fill="#FEA116" font-size="11" text-anchor="middle" font-weight="bold">6</text>
+
+                      <!-- Bar Wednesday: Height = 100px -->
+                      <rect x="215" y="130" width="30" height="100" rx="6" fill="url(#barGradient)" class="chart-bar" />
+                      <text x="230" y="120" fill="#FEA116" font-size="11" text-anchor="middle" font-weight="bold">10</text>
+
+                      <!-- Bar Thursday: Height = 130px -->
+                      <rect x="285" y="100" width="30" height="130" rx="6" fill="url(#barGradient)" class="chart-bar" />
+                      <text x="300" y="90" fill="#FEA116" font-size="11" text-anchor="middle" font-weight="bold">13</text>
+
+                      <!-- Bar Friday: Height = 170px -->
+                      <rect x="355" y="60" width="30" height="170" rx="6" fill="url(#barGradient)" class="chart-bar" />
+                      <text x="370" y="50" fill="#FEA116" font-size="11" text-anchor="middle" font-weight="bold">17</text>
+
+                      <!-- Bar Saturday: Height = 200px (Peak) -->
+                      <rect x="425" y="30" width="30" height="200" rx="6" fill="url(#barGradient)" class="chart-bar" />
+                      <text x="440" y="20" fill="#FEA116" font-size="11" text-anchor="middle" font-weight="bold">20</text>
+
+                      <!-- Bar Sunday: Height = 150px -->
+                      <rect x="495" y="80" width="30" height="150" rx="6" fill="url(#barGradient)" class="chart-bar" />
+                      <text x="510" y="70" fill="#FEA116" font-size="11" text-anchor="middle" font-weight="bold">15</text>
+
+                      <!-- X Axis Labels -->
+                      <text x="90" y="250" fill="rgba(255,255,255,0.6)" font-size="11" text-anchor="middle">Mon</text>
+                      <text x="160" y="250" fill="rgba(255,255,255,0.6)" font-size="11" text-anchor="middle">Tue</text>
+                      <text x="230" y="250" fill="rgba(255,255,255,0.6)" font-size="11" text-anchor="middle">Wed</text>
+                      <text x="300" y="250" fill="rgba(255,255,255,0.6)" font-size="11" text-anchor="middle">Thu</text>
+                      <text x="370" y="250" fill="rgba(255,255,255,0.6)" font-size="11" text-anchor="middle">Fri</text>
+                      <text x="440" y="250" fill="rgba(255,255,255,0.6)" font-size="11" text-anchor="middle">Sat</text>
+                      <text x="510" y="250" fill="rgba(255,255,255,0.6)" font-size="11" text-anchor="middle">Sun</text>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Booking Status Distribution Graph -->
+            <div class="col-lg-4">
+              <div class="card border-0 shadow-lg h-100 bg-dark-card text-white">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                  <h5 class="fw-bold mb-0">Booking Status</h5>
+                </div>
+                <div class="card-body p-4 d-flex flex-column justify-content-between">
+                  <div>
+                    <!-- Status 1 -->
+                    <div class="mb-3">
+                      <div class="d-flex justify-content-between text-sm mb-1">
+                        <span>Confirmed ({{ adminService.getStats().confirmedReservations }})</span>
+                        <span class="text-success">{{ (adminService.getStats().confirmedReservations / (adminService.getStats().totalReservations || 1) * 100) | number:'1.0-0' }}%</span>
+                      </div>
+                      <div class="progress bg-secondary bg-opacity-25" style="height: 8px;">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             [style.width.%]="(adminService.getStats().confirmedReservations / (adminService.getStats().totalReservations || 1) * 100)">
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Status 2 -->
+                    <div class="mb-3">
+                      <div class="d-flex justify-content-between text-sm mb-1">
+                        <span>Pending ({{ adminService.getStats().pendingReservations }})</span>
+                        <span class="text-warning">{{ (adminService.getStats().pendingReservations / (adminService.getStats().totalReservations || 1) * 100) | number:'1.0-0' }}%</span>
+                      </div>
+                      <div class="progress bg-secondary bg-opacity-25" style="height: 8px;">
+                        <div class="progress-bar bg-warning" role="progressbar" 
+                             [style.width.%]="(adminService.getStats().pendingReservations / (adminService.getStats().totalReservations || 1) * 100)">
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Status 3 -->
+                    <div class="mb-3">
+                      <div class="d-flex justify-content-between text-sm mb-1">
+                        <span>Cancelled ({{ adminService.getStats().cancelledReservations }})</span>
+                        <span class="text-danger">{{ (adminService.getStats().cancelledReservations / (adminService.getStats().totalReservations || 1) * 100) | number:'1.0-0' }}%</span>
+                      </div>
+                      <div class="progress bg-secondary bg-opacity-25" style="height: 8px;">
+                        <div class="progress-bar bg-danger" role="progressbar" 
+                             [style.width.%]="(adminService.getStats().cancelledReservations / (adminService.getStats().totalReservations || 1) * 100)">
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Status 4 -->
+                    <div class="mb-3">
+                      <div class="d-flex justify-content-between text-sm mb-1">
+                        <span>Rejected ({{ adminService.getStats().rejectedReservations }})</span>
+                        <span class="text-muted">{{ (adminService.getStats().rejectedReservations / (adminService.getStats().totalReservations || 1) * 100) | number:'1.0-0' }}%</span>
+                      </div>
+                      <div class="progress bg-secondary bg-opacity-25" style="height: 8px;">
+                        <div class="progress-bar bg-secondary" role="progressbar" 
+                             [style.width.%]="(adminService.getStats().rejectedReservations / (adminService.getStats().totalReservations || 1) * 100)">
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="quick-action-strip border-top pt-3 border-secondary border-opacity-25 d-flex gap-2">
+                    <button class="btn btn-outline-warning btn-sm w-100" (click)="selectTab('reservations')">
+                      Manage Reservations
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Bookings Table & System Activities -->
+          <div class="row g-4">
+            <div class="col-lg-7">
+              <div class="card border-0 shadow-lg bg-dark-card text-white">
+                <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                  <h5 class="fw-bold mb-0">Recent Bookings</h5>
+                  <button class="btn btn-link text-warning p-0 text-decoration-none text-sm" (click)="selectTab('reservations')">View All</button>
+                </div>
+                <div class="card-body px-4 pb-4 overflow-auto">
+                  <table class="table table-dark table-hover border-secondary align-middle mb-0 text-white-50">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Date</th>
+                        <th>Guests</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (res of adminService.reservations().slice(0, 4); track res.id) {
+                        <tr>
+                          <td class="text-white fw-bold">{{ res.id }}</td>
+                          <td>{{ res.customerName }}</td>
+                          <td>{{ res.date }} ({{ res.time }})</td>
+                          <td>{{ res.guests }}</td>
+                          <td>
+                            <span class="badge" 
+                                  [class.bg-success]="res.status === 'Confirmed'"
+                                  [class.bg-warning]="res.status === 'Pending'"
+                                  [class.bg-danger]="res.status === 'Cancelled'"
+                                  [class.bg-secondary]="res.status === 'Rejected'">
+                              {{ res.status }}
+                            </span>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="col-lg-5">
+              <div class="card border-0 shadow-lg bg-dark-card text-white h-100">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                  <h5 class="fw-bold mb-0">Recent Activity Log</h5>
+                </div>
+                <div class="card-body p-4">
+                  <div class="activity-timeline">
+                    @if (adminService.notifications().length === 0) {
+                      <div class="text-muted text-center py-5">No recent logs</div>
+                    } @else {
+                      @for (notif of adminService.notifications().slice(0, 4); track notif.id) {
+                        <div class="activity-item d-flex gap-3 mb-3">
+                          <div class="activity-icon-bullet" 
+                               [class.bg-success]="notif.type === 'success'"
+                               [class.bg-warning]="notif.type === 'warning'"
+                               [class.bg-danger]="notif.type === 'danger'"
+                               [class.bg-info]="notif.type === 'info'">
+                          </div>
+                          <div>
+                            <p class="mb-0 text-white-50 text-sm">{{ notif.message }}</p>
+                            <small class="text-muted font-monospace font-xs">{{ notif.timestamp }}</small>
+                          </div>
+                        </div>
+                      }
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      }
+
+      <!-- ================= 2. RESERVATION MANAGEMENT ================= -->
+      @if (activeTab === 'reservations') {
+        <section class="reservations-panel animate-fade-in">
+          <div class="card border-0 shadow-lg bg-dark-card text-white p-4">
+            <!-- Search & Filters Strip -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-4">
+                <div class="input-group">
+                  <span class="input-group-text bg-dark border-secondary text-muted"><i class="fas fa-search"></i></span>
+                  <input type="text" class="form-control bg-dark border-secondary text-white" 
+                         placeholder="Search Name, Email, ID..." [(ngModel)]="searchReservationQuery">
+                </div>
+              </div>
+              <div class="col-sm-6 col-md-3">
+                <select class="form-select bg-dark border-secondary text-white" [(ngModel)]="filterReservationStatus">
+                  <option value="">All Statuses</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Confirmed">Confirmed</option>
+                  <option value="Cancelled">Cancelled</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              </div>
+              <div class="col-sm-6 col-md-3">
+                <input type="date" class="form-control bg-dark border-secondary text-white" [(ngModel)]="filterReservationDate">
+              </div>
+              <div class="col-md-2 text-md-end">
+                <button class="btn btn-warning w-100" (click)="openEditReservationModal({id:'', customerName:'', customerEmail:'', phone:'', date:'', time:'', guests:2, tableId:'', status:'Pending', notes:''})">
+                  <i class="fas fa-plus"></i> New Booking
+                </button>
+              </div>
+            </div>
+
+            <!-- Main Tables Grid -->
+            <div class="table-responsive">
+              <table class="table table-dark table-hover border-secondary align-middle text-white-50">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Customer</th>
+                    <th>Contact</th>
+                    <th>Date / Time</th>
+                    <th>Guests</th>
+                    <th>Assigned Table</th>
+                    <th>Status</th>
+                    <th class="text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @if (filteredReservations.length === 0) {
+                    <tr>
+                      <td colspan="8" class="text-center py-5 text-muted">
+                        <i class="fas fa-folder-open fa-2x mb-3 d-block"></i> No reservations found matching the filters
+                      </td>
+                    </tr>
+                  } @else {
+                    @for (res of filteredReservations; track res.id) {
+                      <tr>
+                        <td class="text-white fw-bold">{{ res.id }}</td>
+                        <td>
+                          <div class="fw-semibold text-white">{{ res.customerName }}</div>
+                          <small class="text-muted">{{ res.notes }}</small>
+                        </td>
+                        <td>
+                          <div>{{ res.customerEmail }}</div>
+                          <small class="text-muted">{{ res.phone }}</small>
+                        </td>
+                        <td>{{ res.date }} at <span class="text-warning fw-semibold">{{ res.time }}</span></td>
+                        <td class="text-center">{{ res.guests }}</td>
+                        <td>
+                          <span class="badge bg-secondary">{{ res.tableId || 'Not Assigned' }}</span>
+                        </td>
+                        <td>
+                          <span class="badge py-2 px-3 text-uppercase font-monospace" 
+                                [class.bg-success]="res.status === 'Confirmed'"
+                                [class.bg-warning]="res.status === 'Pending'"
+                                [class.bg-danger]="res.status === 'Cancelled'"
+                                [class.bg-secondary]="res.status === 'Rejected'">
+                            {{ res.status }}
+                          </span>
+                        </td>
+                        <td>
+                          <div class="d-flex justify-content-center gap-1">
+                            @if (res.status === 'Pending') {
+                              <button class="btn btn-sm btn-success p-2 rounded-circle" title="Confirm" (click)="confirmReservation(res.id)">
+                                <i class="fas fa-check"></i>
+                              </button>
+                              <button class="btn btn-sm btn-danger p-2 rounded-circle" title="Reject" (click)="rejectReservation(res.id)">
+                                <i class="fas fa-times"></i>
+                              </button>
+                            }
+                            @if (res.status === 'Confirmed') {
+                              <button class="btn btn-sm btn-outline-danger p-2 rounded-circle" title="Cancel Booking" (click)="cancelReservation(res.id)">
+                                <i class="fas fa-ban"></i>
+                              </button>
+                            }
+                            <button class="btn btn-sm btn-warning p-2 rounded-circle" title="Edit" (click)="openEditReservationModal(res)">
+                              <i class="fas fa-pencil-alt text-dark"></i>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      }
+
+      <!-- ================= 3. USER MANAGEMENT ================= -->
+      @if (activeTab === 'users') {
+        <section class="users-panel animate-fade-in">
+          <div class="card border-0 shadow-lg bg-dark-card text-white p-4">
+            <div class="row g-3 mb-4">
+              <div class="col-md-6">
+                <div class="input-group">
+                  <span class="input-group-text bg-dark border-secondary text-muted"><i class="fas fa-search"></i></span>
+                  <input type="text" class="form-control bg-dark border-secondary text-white" 
+                         placeholder="Search customers by name or email..." [(ngModel)]="searchUserQuery">
+                </div>
+              </div>
+              <div class="col-md-3">
+                <select class="form-select bg-dark border-secondary text-white" [(ngModel)]="filterUserStatus">
+                  <option value="">All Accounts</option>
+                  <option value="Active">Active Only</option>
+                  <option value="Inactive">Inactive Only</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Users List Table -->
+            <div class="table-responsive">
+              <table class="table table-dark table-hover border-secondary align-middle text-white-50">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Joined Date</th>
+                    <th>Account Status</th>
+                    <th class="text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @if (filteredUsers.length === 0) {
+                    <tr>
+                      <td colspan="7" class="text-center py-5 text-muted">
+                        <i class="fas fa-users-slash fa-2x mb-3 d-block"></i> No registered users found
+                      </td>
+                    </tr>
+                  } @else {
+                    @for (user of filteredUsers; track user.id) {
+                      <tr>
+                        <td class="text-white fw-bold">{{ user.id }}</td>
+                        <td class="text-white fw-semibold">{{ user.name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.phone }}</td>
+                        <td>{{ user.joinedDate }}</td>
+                        <td>
+                          <span class="badge py-2 px-3 text-uppercase font-monospace" 
+                                [class.bg-success]="user.status === 'Active'"
+                                [class.bg-danger]="user.status === 'Inactive'">
+                            {{ user.status }}
+                          </span>
+                        </td>
+                        <td>
+                          <div class="d-flex justify-content-center align-items-center gap-3">
+                            <!-- Toggle switch for status -->
+                            <div class="form-check form-switch mb-0">
+                              <input class="form-check-input cursor-pointer" type="checkbox" role="switch" 
+                                     [checked]="user.status === 'Active'" (change)="toggleUserStatus(user.id)" title="Toggle Status">
+                            </div>
+                            <!-- Delete button -->
+                            <button class="btn btn-sm btn-outline-danger" (click)="openDeleteConfirm('user', user.id, user.name)">
+                              <i class="fas fa-trash-alt"></i> Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      }
+
+      <!-- ================= 4. TABLE MANAGEMENT ================= -->
+      @if (activeTab === 'tables') {
+        <section class="tables-panel animate-fade-in">
+          <div class="row g-3 mb-4 align-items-center">
+            <div class="col-md-6">
+              <h5 class="text-white fw-bold mb-0">Interactive Seating Grid</h5>
+              <p class="text-muted text-sm mb-0">Status Indicators: <span class="text-success"><i class="fas fa-circle font-xs"></i> Available</span> | <span class="text-warning"><i class="fas fa-circle font-xs"></i> Occupied</span> | <span class="text-danger"><i class="fas fa-circle font-xs"></i> Reserved</span></p>
+            </div>
+            <div class="col-md-6 text-md-end">
+              <button class="btn btn-warning px-4" (click)="openAddTableModal()">
+                <i class="fas fa-plus"></i> Add Table Config
+              </button>
+            </div>
+          </div>
+
+          <div class="row g-4">
+            @for (t of adminService.tables(); track t.id) {
+              <div class="col-sm-6 col-lg-3">
+                <div class="card border-0 shadow table-grid-card h-100 bg-dark-card text-white text-center"
+                     [class.border-available]="t.status === 'Available'"
+                     [class.border-occupied]="t.status === 'Occupied'"
+                     [class.border-reserved]="t.status === 'Reserved'">
+                  
+                  <div class="card-body p-4 position-relative">
+                    <span class="badge position-absolute top-0 end-0 m-3 px-3 py-1 font-monospace"
+                          [class.bg-success]="t.status === 'Available'"
+                          [class.bg-warning]="t.status === 'Occupied'"
+                          [class.bg-danger]="t.status === 'Reserved'">
+                      {{ t.status }}
+                    </span>
+
+                    <div class="table-layout-graphic mx-auto my-3 d-flex align-items-center justify-content-center rounded-circle border-3 shadow-inner"
+                         [class.bg-success]="t.status === 'Available'"
+                         [class.bg-warning]="t.status === 'Occupied'"
+                         [class.bg-danger]="t.status === 'Reserved'">
+                      <i class="fas fa-chair text-white fs-3"></i>
+                    </div>
+
+                    <h5 class="card-title text-white fw-bold mb-1">{{ t.name }}</h5>
+                    <p class="text-muted text-sm mb-2"><i class="fas fa-users text-warning me-1"></i> Max {{ t.capacity }} Guests</p>
+                    <span class="badge bg-secondary bg-opacity-20 text-white-50 px-3 py-1 text-xs mb-3">{{ t.location }}</span>
+
+                    <div class="border-top pt-3 border-secondary border-opacity-25 d-flex gap-2">
+                      <button class="btn btn-sm btn-outline-warning w-100" (click)="openEditTableModal(t)">Edit</button>
+                      <button class="btn btn-sm btn-outline-danger w-100" (click)="openDeleteConfirm('table', t.id, t.name)">Delete</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      <!-- ================= 5. MENU MANAGEMENT ================= -->
+      @if (activeTab === 'menu') {
+        <section class="menu-panel animate-fade-in">
+          <div class="card border-0 shadow-lg bg-dark-card text-white p-4">
+            <!-- Filters & Add Trigger -->
+            <div class="row g-3 mb-4">
+              <div class="col-md-5">
+                <div class="input-group">
+                  <span class="input-group-text bg-dark border-secondary text-muted"><i class="fas fa-search"></i></span>
+                  <input type="text" class="form-control bg-dark border-secondary text-white" 
+                         placeholder="Search menu dishes..." [(ngModel)]="searchMenuQuery">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <select class="form-select bg-dark border-secondary text-white" [(ngModel)]="filterMenuCategory">
+                  <option value="">All Categories</option>
+                  <option value="Appetizers">Appetizers</option>
+                  <option value="Main Course">Main Course</option>
+                  <option value="Desserts">Desserts</option>
+                  <option value="Beverages">Beverages</option>
+                </select>
+              </div>
+              <div class="col-md-3 text-md-end">
+                <button class="btn btn-warning w-100" (click)="openAddMenuModal()">
+                  <i class="fas fa-plus"></i> Add Menu Item
+                </button>
+              </div>
+            </div>
+
+            <!-- Menu Grid Layout -->
+            <div class="row g-4">
+              @if (filteredMenuItems.length === 0) {
+                <div class="col-12 text-center py-5 text-muted">
+                  <i class="fas fa-hamburger fa-2x mb-3 d-block"></i> No dishes found matching the search criteria
+                </div>
+              } @else {
+                @for (item of filteredMenuItems; track item.id) {
+                  <div class="col-sm-6 col-lg-4">
+                    <div class="card border-0 shadow menu-card-admin h-100 bg-dark bg-opacity-25" 
+                         [class.opacity-50]="!item.available">
+                      <div class="position-relative overflow-hidden menu-thumbnail-wrapper">
+                        <img [src]="item.imageUrl" class="card-img-top menu-admin-img" alt="Dish image">
+                        <span class="badge bg-warning text-dark position-absolute top-0 start-0 m-3 px-3 py-1 fw-bold fs-6">
+                          ₹{{ item.price }}
+                        </span>
+                        <div class="availability-toggle-badge position-absolute top-0 end-0 m-3 bg-dark bg-opacity-75 rounded-pill px-2.5 py-1">
+                          <div class="form-check form-switch mb-0">
+                            <input class="form-check-input cursor-pointer" type="checkbox" role="switch"
+                                   [checked]="item.available" (change)="toggleMenuItemAvailability(item)" title="Availability">
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="card-body p-4 d-flex flex-column justify-content-between">
+                        <div>
+                          <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="card-title text-white fw-bold mb-0">{{ item.name }}</h5>
+                            <span class="badge bg-secondary bg-opacity-20 text-white-50 text-xs">{{ item.category }}</span>
+                          </div>
+                          <p class="card-text text-muted mb-4 text-sm">{{ item.description }}</p>
+                        </div>
+
+                        <div class="border-top pt-3 border-secondary border-opacity-25 d-flex gap-2">
+                          <button class="btn btn-sm btn-outline-warning w-100" (click)="openEditMenuModal(item)">
+                            <i class="fas fa-edit me-1"></i> Edit Item
+                          </button>
+                          <button class="btn btn-sm btn-outline-danger w-100" (click)="openDeleteConfirm('menu', item.id, item.name)">
+                            <i class="fas fa-trash-alt me-1"></i> Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        </section>
+      }
+
+      <!-- ================= 6. REVIEWS / FEEDBACK ================= -->
+      @if (activeTab === 'reviews') {
+        <section class="reviews-panel animate-fade-in">
+          <div class="row g-4 mb-4">
+            <!-- Review Summary Stats Banner -->
+            <div class="col-md-4">
+              <div class="card border-0 shadow bg-dark-card text-white text-center p-4 h-100">
+                <div class="card-body">
+                  <h1 class="display-3 text-warning fw-bold mb-0">4.8</h1>
+                  <div class="text-warning mb-2 fs-5">
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star"></i>
+                    <i class="fas fa-star-half-alt"></i>
+                  </div>
+                  <h6 class="text-muted text-uppercase mb-0">Average Rating</h6>
+                  <p class="text-muted text-xs mt-2">Based on {{ adminService.reviews().length }} client reviews this month.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Progress distribution -->
+            <div class="col-md-8">
+              <div class="card border-0 shadow bg-dark-card text-white p-4 h-100">
+                <div class="card-body d-flex flex-column justify-content-center">
+                  <!-- 5 Star -->
+                  <div class="d-flex align-items-center mb-2 text-sm">
+                    <span style="width: 50px;">5 Star</span>
+                    <div class="progress flex-grow-1 mx-3" style="height: 6px;">
+                      <div class="progress-bar bg-warning" role="progressbar" style="width: 80%"></div>
+                    </div>
+                    <span class="text-muted">80%</span>
+                  </div>
+                  <!-- 4 Star -->
+                  <div class="d-flex align-items-center mb-2 text-sm">
+                    <span style="width: 50px;">4 Star</span>
+                    <div class="progress flex-grow-1 mx-3" style="height: 6px;">
+                      <div class="progress-bar bg-warning" role="progressbar" style="width: 15%"></div>
+                    </div>
+                    <span class="text-muted">15%</span>
+                  </div>
+                  <!-- 3 Star -->
+                  <div class="d-flex align-items-center mb-2 text-sm">
+                    <span style="width: 50px;">3 Star</span>
+                    <div class="progress flex-grow-1 mx-3" style="height: 6px;">
+                      <div class="progress-bar bg-warning" role="progressbar" style="width: 5%"></div>
+                    </div>
+                    <span class="text-muted">5%</span>
+                  </div>
+                  <!-- 2 Star -->
+                  <div class="d-flex align-items-center mb-2 text-sm">
+                    <span style="width: 50px;">2 Star</span>
+                    <div class="progress flex-grow-1 mx-3" style="height: 6px;">
+                      <div class="progress-bar bg-warning" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <span class="text-muted">0%</span>
+                  </div>
+                  <!-- 1 Star -->
+                  <div class="d-flex align-items-center text-sm">
+                    <span style="width: 50px;">1 Star</span>
+                    <div class="progress flex-grow-1 mx-3" style="height: 6px;">
+                      <div class="progress-bar bg-warning" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <span class="text-muted">0%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Reviews Grid Feed -->
+          <div class="row g-4">
+            @for (rev of adminService.reviews(); track rev.id) {
+              <div class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow bg-dark-card text-white p-4 h-100 d-flex flex-column justify-content-between">
+                  <div>
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                      <div>
+                        <h6 class="fw-bold mb-0 text-white">{{ rev.customerName }}</h6>
+                        <small class="text-muted font-monospace">{{ rev.date }}</small>
+                      </div>
+                      <div class="text-warning">
+                        @for (i of [1,2,3,4,5].slice(0, rev.rating); track i) {
+                          <i class="fas fa-star font-xs"></i>
+                        }
+                        @for (i of [1,2,3,4,5].slice(rev.rating); track i) {
+                          <i class="far fa-star font-xs"></i>
+                        }
+                      </div>
+                    </div>
+                    <p class="text-white-50 text-sm italic mb-4">"{{ rev.comment }}"</p>
+                  </div>
+
+                  <div class="text-end pt-2 border-top border-secondary border-opacity-25">
+                    <button class="btn btn-sm btn-outline-danger py-1" (click)="openDeleteConfirm('review', rev.id, rev.customerName + '\'s review')">
+                      <i class="fas fa-trash-alt me-1"></i> Delete Review
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      }
+
+      <!-- ================= 7. PROFILE & SETTINGS ================= -->
+      @if (activeTab === 'settings') {
+        <section class="settings-panel animate-fade-in">
+          <div class="row g-4">
+            <!-- Edit Profile -->
+            <div class="col-lg-6">
+              <div class="card border-0 shadow bg-dark-card text-white p-4">
+                <h5 class="fw-bold mb-4 text-warning border-bottom pb-2 border-secondary border-opacity-25"><i class="fas fa-user-edit me-2"></i> Update Profile Details</h5>
+                
+                <form (ngSubmit)="saveProfile()">
+                  <div class="mb-3">
+                    <label class="form-label text-white-50">Admin Name</label>
+                    <input type="text" class="form-control bg-dark border-secondary text-white" [(ngModel)]="adminProfile.name" name="name" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label text-white-50">Email Address</label>
+                    <input type="email" class="form-control bg-dark border-secondary text-white" [(ngModel)]="adminProfile.email" name="email" required>
+                  </div>
+                  
+                  <button type="submit" class="btn btn-warning w-100 py-2.5 fw-semibold mt-3">Save Profile</button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Change Password -->
+            <div class="col-lg-6">
+              <div class="card border-0 shadow bg-dark-card text-white p-4">
+                <h5 class="fw-bold mb-4 text-warning border-bottom pb-2 border-secondary border-opacity-25"><i class="fas fa-lock me-2"></i> Change Security Password</h5>
+                
+                <form (ngSubmit)="changePassword()">
+                  <div class="mb-3">
+                    <label class="form-label text-white-50">Current Password</label>
+                    <input type="password" class="form-control bg-dark border-secondary text-white" [(ngModel)]="adminProfile.password" name="password" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label text-white-50">New Password</label>
+                    <input type="password" class="form-control bg-dark border-secondary text-white" [(ngModel)]="adminProfile.newPassword" name="newPassword" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label text-white-50">Confirm New Password</label>
+                    <input type="password" class="form-control bg-dark border-secondary text-white" [(ngModel)]="adminProfile.confirmPassword" name="confirmPassword" required>
+                  </div>
+                  
+                  <button type="submit" class="btn btn-outline-warning w-100 py-2.5 fw-semibold mt-3">Update Password</button>
+                </form>
+              </div>
+            </div>
+            
+            <!-- Global alert feedback -->
+            @if (profileSuccessMsg) {
+              <div class="col-12 mt-3">
+                <div class="alert alert-success border-0 bg-success bg-opacity-25 text-success text-center">
+                  <i class="fas fa-check-circle me-2"></i> {{ profileSuccessMsg }}
+                </div>
+              </div>
+            }
+            @if (profileErrorMsg) {
+              <div class="col-12 mt-3">
+                <div class="alert alert-danger border-0 bg-danger bg-opacity-25 text-danger text-center">
+                  <i class="fas fa-exclamation-triangle me-2"></i> {{ profileErrorMsg }}
+                </div>
+              </div>
+            }
+          </div>
+        </section>
+      }
+    </main>
+
+  </div>
+</section>
+
+<!-- ========================================================================= -->
+<!-- =========================== MODALS & DIALOGS =========================== -->
+<!-- ========================================================================= -->
+
+<!-- 1. RESERVATION BOOKING MODAL -->
+@if (isReservationModalOpen) {
+  <div class="modal-backdrop-custom d-flex align-items-center justify-content-center">
+    <div class="modal-dialog-custom bg-dark-card text-white shadow-lg p-4 rounded-4 animate-scale-in">
+      <div class="modal-header-custom d-flex justify-content-between align-items-center border-bottom pb-3 mb-3 border-secondary border-opacity-25">
+        <h5 class="modal-title fw-bold text-warning">{{ editingReservation ? 'Modify Reservation details' : 'Create New Booking' }}</h5>
+        <button class="btn btn-close btn-close-white" (click)="closeReservationModal()"></button>
+      </div>
+      
+      <form (ngSubmit)="saveReservation()">
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <label class="form-label text-white-50">Customer Name</label>
+            <input type="text" class="form-control bg-dark border-secondary text-white" [(ngModel)]="reservationForm.customerName" name="custName" required>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label text-white-50">Customer Email</label>
+            <input type="email" class="form-control bg-dark border-secondary text-white" [(ngModel)]="reservationForm.customerEmail" name="custEmail">
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label text-white-50">Phone Number</label>
+            <input type="text" class="form-control bg-dark border-secondary text-white" [(ngModel)]="reservationForm.phone" name="custPhone">
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label text-white-50">Guests Count</label>
+            <input type="number" class="form-control bg-dark border-secondary text-white" [(ngModel)]="reservationForm.guests" name="custGuests" min="1" max="20">
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label text-white-50">Booking Date</label>
+            <input type="date" class="form-control bg-dark border-secondary text-white" [(ngModel)]="reservationForm.date" name="custDate" required>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label text-white-50">Booking Time</label>
+            <input type="time" class="form-control bg-dark border-secondary text-white" [(ngModel)]="reservationForm.time" name="custTime" required>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label text-white-50">Assign Table</label>
+            <select class="form-select bg-dark border-secondary text-white" [(ngModel)]="reservationForm.tableId" name="custTable">
+              <option value="">Not Assigned</option>
+              @for (t of adminService.tables(); track t.id) {
+                <option [value]="t.id">{{ t.name }} ({{ t.capacity }} seats - {{ t.location }})</option>
+              }
+            </select>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label text-white-50">Status</label>
+            <select class="form-select bg-dark border-secondary text-white" [(ngModel)]="reservationForm.status" name="custStatus">
+              <option value="Pending">Pending</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label text-white-50">Special Notes/Request</label>
+            <textarea class="form-control bg-dark border-secondary text-white" [(ngModel)]="reservationForm.notes" name="custNotes" rows="2"></textarea>
+          </div>
+        </div>
+        
+        <div class="modal-footer-custom d-flex justify-content-end gap-2 border-top pt-3 mt-4 border-secondary border-opacity-25">
+          <button type="button" class="btn btn-outline-light px-4 py-2" (click)="closeReservationModal()">Cancel</button>
+          <button type="submit" class="btn btn-warning px-4 py-2">Save Booking</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- 2. TABLE CONFIG MODAL -->
+@if (isTableModalOpen) {
+  <div class="modal-backdrop-custom d-flex align-items-center justify-content-center">
+    <div class="modal-dialog-custom bg-dark-card text-white shadow-lg p-4 rounded-4 animate-scale-in" style="max-width: 450px;">
+      <div class="modal-header-custom d-flex justify-content-between align-items-center border-bottom pb-3 mb-3 border-secondary border-opacity-25">
+        <h5 class="modal-title fw-bold text-warning">{{ editingTable ? 'Edit Table Settings' : 'Add New Seating Table' }}</h5>
+        <button class="btn btn-close btn-close-white" (click)="closeTableModal()"></button>
+      </div>
+
+      <form (ngSubmit)="saveTable()">
+        <div class="mb-3">
+          <label class="form-label text-white-50">Table Identification Name</label>
+          <input type="text" class="form-control bg-dark border-secondary text-white" [(ngModel)]="tableForm.name" name="tableName" placeholder="e.g. Table 9" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-white-50">Seating Capacity</label>
+          <input type="number" class="form-control bg-dark border-secondary text-white" [(ngModel)]="tableForm.capacity" name="tableCap" min="1" max="20" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-white-50">Restaurant Location</label>
+          <select class="form-select bg-dark border-secondary text-white" [(ngModel)]="tableForm.location" name="tableLoc">
+            <option value="Main Hall">Main Hall</option>
+            <option value="Terrace">Terrace Lounge</option>
+            <option value="VIP">VIP Private Cabins</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label text-white-50">Table Status</label>
+          <select class="form-select bg-dark border-secondary text-white" [(ngModel)]="tableForm.status" name="tableStat">
+            <option value="Available">Available (Green)</option>
+            <option value="Occupied">Occupied (Yellow)</option>
+            <option value="Reserved">Reserved (Red)</option>
+          </select>
+        </div>
+
+        <div class="modal-footer-custom d-flex justify-content-end gap-2 border-top pt-3 mt-4 border-secondary border-opacity-25">
+          <button type="button" class="btn btn-outline-light px-4 py-2" (click)="closeTableModal()">Cancel</button>
+          <button type="submit" class="btn btn-warning px-4 py-2">Save Configuration</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- 3. MENU ITEM CRUD MODAL -->
+@if (isMenuModalOpen) {
+  <div class="modal-backdrop-custom d-flex align-items-center justify-content-center">
+    <div class="modal-dialog-custom bg-dark-card text-white shadow-lg p-4 rounded-4 animate-scale-in" style="max-width: 600px;">
+      <div class="modal-header-custom d-flex justify-content-between align-items-center border-bottom pb-3 mb-3 border-secondary border-opacity-25">
+        <h5 class="modal-title fw-bold text-warning">{{ editingMenuItem ? 'Modify Menu Item' : 'Add New Dish to Menu' }}</h5>
+        <button class="btn btn-close btn-close-white" (click)="closeMenuModal()"></button>
+      </div>
+
+      <form (ngSubmit)="saveMenuItem()">
+        <div class="row g-3">
+          <div class="col-sm-6">
+            <label class="form-label text-white-50">Item Name</label>
+            <input type="text" class="form-control bg-dark border-secondary text-white" [(ngModel)]="menuForm.name" name="menuName" placeholder="e.g. Beef Biryani" required>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label text-white-50">Item Category</label>
+            <select class="form-select bg-dark border-secondary text-white" [(ngModel)]="menuForm.category" name="menuCategory">
+              <option value="Appetizers">Appetizers</option>
+              <option value="Main Course">Main Course</option>
+              <option value="Desserts">Desserts</option>
+              <option value="Beverages">Beverages</option>
+            </select>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label text-white-50">Price (INR)</label>
+            <input type="number" class="form-control bg-dark border-secondary text-white" [(ngModel)]="menuForm.price" name="menuPrice" min="0" required>
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label text-white-50">Availability Status</label>
+            <div class="form-check form-switch pt-2">
+              <input class="form-check-input cursor-pointer" type="checkbox" role="switch" id="menuFormAvail" [(ngModel)]="menuForm.available" name="menuAvail">
+              <label class="form-check-label text-white-50 ms-2" for="menuFormAvail">In Stock / Display on Menu</label>
+            </div>
+          </div>
+          <div class="col-12">
+            <label class="form-label text-white-50">Dish Description</label>
+            <textarea class="form-control bg-dark border-secondary text-white" [(ngModel)]="menuForm.description" name="menuDesc" rows="2" placeholder="Describe the flavors, spices, and ingredients..." required></textarea>
+          </div>
+          <div class="col-12">
+            <label class="form-label text-white-50">Image URL</label>
+            <input type="text" class="form-control bg-dark border-secondary text-white mb-2" [(ngModel)]="menuForm.imageUrl" name="menuImage" placeholder="Paste image link here...">
+            
+            <span class="text-white-50 text-xs d-block mb-2">Or select from high-quality presets:</span>
+            <div class="d-flex flex-wrap gap-2 justify-content-between p-2 rounded bg-dark">
+              @for (img of defaultFoodImages; track img.url) {
+                <img [src]="img.url" class="img-thumbnail preset-image-selector cursor-pointer"
+                     [class.border-warning]="menuForm.imageUrl === img.url"
+                     width="65" height="50" [title]="img.name" (click)="selectDefaultImage(img.url)">
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer-custom d-flex justify-content-end gap-2 border-top pt-3 mt-4 border-secondary border-opacity-25">
+          <button type="button" class="btn btn-outline-light px-4 py-2" (click)="closeMenuModal()">Cancel</button>
+          <button type="submit" class="btn btn-warning px-4 py-2">Save Menu Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- 4. DELETE CONFIRMATION SAFETY PROMPT -->
+@if (isDeleteConfirmOpen) {
+  <div class="modal-backdrop-custom d-flex align-items-center justify-content-center">
+    <div class="modal-dialog-custom bg-dark-card text-white shadow-lg p-4 rounded-4 animate-scale-in" style="max-width: 400px; border: 1px solid rgba(220, 53, 69, 0.4) !important;">
+      <div class="text-center p-3">
+        <div class="text-danger mb-3">
+          <i class="fas fa-exclamation-triangle fa-3x animate-pulse"></i>
+        </div>
+        <h4 class="fw-bold mb-2">Delete Confirmation</h4>
+        <p class="text-white-50 text-sm">Are you absolutely sure you want to permanently remove <strong class="text-white">{{ deleteTargetName }}</strong>? This action cannot be undone.</p>
+        
+        <div class="d-flex gap-2 justify-content-center mt-4">
+          <button class="btn btn-outline-light px-4 py-2" (click)="closeDeleteConfirm()">Cancel</button>
+          <button class="btn btn-danger px-4 py-2" (click)="confirmDelete()">Permanently Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
