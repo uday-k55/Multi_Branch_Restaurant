@@ -1,0 +1,97 @@
+﻿
+Name                           Value                                                                                   
+----                           -----                                                                                   
+Content                        {"message":"User registered successfully!","userId":109}                                
+Name                           Setup 6. Register Customer 1                                                            
+StatusCode                     200                                                                                     
+Passed                         True                                                                                    
+Content                        {"message":"User registered successfully!","userId":110}                                
+Name                           Setup 7. Register Customer 2                                                            
+StatusCode                     200                                                                                     
+Passed                         True                                                                                    
+Content                        ["Karnataka","Kerala"]                                                                  
+Name                           1. Load Active States                                                                   
+StatusCode                     200                                                                                     
+Passed                         True                                                                                    
+Content                        ["Ernakulam"]                                                                           
+Name                           2. Load Districts for Kerala                                                            
+StatusCode                     200                                                                                     
+Passed                         True                                                                                    
+Content                        [{"id":17,"name":"Phase6 Branch Alpha 639238077389558814","state":"Kerala","district"...
+Name                           3. Load Branches for Kerala / Ernakulam                                                 
+StatusCode                     200                                                                                     
+Passed                         True                                                                                    
+Content                        [{"id":19,"name":"Wagyu Ribeye","description":null,"price":45.0,"imageUrl":null,"enab...
+Name                           4. Load Dynamic Customer Menu for Branch A                                              
+StatusCode                     200                                                                                     
+Passed                         True                                                                                    
+Content                        {"id":12,"tableNumber":"7","capacity":4,"status":"AVAILABLE","qrCode":"QR-38-7","bran...
+Name                           5. Resolve Valid QR (QR-38-7)                                                           
+StatusCode                     200                                                                                     
+Passed                         True                                                                                    
+Content                        {"timestamp":"2026-08-31T16:59:05.093Z","status":404,"error":"Not Found","trace":"org...
+Name                           6. Reject Invalid QR (QR-NONEXISTENT)                                                   
+StatusCode                     404                                                                                     
+Passed                         True                                                                                    
+Content                        [{"id":19,"userId":109,"customerName":"Alice Walker","branchId":38,"branchName":"Phas...
+Name                           10. Customer 1 fetches own order history                                                
+StatusCode                     200                                                                                     
+Passed                         True                                                                                    
+Content                        {"id":19,"userId":109,"customerName":"Alice Walker","branchId":38,"branchName":"Phase...
+Name                           11. Customer 1 fetches own Order #19                                                    
+StatusCode                     200                                                                                     
+Passed                         True                                                                                    
+Content                        {"timestamp":"2026-08-31T16:59:05.417Z","status":403,"error":"Forbidden","trace":"org...
+Name                           12. Customer 2 blocked from Customer 1 Order (IDOR Check)                               
+StatusCode                     403                                                                                     
+Passed                         True                                                                                    
+Content                        {"id":10,"orderId":19,"orderType":"DINE_IN","branchId":38,"amount":45.0,"status":"FAI...
+Name                           14. Process Demo Payment (Simulation Failure)                                           
+StatusCode                     200                                                                                     
+Passed                         True                                                                                    
+Content                        {"id":10,"orderId":19,"orderType":"DINE_IN","branchId":38,"amount":45.0,"status":"FAI...
+Name                           16. Fetch Payment Record for Order #19                                                  
+StatusCode                     200                                                                                     
+Passed                         True                                                                                    
+Content                        {"timestamp":"2026-08-31T16:59:05.602Z","status":403,"error":"Forbidden","trace":"org...
+Name                           18. Manager Alpha blocked from creating Category on Branch Beta                         
+StatusCode                     403                                                                                     
+Passed                         True                                                                                    
+Content                        {"id":19,"name":"Wagyu Ribeye (Updated)","description":null,"price":48.0,"imageUrl":n...
+Name                           19. Manager Alpha updates Food Item on Branch Alpha                                     
+StatusCode                     200                                                                                     
+Passed                         True                                                                                    
+Content                        {"id":2,"name":"Wagyu Beef Cut","quantity":22.5,"unit":"KG","lowStockThreshold":15.0,...
+Name                           22. Manager Alpha performs Stock Adjustment (STOCK_IN)                                  
+StatusCode                     200                                                                                     
+Passed                         True                                                                                    
+Content                        {"timestamp":"2026-08-31T16:59:05.730Z","status":403,"error":"Forbidden","trace":"org...
+Name                           23. Manager Alpha blocked from Branch Beta Inventory                                    
+StatusCode                     403                                                                                     
+Passed                         True                                                                                    
+Content                        []                                                                                      
+Name                           24. Query Low Stock Items on Branch Alpha                                               
+StatusCode                     200                                                                                     
+Passed                         True                                                                                    
+Content                        [{"id":2,"inventoryItemId":2,"inventoryItemName":"Wagyu Beef Cut","transactionType":"...
+Name                           25. Query Inventory Transactions on Branch Alpha                                        
+StatusCode                     200                                                                                     
+Passed                         True                                                                                    
+Content                        [{"id":10,"customerName":"Alice Walker","customerPhone":"9876543211","customerEmail":...
+Name                           26. Manager Alpha queries Branch Alpha Reservations                                     
+StatusCode                     200                                                                                     
+Passed                         True                                                                                    
+Content                        {"id":10,"customerName":"Alice Walker","customerPhone":"9876543211","customerEmail":"...
+Name                           27. Manager Alpha updates Reservation #10 status to CONFIRMED                           
+StatusCode                     200                                                                                     
+Passed                         True                                                                                    
+Content                        {"timestamp":"2026-08-31T16:59:05.881Z","status":500,"error":"Internal Server Error",...
+Name                           28. Manager Alpha updates Reservation #10 status to SEATED                              
+StatusCode                     500                                                                                     
+Passed                         False                                                                                   
+Content                        {"timestamp":"2026-08-31T16:59:05.901Z","status":403,"error":"Forbidden","trace":"org...
+Name                           29. Manager Alpha blocked from Branch Beta Reservations                                 
+StatusCode                     403                                                                                     
+Passed                         True                                                                                    
+
+

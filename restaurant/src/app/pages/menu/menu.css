@@ -1,0 +1,17 @@
+.hover-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 20px rgba(255, 193, 7, 0.15) !important;
+}
+.food-img {
+  height: 200px;
+  object-fit: cover;
+}
+.food-img-placeholder {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

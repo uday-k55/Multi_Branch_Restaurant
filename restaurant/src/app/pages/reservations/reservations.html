@@ -1,0 +1,226 @@
+<section class="reservations-section py-5 min-vh-100 bg-dark text-white">
+  <div class="container">
+    
+    <div class="text-center mb-5">
+      <span class="badge bg-warning text-dark px-3 py-2 mb-2 text-uppercase fw-bold">Table Booking</span>
+      <h1 class="display-5 fw-bold text-white">Reserve Your Dining Table</h1>
+      <p class="lead text-muted">Book a table in advance at any of our restaurant branches with instant confirmation.</p>
+    </div>
+
+    @if (errorMsg()) {
+      <div class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i> {{ errorMsg() }}
+        <button type="button" class="btn-close" (click)="errorMsg.set('')"></button>
+      </div>
+    }
+
+    <!-- Confirmed Reservation Card -->
+    @if (confirmedReservation()) {
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="card bg-secondary text-white border-0 shadow-lg rounded-4 p-4 p-md-5 text-center">
+            <div class="text-success mb-3">
+              <i class="fas fa-calendar-check fa-4x"></i>
+            </div>
+            <h2 class="fw-bold text-warning mb-2">Reservation Confirmed!</h2>
+            <p class="text-white-50 mb-4">Your dining table reservation has been successfully booked in the system.</p>
+
+            <div class="card bg-dark border-secondary p-4 rounded-3 text-start mb-4">
+              <div class="row g-3">
+                <div class="col-sm-6">
+                  <span class="text-muted small d-block">Reservation ID</span>
+                  <strong class="text-warning fs-5">#{{ confirmedReservation()?.id }}</strong>
+                </div>
+                <div class="col-sm-6">
+                  <span class="text-muted small d-block">Status</span>
+                  <span class="badge bg-success fs-6">{{ confirmedReservation()?.status }}</span>
+                </div>
+                <div class="col-sm-6">
+                  <span class="text-muted small d-block">Branch Location</span>
+                  <strong class="text-white">{{ confirmedReservation()?.branchName }}</strong>
+                </div>
+                <div class="col-sm-6">
+                  <span class="text-muted small d-block">Table Number</span>
+                  <strong class="text-warning">Table {{ confirmedReservation()?.tableNumber }}</strong>
+                </div>
+                <div class="col-sm-6">
+                  <span class="text-muted small d-block">Date & Time</span>
+                  <strong class="text-white">{{ confirmedReservation()?.reservationDate }} at {{ confirmedReservation()?.reservationTime }}</strong>
+                </div>
+                <div class="col-sm-6">
+                  <span class="text-muted small d-block">Party Size</span>
+                  <strong class="text-white">{{ confirmedReservation()?.numberOfPeople }} Guests</strong>
+                </div>
+                <div class="col-12">
+                  <span class="text-muted small d-block">Guest Contact</span>
+                  <div class="text-white-50 small">{{ confirmedReservation()?.customerName }} ({{ confirmedReservation()?.customerPhone }}) - {{ confirmedReservation()?.customerEmail }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-center gap-3">
+              <button class="btn btn-outline-light px-4" (click)="resetForm()">
+                <i class="fas fa-plus me-1"></i> Book Another Table
+              </button>
+              <a routerLink="/menu" class="btn btn-warning fw-bold px-4">
+                <i class="fas fa-utensils me-1"></i> Explore Menu
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    } @else {
+      
+      <div class="row g-4">
+        
+        <!-- Left: Search & Criteria -->
+        <div class="col-lg-6">
+          <div class="card bg-secondary text-white border-0 shadow-lg rounded-4 p-4 h-100">
+            <h3 class="h4 text-warning mb-4"><i class="fas fa-calendar-alt me-2"></i>1. Select Date, Time & Party Size</h3>
+            
+            <form (ngSubmit)="searchAvailableTables()">
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label text-warning fw-semibold">Select Restaurant Branch *</label>
+                  <select class="form-select bg-dark text-white border-secondary" [ngModel]="selectedBranchId()" (ngModelChange)="selectedBranchId.set($event)" name="branchId" required>
+                    <option *ngFor="let b of branches()" [value]="b.id">{{ b.name }} ({{ b.district }}, {{ b.state }})</option>
+                  </select>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label text-warning fw-semibold">Reservation Date *</label>
+                  <input type="date" class="form-control bg-dark text-white border-secondary" [min]="minDate" [ngModel]="reservationDate()" (ngModelChange)="reservationDate.set($event)" name="date" required>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label text-warning fw-semibold">Reservation Time *</label>
+                  <select class="form-select bg-dark text-white border-secondary" [ngModel]="reservationTime()" (ngModelChange)="reservationTime.set($event)" name="time" required>
+                    <option *ngFor="let slot of timeSlots" [value]="slot">{{ slot }}</option>
+                  </select>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label text-warning fw-semibold">Number of Guests *</label>
+                  <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-outline-warning" (click)="numberOfPeople.set(numberOfPeople() > 1 ? numberOfPeople() - 1 : 1)">-</button>
+                    <input type="number" min="1" max="20" class="form-control bg-dark text-white border-secondary text-center fw-bold" style="max-width: 100px;" [ngModel]="numberOfPeople()" (ngModelChange)="numberOfPeople.set($event)" name="people">
+                    <button type="button" class="btn btn-outline-warning" (click)="numberOfPeople.set(numberOfPeople() < 20 ? numberOfPeople() + 1 : 20)">+</button>
+                    <span class="text-muted small ms-2">{{ numberOfPeople() }} Guest(s)</span>
+                  </div>
+                </div>
+
+                <div class="col-12 mt-4">
+                  <button type="submit" class="btn btn-warning fw-bold w-100 py-2 shadow-sm" [disabled]="searchingTables()">
+                    @if (searchingTables()) {
+                      <span class="spinner-border spinner-border-sm me-1"></span> Searching Available Tables...
+                    } @else {
+                      <i class="fas fa-search me-1"></i> Check Available Tables
+                    }
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            <!-- Table Selection Results -->
+            @if (hasSearched()) {
+              <div class="mt-4 pt-3 border-top border-secondary">
+                <h5 class="text-warning mb-3">Available Tables ({{ availableTables().length }})</h5>
+
+                @if (availableTables().length === 0) {
+                  <div class="alert alert-dark border-secondary text-white-50 text-center py-3">
+                    <i class="fas fa-chair fa-2x mb-2 text-warning d-block"></i>
+                    No tables available for {{ numberOfPeople() }} guests at {{ reservationTime() }} on {{ reservationDate() }}. Please try a different time or party size.
+                  </div>
+                } @else {
+                  <div class="row g-2">
+                    @for (tbl of availableTables(); track tbl.id) {
+                      <div class="col-sm-6 col-md-4">
+                        <div class="card p-3 text-center table-card border-2" 
+                             [class.border-warning]="selectedTableId() === tbl.id"
+                             [class.bg-warning]="selectedTableId() === tbl.id"
+                             [class.text-dark]="selectedTableId() === tbl.id"
+                             [class.bg-dark]="selectedTableId() !== tbl.id"
+                             [class.text-white]="selectedTableId() !== tbl.id"
+                             (click)="selectTable(tbl)" 
+                             style="cursor: pointer;">
+                          <i class="fas fa-utensils mb-1"></i>
+                          <strong class="d-block">Table {{ tbl.tableNumber }}</strong>
+                          <small [class.text-muted]="selectedTableId() !== tbl.id">{{ tbl.capacity }} Seats</small>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+
+          </div>
+        </div>
+
+        <!-- Right: Guest Details & Submit -->
+        <div class="col-lg-6">
+          <div class="card bg-secondary text-white border-0 shadow-lg rounded-4 p-4 h-100">
+            <h3 class="h4 text-warning mb-4"><i class="fas fa-user-check me-2"></i>2. Guest Details & Confirmation</h3>
+
+            <form (ngSubmit)="submitReservation()">
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label text-warning fw-semibold">Full Name *</label>
+                  <input type="text" class="form-control bg-dark text-white border-secondary" [ngModel]="customerName()" (ngModelChange)="customerName.set($event)" name="name" placeholder="John Doe" required>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label text-warning fw-semibold">Phone Number *</label>
+                  <input type="tel" class="form-control bg-dark text-white border-secondary" [ngModel]="customerPhone()" (ngModelChange)="customerPhone.set($event)" name="phone" placeholder="+91 9876543210" required>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label text-warning fw-semibold">Email Address *</label>
+                  <input type="email" class="form-control bg-dark text-white border-secondary" [ngModel]="customerEmail()" (ngModelChange)="customerEmail.set($event)" name="email" placeholder="john@example.com" required>
+                </div>
+
+                <div class="col-12">
+                  <label class="form-label text-warning fw-semibold">Special Requests / Occasion</label>
+                  <textarea class="form-control bg-dark text-white border-secondary" rows="3" [ngModel]="specialRequests()" (ngModelChange)="specialRequests.set($event)" name="requests" placeholder="Anniversary, window seat, high chair, dietary preferences..."></textarea>
+                </div>
+
+                <!-- Summary Info Box -->
+                <div class="col-12">
+                  <div class="card bg-dark border-secondary p-3 rounded-3">
+                    <h6 class="text-warning fw-bold mb-2">Reservation Summary</h6>
+                    <div class="d-flex justify-content-between small text-white-50 mb-1">
+                      <span>Date & Time:</span>
+                      <strong class="text-white">{{ reservationDate() }} at {{ reservationTime() }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between small text-white-50 mb-1">
+                      <span>Party Size:</span>
+                      <strong class="text-white">{{ numberOfPeople() }} People</strong>
+                    </div>
+                    <div class="d-flex justify-content-between small text-white-50">
+                      <span>Selected Table:</span>
+                      <strong class="text-warning">{{ selectedTableId() ? 'Table ' + selectedTableNumber() : 'None Selected' }}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="col-12 mt-4">
+                  <button type="submit" class="btn btn-warning btn-lg fw-bold w-100 py-3 shadow" [disabled]="!selectedTableId() || submitting()">
+                    @if (submitting()) {
+                      <span class="spinner-border spinner-border-sm me-1"></span> Booking Reservation...
+                    } @else {
+                      <i class="fas fa-check-circle me-1"></i> Confirm & Book Reservation
+                    }
+                  </button>
+                </div>
+              </div>
+            </form>
+
+          </div>
+        </div>
+
+      </div>
+
+    }
+
+  </div>
+</section>

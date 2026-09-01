@@ -1,0 +1,102 @@
+/* ================= ADMIN DASHBOARD SECTION ================= */
+.admin-dashboard-section {
+  min-height: 100vh;
+  padding: 140px 0 80px 0; /* Clear navbar */
+  background: 
+    linear-gradient(rgba(15, 23, 43, 0.94), rgba(15, 23, 43, 0.94)),
+    url("https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600");
+  background-size: cover;
+  background-position: center;
+}
+
+.dashboard-header h1 {
+  letter-spacing: -1px;
+}
+
+.header-line {
+  width: 80px;
+  height: 4px;
+  background: #FEA116;
+  border-radius: 2px;
+  margin-top: 15px;
+}
+
+.tracking-wide {
+  letter-spacing: 2px;
+}
+
+/* ================= DASHBOARD CARD ================= */
+.dashboard-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.dashboard-card:hover {
+  transform: translateY(-8px);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(254, 161, 22, 0.4) !important;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.4) !important;
+}
+
+.icon-wrapper {
+  width: 70px;
+  height: 70px;
+  background: rgba(254, 161, 22, 0.1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.4s ease;
+}
+
+.dashboard-card:hover .icon-wrapper {
+  background: #FEA116;
+}
+
+.dashboard-card:hover .icon-wrapper i {
+  color: #fff !important;
+  transform: scale(1.1);
+}
+
+.icon-wrapper i {
+  transition: all 0.4s ease;
+}
+
+.card-title {
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.card-text {
+  font-size: 14.5px;
+  line-height: 1.6;
+}
+
+/* ================= BUTTONS ================= */
+.btn-outline-warning {
+  color: #FEA116;
+  border-color: #FEA116;
+  border-width: 2px;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-warning:hover {
+  background: #FEA116;
+  color: #fff;
+  border-color: #FEA116;
+  box-shadow: 0 4px 15px rgba(254, 161, 22, 0.3);
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+  .admin-dashboard-section {
+    padding: 100px 0 60px 0;
+  }
+  .dashboard-header h1 {
+    font-size: 32px;
+  }
+}

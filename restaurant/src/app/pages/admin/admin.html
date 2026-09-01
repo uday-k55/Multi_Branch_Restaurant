@@ -1,0 +1,1277 @@
+<section class="admin-dashboard-section py-5 bg-dark text-white min-vh-100">
+  <div class="container">
+    <div class="dashboard-header text-center mb-4">
+      <span class="badge bg-warning text-dark px-3 py-2 mb-2 text-uppercase fw-bold tracking-wide">Control Panel</span>
+      <h1 class="display-4 text-white fw-bold">Admin & Operations Management</h1>
+      <p class="lead text-muted">Manage multi-branch restaurants, menus, inventory, tables, and employees.</p>
+      <div class="header-line mx-auto"></div>
+    </div>
+
+    <!-- Feedback Alerts -->
+    <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show shadow-sm mb-4" role="alert">
+      <i class="fas fa-check-circle me-2"></i> {{ successMessage }}
+      <button type="button" class="btn-close" (click)="clearMessages()"></button>
+    </div>
+    <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+      <i class="fas fa-exclamation-triangle me-2"></i> {{ errorMessage }}
+      <button type="button" class="btn-close" (click)="clearMessages()"></button>
+    </div>
+
+    <!-- Admin Section Navigation Tabs -->
+    <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+      <button 
+        *ngFor="let sec of sections" 
+        class="btn btn-sm px-3 py-2 fw-semibold rounded-pill"
+        [ngClass]="activeSection === sec.id ? 'btn-warning text-dark' : 'btn-outline-secondary text-white'"
+        (click)="setSection(sec.id)">
+        <i [class]="sec.icon + ' me-1'"></i> {{ sec.label }}
+      </button>
+    </div>
+
+    <!-- Branch Selector Bar for Branch-Scoped Sections (Menu, Inventory, Reservations) -->
+    <div *ngIf="activeSection === 'menu' || activeSection === 'inventory' || activeSection === 'reservations'" 
+         class="card bg-secondary text-white border-0 shadow-sm p-3 mb-4 rounded-3 d-flex flex-row justify-content-between align-items-center flex-wrap gap-2">
+      <div class="d-flex align-items-center">
+        <i class="fas fa-store text-warning fs-5 me-2"></i>
+        <strong class="text-white me-3">Active Branch Context:</strong>
+        
+        <!-- If Super Admin: Can select any branch -->
+        <select *ngIf="authService.isAdmin()" class="form-select bg-dark text-white border-secondary form-select-sm" style="min-width: 250px;" [ngModel]="selectedBranchId" (ngModelChange)="onScopedBranchChange($event)">
+          <option *ngFor="let b of branches" [value]="b.id">{{ b.name }} ({{ b.district }}, {{ b.state }})</option>
+        </select>
+
+        <!-- If Branch Manager: Locked to assigned branch -->
+        <span *ngIf="!authService.isAdmin()" class="badge bg-dark border border-warning text-warning fs-6 px-3 py-2">
+          Assigned Branch: {{ authService.getBranchId() }}
+        </span>
+      </div>
+      <div>
+        <span class="text-muted small">Real-time isolation active</span>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 1: DASHBOARD STATS OVERVIEW -->
+    <!-- ========================================== -->
+    <div *ngIf="activeSection === 'dashboard'">
+      <h3 class="h4 text-warning mb-4"><i class="fas fa-chart-pie me-2"></i>Live System Metrics</h3>
+      <div class="row g-4 mb-5">
+        <!-- Total Branches -->
+        <div class="col-md-6 col-lg-3">
+          <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3" (click)="setSection('branches')" style="cursor: pointer;">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p class="text-muted mb-1 text-uppercase small fw-bold">Total Branches</p>
+                <h2 class="fw-bold mb-0 text-warning">{{ stats.totalBranches }}</h2>
+              </div>
+              <i class="fas fa-store fa-2x text-warning opacity-75"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Today's Orders -->
+        <div class="col-md-6 col-lg-3">
+          <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p class="text-muted mb-1 text-uppercase small fw-bold">Today's Orders</p>
+                <h2 class="fw-bold mb-0 text-info">{{ stats.todaysOrders }}</h2>
+              </div>
+              <i class="fas fa-shopping-bag fa-2x text-info opacity-75"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Today's Sales -->
+        <div class="col-md-6 col-lg-3">
+          <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p class="text-muted mb-1 text-uppercase small fw-bold">Today's Sales</p>
+                <h2 class="fw-bold mb-0 text-success">${{ stats.todaysSales | number:'1.2-2' }}</h2>
+              </div>
+              <i class="fas fa-dollar-sign fa-2x text-success opacity-75"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Employees -->
+        <div class="col-md-6 col-lg-3">
+          <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3" (click)="setSection('employees')" style="cursor: pointer;">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p class="text-muted mb-1 text-uppercase small fw-bold">Active Employees</p>
+                <h2 class="fw-bold mb-0 text-primary">{{ stats.activeEmployees }}</h2>
+              </div>
+              <i class="fas fa-users fa-2x text-primary opacity-75"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Low Stock Items -->
+        <div class="col-md-6 col-lg-3">
+          <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3" (click)="setSection('inventory')" style="cursor: pointer;">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p class="text-muted mb-1 text-uppercase small fw-bold">Low-Stock Items</p>
+                <h2 class="fw-bold mb-0 text-danger">{{ stats.lowStockItemsCount }}</h2>
+              </div>
+              <i class="fas fa-exclamation-triangle fa-2x text-danger opacity-75"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reservations -->
+        <div class="col-md-6 col-lg-3">
+          <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3" (click)="setSection('reservations')" style="cursor: pointer;">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <p class="text-muted mb-1 text-uppercase small fw-bold">Total Reservations</p>
+                <h2 class="fw-bold mb-0 text-info">{{ stats.totalReservations }}</h2>
+              </div>
+              <i class="fas fa-calendar-alt fa-2x text-info opacity-75"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Action Cards -->
+      <h3 class="h4 text-warning mb-4"><i class="fas fa-bolt me-2"></i>Quick Management Actions</h3>
+      <div class="row g-4">
+        <div class="col-md-6 col-lg-3">
+          <div class="card dashboard-card border-0 shadow-lg h-100 bg-secondary">
+            <div class="card-body p-4 text-center d-flex flex-column justify-content-between">
+              <div>
+                <i class="fas fa-users-cog fa-3x text-warning mb-3"></i>
+                <h4 class="card-title text-white mb-2">Staff Onboarding</h4>
+                <p class="card-text text-muted small">Register employees, assign to branches and roles.</p>
+              </div>
+              <button class="btn btn-outline-warning w-100 py-2 fw-semibold mt-3" (click)="setSection('employees')">Manage Staff</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+          <div class="card dashboard-card border-0 shadow-lg h-100 bg-secondary">
+            <div class="card-body p-4 text-center d-flex flex-column justify-content-between">
+              <div>
+                <i class="fas fa-utensils fa-3x text-warning mb-3"></i>
+                <h4 class="card-title text-white mb-2">Menu Management</h4>
+                <p class="card-text text-muted small">Add categories, create food items and set prices.</p>
+              </div>
+              <button class="btn btn-outline-warning w-100 py-2 fw-semibold mt-3" (click)="setSection('menu')">Manage Menu</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+          <div class="card dashboard-card border-0 shadow-lg h-100 bg-secondary">
+            <div class="card-body p-4 text-center d-flex flex-column justify-content-between">
+              <div>
+                <i class="fas fa-boxes fa-3x text-warning mb-3"></i>
+                <h4 class="card-title text-white mb-2">Inventory Control</h4>
+                <p class="card-text text-muted small">Track stock, record usage, and monitor threshold alerts.</p>
+              </div>
+              <button class="btn btn-outline-warning w-100 py-2 fw-semibold mt-3" (click)="setSection('inventory')">Manage Inventory</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+          <div class="card dashboard-card border-0 shadow-lg h-100 bg-secondary">
+            <div class="card-body p-4 text-center d-flex flex-column justify-content-between">
+              <div>
+                <i class="fas fa-calendar-check fa-3x text-warning mb-3"></i>
+                <h4 class="card-title text-white mb-2">Tables & Bookings</h4>
+                <p class="card-text text-muted small">Configure QR tables and manage customer reservations.</p>
+              </div>
+              <button class="btn btn-outline-warning w-100 py-2 fw-semibold mt-3" (click)="setSection('reservations')">Manage Tables</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 2: BRANCH MANAGEMENT -->
+    <!-- ========================================== -->
+    <div *ngIf="activeSection === 'branches'">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h3 class="h4 text-warning mb-1"><i class="fas fa-store me-2"></i>Branch Management</h3>
+          <p class="text-muted mb-0">View, register, configure, and monitor restaurant branches across regions.</p>
+        </div>
+        <button *ngIf="authService.isAdmin()" class="btn btn-warning fw-bold px-4 py-2 rounded-pill shadow-sm" (click)="openAddBranchModal()">
+          <i class="fas fa-plus me-1"></i> Add Branch
+        </button>
+      </div>
+
+      <div *ngIf="loading" class="text-center py-5">
+        <div class="spinner-border text-warning" role="status">
+          <span class="visually-hidden">Loading branches...</span>
+        </div>
+      </div>
+
+      <div *ngIf="!loading && branches.length === 0" class="card bg-secondary text-white p-5 text-center rounded-3">
+        <i class="fas fa-store-slash fa-4x text-warning mb-3"></i>
+        <h4>No Branches Configured</h4>
+      </div>
+
+      <div *ngIf="!loading && branches.length > 0" class="card bg-secondary text-white border-0 rounded-3 shadow-lg overflow-hidden">
+        <div class="table-responsive">
+          <table class="table table-dark table-hover mb-0 align-middle">
+            <thead class="table-dark text-warning border-bottom border-warning">
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Branch Name</th>
+                <th scope="col">Region</th>
+                <th scope="col">Contact & Hours</th>
+                <th scope="col">Coordinates</th>
+                <th scope="col">Status</th>
+                <th scope="col" class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let b of branches">
+                <td class="fw-bold text-muted">{{ b.id }}</td>
+                <td>
+                  <strong class="text-white fs-6">{{ b.name }}</strong>
+                  <div *ngIf="b.address" class="small text-muted text-truncate" style="max-width: 200px;">
+                    <i class="fas fa-map-marker-alt me-1 text-warning"></i>{{ b.address }}
+                  </div>
+                </td>
+                <td>
+                  <span class="badge bg-dark border border-secondary text-light me-1">{{ b.district }}</span>
+                  <span class="badge bg-dark border border-secondary text-light">{{ b.state }}</span>
+                </td>
+                <td class="small">
+                  <div *ngIf="b.phone"><i class="fas fa-phone me-1 text-info"></i>{{ b.phone }}</div>
+                  <div class="text-muted"><i class="fas fa-clock me-1 text-warning"></i>{{ b.openingHours || '09:00 AM' }} - {{ b.closingHours || '10:00 PM' }}</div>
+                </td>
+                <td class="small text-muted">
+                  <code>{{ b.latitude | number:'1.4-4' }}, {{ b.longitude | number:'1.4-4' }}</code>
+                </td>
+                <td>
+                  <span class="badge rounded-pill px-3 py-1" [ngClass]="b.active ? 'bg-success' : 'bg-danger'">
+                    {{ b.active ? 'Active' : 'Inactive' }}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-info" title="View Details" (click)="viewBranchDetails(b)">
+                      <i class="fas fa-eye"></i>
+                    </button>
+                    <button *ngIf="authService.isAdmin()" class="btn btn-outline-warning" title="Edit Branch" (click)="openEditBranchModal(b)">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button *ngIf="authService.isAdmin()" class="btn" [ngClass]="b.active ? 'btn-outline-secondary' : 'btn-outline-success'" 
+                      [title]="b.active ? 'Deactivate' : 'Activate'" (click)="toggleBranchStatus(b)">
+                      <i [class]="b.active ? 'fas fa-toggle-on text-success' : 'fas fa-toggle-off text-muted'"></i>
+                    </button>
+                    <button *ngIf="authService.isAdmin()" class="btn btn-outline-danger" title="Delete Branch" (click)="deleteBranch(b)">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 3: EMPLOYEE ONBOARDING -->
+    <!-- ========================================== -->
+    <div *ngIf="activeSection === 'employees'">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h3 class="h4 text-warning mb-1"><i class="fas fa-users-cog me-2"></i>Employee Onboarding & Management</h3>
+          <p class="text-muted mb-0">Onboard branch managers, chefs, and staff with real database records.</p>
+        </div>
+        <button *ngIf="authService.isAdmin()" class="btn btn-warning fw-bold px-4 py-2 rounded-pill shadow-sm" (click)="openAddEmployeeModal()">
+          <i class="fas fa-user-plus me-1"></i> Onboard Employee
+        </button>
+      </div>
+
+      <div *ngIf="loading" class="text-center py-5">
+        <div class="spinner-border text-warning" role="status">
+          <span class="visually-hidden">Loading employees...</span>
+        </div>
+      </div>
+
+      <div *ngIf="!loading && employees.length === 0" class="card bg-secondary text-white p-5 text-center rounded-3">
+        <i class="fas fa-user-slash fa-4x text-warning mb-3"></i>
+        <h4>No Employees Found</h4>
+      </div>
+
+      <div *ngIf="!loading && employees.length > 0" class="card bg-secondary text-white border-0 rounded-3 shadow-lg overflow-hidden">
+        <div class="table-responsive">
+          <table class="table table-dark table-hover mb-0 align-middle">
+            <thead class="table-dark text-warning border-bottom border-warning">
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Name & Contact</th>
+                <th scope="col">Role</th>
+                <th scope="col">Assigned Branch</th>
+                <th scope="col" class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let emp of employees">
+                <td class="fw-bold text-muted">{{ emp.id }}</td>
+                <td>
+                  <strong class="text-white">{{ emp.firstName }} {{ emp.lastName }}</strong>
+                  <div class="small text-muted"><i class="fas fa-envelope me-1 text-warning"></i>{{ emp.email }}</div>
+                  <div *ngIf="emp.phoneNumber" class="small text-muted"><i class="fas fa-phone me-1 text-info"></i>{{ emp.phoneNumber }}</div>
+                </td>
+                <td>
+                  <span class="badge px-3 py-1 rounded-pill" [ngClass]="{
+                    'bg-danger': emp.role === 'ADMIN',
+                    'bg-warning text-dark': emp.role === 'BRANCH_MANAGER',
+                    'bg-info text-dark': emp.role === 'CHEF',
+                    'bg-primary': emp.role === 'EMPLOYEE'
+                  }">
+                    {{ emp.role }}
+                  </span>
+                </td>
+                <td>
+                  <span *ngIf="emp.branchName" class="badge bg-dark border border-secondary text-light">
+                    <i class="fas fa-store me-1 text-warning"></i> {{ emp.branchName }}
+                  </span>
+                  <span *ngIf="!emp.branchName" class="badge bg-secondary text-muted">Super Admin</span>
+                </td>
+                <td class="text-end">
+                  <div class="btn-group btn-group-sm" *ngIf="authService.isAdmin()">
+                    <button class="btn btn-outline-warning" title="Edit Employee" (click)="openEditEmployeeModal(emp)">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button *ngIf="emp.role !== 'ADMIN'" class="btn btn-outline-danger" title="Delete Employee" (click)="deleteEmployee(emp)">
+                      <i class="fas fa-trash-alt"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 4: MENU MANAGEMENT -->
+    <!-- ========================================== -->
+    <div *ngIf="activeSection === 'menu'">
+      
+      <!-- Top Action Bar -->
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+          <h3 class="h4 text-warning mb-1"><i class="fas fa-utensils me-2"></i>Menu Categories & Dishes</h3>
+          <p class="text-muted mb-0">Configure menu categories and food items for the selected branch.</p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-warning fw-bold rounded-pill px-3" (click)="openAddCategoryModal()">
+            <i class="fas fa-folder-plus me-1"></i> Add Category
+          </button>
+          <button class="btn btn-warning fw-bold rounded-pill px-3" (click)="openAddFoodItemModal()">
+            <i class="fas fa-plus me-1"></i> Add Dish
+          </button>
+        </div>
+      </div>
+
+      <!-- Categories Pill Bar -->
+      <div class="card bg-secondary text-white p-3 mb-4 rounded-3 border-0 shadow-sm">
+        <h6 class="text-warning small text-uppercase fw-bold mb-2">Menu Categories ({{ menuCategories.length }})</h6>
+        <div class="d-flex flex-wrap gap-2">
+          <div *ngFor="let cat of menuCategories" class="badge bg-dark border border-secondary p-2 d-flex align-items-center gap-2">
+            <span class="fs-6 text-white">{{ cat.name }}</span>
+            <button class="btn btn-sm text-warning p-0" title="Edit Category" (click)="openEditCategoryModal(cat)"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-sm text-danger p-0" title="Delete Category" (click)="deleteCategory(cat)"><i class="fas fa-trash-alt"></i></button>
+          </div>
+          <span *ngIf="menuCategories.length === 0" class="text-muted small">No categories created yet. Click "Add Category" above.</span>
+        </div>
+      </div>
+
+      <!-- Food Items Table -->
+      <div class="card bg-secondary text-white border-0 rounded-3 shadow-lg overflow-hidden">
+        <div class="table-responsive">
+          <table class="table table-dark table-hover mb-0 align-middle">
+            <thead class="table-dark text-warning border-bottom border-warning">
+              <tr>
+                <th>#</th>
+                <th>Dish Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Seasonal</th>
+                <th>Availability</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of foodItems">
+                <td class="text-muted fw-bold">{{ item.id }}</td>
+                <td>
+                  <strong class="text-white">{{ item.name }}</strong>
+                  <div *ngIf="item.description" class="small text-muted text-truncate" style="max-width: 250px;">{{ item.description }}</div>
+                </td>
+                <td><span class="badge bg-dark border border-secondary text-light">{{ item.categoryName || 'General' }}</span></td>
+                <td class="text-warning fw-bold">${{ item.price | number:'1.2-2' }}</td>
+                <td>
+                  <span *ngIf="item.isSeasonal" class="badge bg-danger"><i class="fas fa-star me-1"></i>Seasonal</span>
+                  <span *ngIf="!item.isSeasonal" class="text-muted small">Standard</span>
+                </td>
+                <td>
+                  <button class="btn btn-sm" [ngClass]="item.enabled ? 'btn-outline-success' : 'btn-outline-secondary'" (click)="toggleFoodItemStatus(item)">
+                    <i [class]="item.enabled ? 'fas fa-check-circle text-success' : 'fas fa-ban text-muted'"></i>
+                    <span class="ms-1">{{ item.enabled ? 'Available' : 'Disabled' }}</span>
+                  </button>
+                </td>
+                <td class="text-end">
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-warning" title="Edit Dish" (click)="openEditFoodItemModal(item)"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-outline-danger" title="Delete Dish" (click)="deleteFoodItem(item)"><i class="fas fa-trash-alt"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="foodItems.length === 0">
+                <td colspan="7" class="text-center py-4 text-muted">No food items added for this branch yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 5: INVENTORY MANAGEMENT -->
+    <!-- ========================================== -->
+    <div *ngIf="activeSection === 'inventory'">
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+          <h3 class="h4 text-warning mb-1"><i class="fas fa-boxes me-2"></i>Inventory & Stock Control</h3>
+          <p class="text-muted mb-0">Monitor ingredient levels, perform stock adjustments, and review transactions.</p>
+        </div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-outline-warning fw-bold rounded-pill px-3" (click)="openAddInventoryCategoryModal()">
+            <i class="fas fa-folder-plus me-1"></i> Add Category
+          </button>
+          <button class="btn btn-warning fw-bold rounded-pill px-3" (click)="openAddInventoryItemModal()">
+            <i class="fas fa-plus me-1"></i> Add Inventory Item
+          </button>
+        </div>
+      </div>
+
+      <!-- Low Stock Warnings Banner -->
+      <div *ngIf="lowStockItems.length > 0" class="alert alert-danger shadow-sm mb-4 rounded-3">
+        <h6 class="fw-bold mb-2"><i class="fas fa-exclamation-triangle me-2"></i>Low Stock Warnings ({{ lowStockItems.length }})</h6>
+        <div class="d-flex flex-wrap gap-2">
+          <span *ngFor="let low of lowStockItems" class="badge bg-dark border border-danger text-danger p-2">
+            {{ low.name }}: {{ low.currentStock }} {{ low.unit }} remaining (Threshold: {{ low.minStockThreshold }} {{ low.unit }})
+          </span>
+        </div>
+      </div>
+
+      <!-- Inventory Items Table -->
+      <div class="card bg-secondary text-white border-0 rounded-3 shadow-lg overflow-hidden mb-4">
+        <div class="table-responsive">
+          <table class="table table-dark table-hover mb-0 align-middle">
+            <thead class="table-dark text-warning border-bottom border-warning">
+              <tr>
+                <th>#</th>
+                <th>Item Name</th>
+                <th>Category</th>
+                <th>Current Stock</th>
+                <th>Min Threshold</th>
+                <th>Status</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of inventoryItems">
+                <td class="text-muted fw-bold">{{ item.id }}</td>
+                <td><strong class="text-white">{{ item.name }}</strong></td>
+                <td><span class="badge bg-dark border border-secondary text-light">{{ item.categoryName || 'General' }}</span></td>
+                <td><strong class="fs-6" [class.text-danger]="item.lowStock" [class.text-success]="!item.lowStock">{{ item.currentStock }} {{ item.unit }}</strong></td>
+                <td class="text-muted">{{ item.minStockThreshold }} {{ item.unit }}</td>
+                <td>
+                  <span class="badge" [ngClass]="item.lowStock ? 'bg-danger' : 'bg-success'">
+                    {{ item.lowStock ? 'Low Stock' : 'Adequate' }}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-info" title="Adjust Stock" (click)="openStockAdjustModal(item)">
+                      <i class="fas fa-exchange-alt me-1"></i> Adjust
+                    </button>
+                    <button class="btn btn-outline-warning" title="Edit Item" (click)="openEditInventoryItemModal(item)"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-outline-danger" title="Delete Item" (click)="deleteInventoryItem(item)"><i class="fas fa-trash-alt"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="inventoryItems.length === 0">
+                <td colspan="7" class="text-center py-4 text-muted">No inventory items recorded for this branch.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Recent Stock Transactions Log -->
+      <h4 class="h5 text-warning mb-3"><i class="fas fa-history me-2"></i>Recent Stock Transactions Log</h4>
+      <div class="card bg-secondary text-white border-0 rounded-3 shadow-sm overflow-hidden">
+        <div class="table-responsive">
+          <table class="table table-dark table-sm mb-0">
+            <thead>
+              <tr class="text-muted small">
+                <th>Date & Time</th>
+                <th>Item</th>
+                <th>Type</th>
+                <th>Qty</th>
+                <th>Unit Cost</th>
+                <th>Reason / Ref</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let tx of inventoryTransactions">
+                <td class="small text-muted">{{ tx.createdAt | date:'short' }}</td>
+                <td><strong class="text-white">{{ tx.inventoryItemName || 'Item #' + tx.inventoryItemId }}</strong></td>
+                <td>
+                  <span class="badge" [ngClass]="{
+                    'bg-success': tx.transactionType === 'STOCK_IN',
+                    'bg-warning text-dark': tx.transactionType === 'STOCK_OUT' || tx.transactionType === 'USAGE',
+                    'bg-info text-dark': tx.transactionType === 'AUDIT'
+                  }">{{ tx.transactionType }}</span>
+                </td>
+                <td class="fw-bold">{{ tx.quantity }}</td>
+                <td>${{ tx.unitPrice || 0 | number:'1.2-2' }}</td>
+                <td class="small text-muted">{{ tx.reason || 'N/A' }} ({{ tx.referenceNumber || 'N/A' }})</td>
+              </tr>
+              <tr *ngIf="inventoryTransactions.length === 0">
+                <td colspan="6" class="text-center py-3 text-muted small">No transactions recorded yet.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 6: RESERVATIONS & TABLES -->
+    <!-- ========================================== -->
+    <div *ngIf="activeSection === 'reservations'">
+      
+      <!-- Tables Management -->
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+          <h3 class="h4 text-warning mb-1"><i class="fas fa-chair me-2"></i>Dining Tables & QR Codes</h3>
+          <p class="text-muted mb-0">Configure tables and download QR table deep-link codes.</p>
+        </div>
+        <button class="btn btn-warning fw-bold rounded-pill px-3" (click)="openAddTableModal()">
+          <i class="fas fa-plus me-1"></i> Add Table
+        </button>
+      </div>
+
+      <div class="row g-3 mb-5">
+        <div *ngFor="let tbl of tables" class="col-md-6 col-lg-3">
+          <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3 h-100">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <h5 class="fw-bold text-warning mb-0">Table {{ tbl.tableNumber }}</h5>
+              <span class="badge" [ngClass]="tbl.active !== false ? 'bg-success' : 'bg-danger'">
+                {{ tbl.active !== false ? 'Active' : 'Inactive' }}
+              </span>
+            </div>
+            <p class="text-muted small mb-2"><i class="fas fa-users me-1 text-info"></i>Capacity: {{ tbl.capacity }} Seats</p>
+            <div class="bg-dark p-2 rounded text-center mb-3">
+              <small class="text-white-50 d-block mb-1">QR Code Deep-Link</small>
+              <code class="text-warning small d-block text-truncate">{{ tbl.qrCode || 'QR-BRANCH-' + tbl.branchId + '-TABLE-' + tbl.id }}</code>
+            </div>
+            <div class="d-flex gap-2 mt-auto">
+              <a [routerLink]="['/qr', tbl.qrCode || 'QR-BRANCH-' + tbl.branchId + '-TABLE-' + tbl.id]" target="_blank" class="btn btn-sm btn-outline-info flex-grow-1">
+                <i class="fas fa-external-link-alt me-1"></i> Test QR
+              </a>
+              <button class="btn btn-sm btn-outline-warning" (click)="openEditTableModal(tbl)"><i class="fas fa-edit"></i></button>
+              <button class="btn btn-sm btn-outline-danger" (click)="deleteTable(tbl)"><i class="fas fa-trash-alt"></i></button>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="tables.length === 0" class="col-12 text-center text-muted py-3">
+          No dining tables configured for this branch. Click "Add Table" to create one.
+        </div>
+      </div>
+
+      <!-- Reservations List -->
+      <h3 class="h4 text-warning mb-3"><i class="fas fa-calendar-check me-2"></i>Branch Reservations</h3>
+      <div class="card bg-secondary text-white border-0 rounded-3 shadow-lg overflow-hidden">
+        <div class="table-responsive">
+          <table class="table table-dark table-hover mb-0 align-middle">
+            <thead class="table-dark text-warning border-bottom border-warning">
+              <tr>
+                <th>#</th>
+                <th>Customer Details</th>
+                <th>Table</th>
+                <th>Date & Time</th>
+                <th>Party</th>
+                <th>Status</th>
+                <th class="text-end">Update Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let res of reservations">
+                <td class="text-muted fw-bold">#{{ res.id }}</td>
+                <td>
+                  <strong class="text-white">{{ res.customerName }}</strong>
+                  <div class="small text-muted">{{ res.customerPhone }} | {{ res.customerEmail }}</div>
+                  <div *ngIf="res.specialRequests" class="small text-warning fst-italic">"{{ res.specialRequests }}"</div>
+                </td>
+                <td><span class="badge bg-dark border border-secondary text-warning fs-6">Table {{ res.tableNumber }}</span></td>
+                <td><strong class="text-white">{{ res.reservationDate }}</strong> <span class="text-muted small">({{ res.reservationTime }})</span></td>
+                <td>{{ res.numberOfPeople }} Guests</td>
+                <td>
+                  <span class="badge px-3 py-1 rounded-pill" [ngClass]="{
+                    'bg-secondary': res.status === 'PENDING',
+                    'bg-info text-dark': res.status === 'CONFIRMED',
+                    'bg-warning text-dark': res.status === 'SEATED',
+                    'bg-success': res.status === 'COMPLETED',
+                    'bg-danger': res.status === 'CANCELLED'
+                  }">{{ res.status }}</span>
+                </td>
+                <td class="text-end">
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-info" title="Confirm" (click)="updateReservationStatus(res.id, 'CONFIRMED')"><i class="fas fa-check"></i></button>
+                    <button class="btn btn-outline-warning" title="Seat" (click)="updateReservationStatus(res.id, 'SEATED')"><i class="fas fa-chair"></i></button>
+                    <button class="btn btn-outline-success" title="Complete" (click)="updateReservationStatus(res.id, 'COMPLETED')"><i class="fas fa-flag-checkered"></i></button>
+                    <button class="btn btn-outline-danger" title="Cancel" (click)="updateReservationStatus(res.id, 'CANCELLED')"><i class="fas fa-times"></i></button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="reservations.length === 0">
+                <td colspan="7" class="text-center py-4 text-muted">No reservations recorded for this branch.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION: USERS & CUSTOMERS MANAGEMENT -->
+    <!-- ========================================== -->
+    <div *ngIf="activeSection === 'users'">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="h4 text-warning mb-0"><i class="fas fa-user-shield me-2"></i>User & Customer Accounts</h3>
+        <span class="badge bg-warning text-dark px-3 py-2 fs-6">Total Users: {{ allUsers.length }}</span>
+      </div>
+
+      <div class="card bg-secondary text-white border-0 rounded-3 shadow-lg overflow-hidden">
+        <div class="table-responsive">
+          <table class="table table-dark table-hover mb-0 align-middle">
+            <thead class="table-dark text-warning border-bottom border-warning">
+              <tr>
+                <th>ID</th>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Role</th>
+                <th>Branch Assignment</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let u of allUsers">
+                <td class="text-muted fw-bold">#{{ u.id }}</td>
+                <td><strong class="text-white">{{ u.firstName }} {{ u.lastName }}</strong></td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.phoneNumber || 'N/A' }}</td>
+                <td>
+                  <span class="badge px-3 py-1 rounded-pill" [ngClass]="{
+                    'bg-danger': u.role === 'ADMIN',
+                    'bg-warning text-dark': u.role === 'BRANCH_MANAGER',
+                    'bg-info text-dark': u.role === 'CHEF',
+                    'bg-primary': u.role === 'EMPLOYEE',
+                    'bg-secondary': u.role === 'CUSTOMER'
+                  }">{{ u.role }}</span>
+                </td>
+                <td>{{ u.branchName || (u.branchId ? 'Branch #' + u.branchId : 'Global System') }}</td>
+                <td class="text-end">
+                  <button *ngIf="u.email !== authService.getUserEmail()" class="btn btn-outline-danger btn-sm" (click)="deleteUserAccount(u)" title="Delete Account">
+                    <i class="fas fa-trash-alt me-1"></i> Delete
+                  </button>
+                  <span *ngIf="u.email === authService.getUserEmail()" class="badge bg-dark border border-secondary text-muted">Current Session</span>
+                </td>
+              </tr>
+              <tr *ngIf="allUsers.length === 0">
+                <td colspan="7" class="text-center py-4 text-muted">No users found.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION: ORDERS MANAGEMENT -->
+    <!-- ========================================== -->
+    <div *ngIf="activeSection === 'orders'">
+      <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h3 class="h4 text-warning mb-0"><i class="fas fa-receipt me-2"></i>Orders Tracking & Operations</h3>
+        <div class="d-flex align-items-center gap-2">
+          <label class="text-muted small">Status Filter:</label>
+          <select class="form-select bg-dark text-white border-secondary form-select-sm" [(ngModel)]="orderFilterStatus">
+            <option value="ALL">All Statuses</option>
+            <option value="PLACED">PLACED</option>
+            <option value="CONFIRMED">CONFIRMED</option>
+            <option value="PREPARING">PREPARING</option>
+            <option value="READY">READY</option>
+            <option value="AVAILABLE_FOR_DELIVERY">AVAILABLE FOR DELIVERY</option>
+            <option value="ACCEPTED">ACCEPTED</option>
+            <option value="PICKED_UP">PICKED UP</option>
+            <option value="OUT_FOR_DELIVERY">OUT FOR DELIVERY</option>
+            <option value="DELIVERED">DELIVERED</option>
+            <option value="COMPLETED">COMPLETED</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card bg-secondary text-white border-0 rounded-3 shadow-lg overflow-hidden">
+        <div class="table-responsive">
+          <table class="table table-dark table-hover mb-0 align-middle">
+            <thead class="table-dark text-warning border-bottom border-warning">
+              <tr>
+                <th>Order #</th>
+                <th>Customer</th>
+                <th>Branch</th>
+                <th>Type</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th class="text-end">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let ord of filteredOrders">
+                <td class="fw-bold text-warning">#{{ ord.id }}</td>
+                <td><strong class="text-white">{{ ord.customerName }}</strong></td>
+                <td>{{ ord.branchName }}</td>
+                <td><span class="badge bg-dark border border-secondary text-info">{{ ord.orderType }}</span></td>
+                <td class="fw-bold text-warning">${{ ord.totalAmount | number:'1.2-2' }}</td>
+                <td>
+                  <span class="badge px-3 py-1 rounded-pill" [ngClass]="{
+                    'bg-secondary': ord.status === 'PLACED',
+                    'bg-info text-dark': ord.status === 'CONFIRMED' || ord.status === 'PREPARING',
+                    'bg-primary': ord.status === 'READY' || ord.status === 'AVAILABLE_FOR_DELIVERY' || ord.status === 'ACCEPTED',
+                    'bg-warning text-dark': ord.status === 'PICKED_UP' || ord.status === 'OUT_FOR_DELIVERY',
+                    'bg-success': ord.status === 'DELIVERED' || ord.status === 'COMPLETED',
+                    'bg-danger': ord.status === 'CANCELLED'
+                  }">{{ ord.status }}</span>
+                </td>
+                <td class="small text-muted">{{ ord.createdAt | date:'short' }}</td>
+                <td class="text-end">
+                  <button class="btn btn-outline-warning btn-sm" (click)="viewOrderDetailsModal(ord)">
+                    <i class="fas fa-eye me-1"></i> View Items
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="filteredOrders.length === 0">
+                <td colspan="8" class="text-center py-4 text-muted">No orders found for selected criteria.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION: REPORTS & ANALYTICS -->
+    <!-- ========================================== -->
+    <div *ngIf="activeSection === 'reports'">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="h4 text-warning mb-0"><i class="fas fa-file-invoice-dollar me-2"></i>Executive Reports & Performance Analytics</h3>
+        <button class="btn btn-outline-warning btn-sm" (click)="loadReportsSection()"><i class="fas fa-sync-alt me-1"></i> Refresh Metrics</button>
+      </div>
+
+      <div *ngIf="reportData" class="row g-4 mb-4">
+        <div class="col-md-6 col-lg-3">
+          <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3">
+            <p class="text-muted mb-1 text-uppercase small fw-bold">Total Sales Revenue</p>
+            <h2 class="fw-bold text-success mb-0">${{ reportData.totalRevenue | number:'1.2-2' }}</h2>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3">
+            <p class="text-muted mb-1 text-uppercase small fw-bold">Total Orders Processed</p>
+            <h2 class="fw-bold text-warning mb-0">{{ reportData.totalOrders }}</h2>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3">
+            <p class="text-muted mb-1 text-uppercase small fw-bold">Inventory Items Count</p>
+            <h2 class="fw-bold text-info mb-0">{{ reportData.totalInventoryItems }}</h2>
+          </div>
+        </div>
+        <div class="col-md-6 col-lg-3">
+          <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3">
+            <p class="text-muted mb-1 text-uppercase small fw-bold">Low-Stock Warnings</p>
+            <h2 class="fw-bold text-danger mb-0">{{ reportData.lowStockCount }}</h2>
+          </div>
+        </div>
+      </div>
+
+      <!-- Branch Sales Performance Breakdown Table -->
+      <div *ngIf="reportData && reportData.branchSalesSummaries.length > 0" class="card bg-secondary text-white border-0 rounded-3 shadow-lg overflow-hidden mb-4">
+        <div class="card-header bg-dark border-bottom border-warning">
+          <h5 class="text-warning mb-0"><i class="fas fa-store-alt me-2"></i>Branch Sales Performance Comparison</h5>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-dark table-hover mb-0 align-middle">
+            <thead class="table-dark text-warning">
+              <tr>
+                <th>Branch Name</th>
+                <th>Total Orders</th>
+                <th>Gross Revenue</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let b of reportData.branchSalesSummaries">
+                <td><strong class="text-white">{{ b.branchName }}</strong></td>
+                <td>{{ b.orderCount }}</td>
+                <td class="fw-bold text-success">${{ b.totalSales | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SECTION: SETTINGS -->
+    <!-- ========================================== -->
+    <div *ngIf="activeSection === 'settings'">
+      <h3 class="h4 text-warning mb-4"><i class="fas fa-cog me-2"></i>System & Operations Settings</h3>
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="card bg-secondary text-white border-0 p-4 rounded-3 shadow-sm">
+            <h5 class="text-warning mb-3"><i class="fas fa-paint-brush me-2"></i>Appearance & Theme Preference</h5>
+            <p class="text-muted">Toggle application visual theme mode (Dark/Light) across all components.</p>
+            <button (click)="themeService.toggleTheme()" class="btn btn-warning fw-bold w-50">
+              <i [class]="themeService.isDark() ? 'fas fa-sun me-2' : 'fas fa-moon me-2'"></i>
+              Switch to {{ themeService.isDark() ? 'Light Mode' : 'Dark Mode' }}
+            </button>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card bg-secondary text-white border-0 p-4 rounded-3 shadow-sm">
+            <h5 class="text-warning mb-3"><i class="fas fa-user-circle me-2"></i>Current Active Session</h5>
+            <p class="mb-1"><strong>Authenticated User:</strong> {{ authService.getUserEmail() }}</p>
+            <p class="mb-1"><strong>Role Privilege:</strong> <span class="badge bg-warning text-dark">{{ authService.userRoleSignal() }}</span></p>
+            <p class="mb-3"><strong>Assigned Branch ID:</strong> {{ authService.getBranchId() || 'Global System' }}</p>
+            <button (click)="authService.logout()" class="btn btn-outline-danger fw-bold w-50">
+              <i class="fas fa-sign-out-alt me-2"></i> Log Out Session
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Modal: View Order Details -->
+<div *ngIf="selectedOrderForModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.7);">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark text-white border-warning">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-warning"><i class="fas fa-receipt me-2"></i>Order Details #{{ selectedOrderForModal.id }}</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeOrderDetailsModal()"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row mb-3">
+          <div class="col-md-6"><strong>Customer:</strong> {{ selectedOrderForModal.customerName }}</div>
+          <div class="col-md-6"><strong>Branch:</strong> {{ selectedOrderForModal.branchName }}</div>
+          <div class="col-md-6"><strong>Type:</strong> {{ selectedOrderForModal.orderType }}</div>
+          <div class="col-md-6"><strong>Status:</strong> {{ selectedOrderForModal.status }}</div>
+        </div>
+        <h6 class="text-warning fw-bold mb-2">Order Items:</h6>
+        <div class="table-responsive">
+          <table class="table table-dark table-sm mb-0">
+            <thead>
+              <tr>
+                <th>Item Name</th>
+                <th class="text-center">Qty</th>
+                <th class="text-end">Price</th>
+                <th class="text-end">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of selectedOrderForModal.items">
+                <td>{{ item.foodItemName }}</td>
+                <td class="text-center">{{ item.quantity }}</td>
+                <td class="text-end">${{ item.pricePerUnit | number:'1.2-2' }}</td>
+                <td class="text-end text-warning">${{ item.subtotal | number:'1.2-2' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top border-secondary">
+          <span class="text-muted">Created: {{ selectedOrderForModal.createdAt | date:'medium' }}</span>
+          <span class="fs-5 fw-bold text-warning">Total Amount: ${{ selectedOrderForModal.totalAmount | number:'1.2-2' }}</span>
+        </div>
+      </div>
+      <div class="modal-footer border-secondary">
+        <button type="button" class="btn btn-warning fw-bold" (click)="closeOrderDetailsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- MODALS -->
+<!-- ========================================== -->
+
+<!-- Modal: Add / Edit Branch -->
+<div *ngIf="showBranchModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.7);">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark text-white border-warning">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-warning"><i class="fas fa-store me-2"></i>{{ isEditingBranch ? 'Edit Branch' : 'Add New Branch' }}</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeBranchModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="saveBranch()">
+          <div class="row g-3">
+            <div class="col-md-12">
+              <label class="form-label text-warning fw-semibold">Branch Name *</label>
+              <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="branchForm.name" name="name" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-warning fw-semibold">State *</label>
+              <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="branchForm.state" name="state" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-warning fw-semibold">District *</label>
+              <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="branchForm.district" name="district" required>
+            </div>
+            <div class="col-md-12">
+              <label class="form-label text-warning fw-semibold">Street Address</label>
+              <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="branchForm.address" name="address">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-warning fw-semibold">Phone</label>
+              <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="branchForm.phone" name="phone">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label text-warning fw-semibold">Latitude *</label>
+              <input type="number" step="any" class="form-control bg-secondary text-white border-0" [(ngModel)]="branchForm.latitude" name="latitude" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label text-warning fw-semibold">Longitude *</label>
+              <input type="number" step="any" class="form-control bg-secondary text-white border-0" [(ngModel)]="branchForm.longitude" name="longitude" required>
+            </div>
+            <div class="col-12 mt-3">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="activeSwitch" [(ngModel)]="branchForm.active" name="active">
+                <label class="form-check-label text-white" for="activeSwitch">Active Location</label>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer border-secondary mt-4 px-0 pb-0">
+            <button type="button" class="btn btn-outline-secondary text-white" (click)="closeBranchModal()">Cancel</button>
+            <button type="submit" class="btn btn-warning fw-bold px-4" [disabled]="loading">Save Branch</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add / Edit Employee -->
+<div *ngIf="showEmployeeModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.7);">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark text-white border-warning">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-warning"><i class="fas fa-user-plus me-2"></i>{{ isEditingEmployee ? 'Edit Employee' : 'Onboard Employee' }}</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeEmployeeModal()"></button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="saveEmployee()">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label text-warning fw-semibold">First Name *</label>
+              <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="employeeForm.firstName" name="firstName" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-warning fw-semibold">Last Name *</label>
+              <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="employeeForm.lastName" name="lastName" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-warning fw-semibold">Email *</label>
+              <input type="email" class="form-control bg-secondary text-white border-0" [(ngModel)]="employeeForm.email" name="email" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-warning fw-semibold">Phone Number</label>
+              <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="employeeForm.phoneNumber" name="phoneNumber">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-warning fw-semibold">Password *</label>
+              <input type="password" class="form-control bg-secondary text-white border-0" [(ngModel)]="employeeForm.password" name="password" [required]="!isEditingEmployee">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-warning fw-semibold">Role *</label>
+              <select class="form-select bg-secondary text-white border-0" [(ngModel)]="employeeForm.role" name="role" required>
+                <option value="BRANCH_MANAGER">Branch Manager</option>
+                <option value="CHEF">Chef</option>
+                <option value="EMPLOYEE">General Staff / Employee</option>
+              </select>
+            </div>
+            <div class="col-md-12">
+              <label class="form-label text-warning fw-semibold">Assigned Branch *</label>
+              <select class="form-select bg-secondary text-white border-0" [(ngModel)]="employeeForm.branchId" name="branchId" required>
+                <option *ngFor="let b of branches" [value]="b.id">{{ b.name }} ({{ b.district }}, {{ b.state }})</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer border-secondary mt-4 px-0 pb-0">
+            <button type="button" class="btn btn-outline-secondary text-white" (click)="closeEmployeeModal()">Cancel</button>
+            <button type="submit" class="btn btn-warning fw-bold px-4" [disabled]="loading">Save Employee</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add / Edit Menu Category -->
+<div *ngIf="showCategoryModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.7);">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-white border-warning">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-warning"><i class="fas fa-folder me-2"></i>{{ isEditingCategory ? 'Edit Category' : 'Add Category' }}</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="showCategoryModal = false"></button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="saveCategory()">
+          <div class="mb-3">
+            <label class="form-label text-warning fw-semibold">Category Name *</label>
+            <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="categoryForm.name" name="catName" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-warning fw-semibold">Description</label>
+            <textarea class="form-control bg-secondary text-white border-0" [(ngModel)]="categoryForm.description" name="catDesc"></textarea>
+          </div>
+          <div class="modal-footer border-secondary px-0 pb-0">
+            <button type="button" class="btn btn-outline-secondary text-white" (click)="showCategoryModal = false">Cancel</button>
+            <button type="submit" class="btn btn-warning fw-bold px-4">Save Category</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add / Edit Food Item -->
+<div *ngIf="showFoodItemModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.7);">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark text-white border-warning">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-warning"><i class="fas fa-utensils me-2"></i>{{ isEditingFoodItem ? 'Edit Dish' : 'Add New Dish' }}</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="showFoodItemModal = false"></button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="saveFoodItem()">
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label text-warning fw-semibold">Dish Name *</label>
+              <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="foodItemForm.name" name="itemName" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label text-warning fw-semibold">Price ($) *</label>
+              <input type="number" step="0.01" class="form-control bg-secondary text-white border-0" [(ngModel)]="foodItemForm.price" name="itemPrice" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-warning fw-semibold">Category *</label>
+              <select class="form-select bg-secondary text-white border-0" [(ngModel)]="foodItemForm.categoryId" name="itemCatId" required>
+                <option *ngFor="let c of menuCategories" [value]="c.id">{{ c.name }}</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-warning fw-semibold">Image URL</label>
+              <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="foodItemForm.imageUrl" name="itemImg" placeholder="https://...">
+            </div>
+            <div class="col-12">
+              <label class="form-label text-warning fw-semibold">Description</label>
+              <textarea class="form-control bg-secondary text-white border-0" rows="2" [(ngModel)]="foodItemForm.description" name="itemDesc"></textarea>
+            </div>
+            <div class="col-6">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="seasonalSw" [(ngModel)]="foodItemForm.isSeasonal" name="seasonal">
+                <label class="form-check-label text-white" for="seasonalSw">Seasonal Special</label>
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="enabledSw" [(ngModel)]="foodItemForm.enabled" name="enabled">
+                <label class="form-check-label text-white" for="enabledSw">Available for Order</label>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer border-secondary mt-4 px-0 pb-0">
+            <button type="button" class="btn btn-outline-secondary text-white" (click)="showFoodItemModal = false">Cancel</button>
+            <button type="submit" class="btn btn-warning fw-bold px-4">Save Dish</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add Inventory Category -->
+<div *ngIf="showInventoryCategoryModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.7);">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-white border-warning">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-warning"><i class="fas fa-boxes me-2"></i>Add Inventory Category</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="showInventoryCategoryModal = false"></button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="saveInventoryCategory()">
+          <div class="mb-3">
+            <label class="form-label text-warning fw-semibold">Category Name *</label>
+            <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="inventoryCategoryForm.name" name="invCatName" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-warning fw-semibold">Description</label>
+            <textarea class="form-control bg-secondary text-white border-0" [(ngModel)]="inventoryCategoryForm.description" name="invCatDesc"></textarea>
+          </div>
+          <div class="modal-footer border-secondary px-0 pb-0">
+            <button type="button" class="btn btn-outline-secondary text-white" (click)="showInventoryCategoryModal = false">Cancel</button>
+            <button type="submit" class="btn btn-warning fw-bold px-4">Save Category</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add / Edit Inventory Item -->
+<div *ngIf="showInventoryItemModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.7);">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark text-white border-warning">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-warning"><i class="fas fa-box me-2"></i>{{ isEditingInventoryItem ? 'Edit Inventory Item' : 'Add Inventory Item' }}</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="showInventoryItemModal = false"></button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="saveInventoryItem()">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label text-warning fw-semibold">Item Name *</label>
+              <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="inventoryItemForm.name" name="invName" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-warning fw-semibold">Category *</label>
+              <select class="form-select bg-secondary text-white border-0" [(ngModel)]="inventoryItemForm.categoryId" name="invCatId" required>
+                <option *ngFor="let c of inventoryCategories" [value]="c.id">{{ c.name }}</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label text-warning fw-semibold">Unit of Measure *</label>
+              <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="inventoryItemForm.unit" name="invUnit" placeholder="e.g. KG, LITER, PACK" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label text-warning fw-semibold">Current Stock *</label>
+              <input type="number" step="any" class="form-control bg-secondary text-white border-0" [(ngModel)]="inventoryItemForm.currentStock" name="invStock" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label text-warning fw-semibold">Min Stock Threshold *</label>
+              <input type="number" step="any" class="form-control bg-secondary text-white border-0" [(ngModel)]="inventoryItemForm.minStockThreshold" name="invMin" required>
+            </div>
+          </div>
+          <div class="modal-footer border-secondary mt-4 px-0 pb-0">
+            <button type="button" class="btn btn-outline-secondary text-white" (click)="showInventoryItemModal = false">Cancel</button>
+            <button type="submit" class="btn btn-warning fw-bold px-4">Save Inventory Item</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Stock Adjustment -->
+<div *ngIf="showStockAdjustModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.7);">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-white border-warning">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-warning"><i class="fas fa-exchange-alt me-2"></i>Stock Adjustment: {{ selectedItemForStock?.name }}</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="showStockAdjustModal = false"></button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="saveStockAdjustment()">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label text-warning fw-semibold">Transaction Type *</label>
+              <select class="form-select bg-secondary text-white border-0" [(ngModel)]="stockAdjustForm.transactionType" name="txType" required>
+                <option value="STOCK_IN">Stock In (Purchase/Restock)</option>
+                <option value="STOCK_OUT">Stock Out (Transfer/Spillage)</option>
+                <option value="USAGE">Kitchen Usage</option>
+                <option value="AUDIT">Stock Audit Adjustment</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-warning fw-semibold">Quantity ({{ selectedItemForStock?.unit }}) *</label>
+              <input type="number" step="any" min="0.01" class="form-control bg-secondary text-white border-0" [(ngModel)]="stockAdjustForm.quantity" name="txQty" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-warning fw-semibold">Unit Cost / Price</label>
+              <input type="number" step="0.01" class="form-control bg-secondary text-white border-0" [(ngModel)]="stockAdjustForm.unitPrice" name="txPrice">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label text-warning fw-semibold">Ref / Invoice #</label>
+              <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="stockAdjustForm.referenceNumber" name="txRef">
+            </div>
+            <div class="col-12">
+              <label class="form-label text-warning fw-semibold">Reason / Note</label>
+              <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="stockAdjustForm.reason" name="txReason">
+            </div>
+          </div>
+          <div class="modal-footer border-secondary mt-4 px-0 pb-0">
+            <button type="button" class="btn btn-outline-secondary text-white" (click)="showStockAdjustModal = false">Cancel</button>
+            <button type="submit" class="btn btn-warning fw-bold px-4">Submit Adjustment</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Add / Edit Dining Table -->
+<div *ngIf="showTableModal" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.7);">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark text-white border-warning">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-warning"><i class="fas fa-chair me-2"></i>{{ isEditingTable ? 'Edit Table' : 'Add Dining Table' }}</h5>
+        <button type="button" class="btn-close btn-close-white" (click)="showTableModal = false"></button>
+      </div>
+      <div class="modal-body">
+        <form (ngSubmit)="saveTable()">
+          <div class="mb-3">
+            <label class="form-label text-warning fw-semibold">Table Number / Label *</label>
+            <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="tableForm.tableNumber" name="tblNum" placeholder="e.g. 5 or T-12" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-warning fw-semibold">Seating Capacity *</label>
+            <input type="number" min="1" max="50" class="form-control bg-secondary text-white border-0" [(ngModel)]="tableForm.capacity" name="tblCap" required>
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="tblActiveSw" [(ngModel)]="tableForm.active" name="tblActive">
+            <label class="form-check-label text-white" for="tblActiveSw">Active Table (Accepts QR Orders & Bookings)</label>
+          </div>
+          <div class="modal-footer border-secondary px-0 pb-0">
+            <button type="button" class="btn btn-outline-secondary text-white" (click)="showTableModal = false">Cancel</button>
+            <button type="submit" class="btn btn-warning fw-bold px-4">Save Table</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

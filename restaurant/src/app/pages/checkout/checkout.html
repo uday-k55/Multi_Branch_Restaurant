@@ -1,0 +1,265 @@
+<div class="container py-5 mt-5">
+  <div class="row mb-4">
+    <div class="col-12">
+      <h1 class="fw-bold text-warning mb-1">
+        <i class="fas fa-shopping-bag me-2"></i>Checkout & Order
+      </h1>
+      <p class="text-muted">Review your cart items and choose your order preferences</p>
+    </div>
+  </div>
+
+  @if (errorMsg()) {
+    <div class="alert alert-danger shadow-sm mb-4" role="alert">
+      <i class="fas fa-exclamation-circle me-2"></i>{{ errorMsg() }}
+    </div>
+  }
+
+  @if (cartService.items().length === 0) {
+    <div class="text-center py-5 bg-dark text-light rounded shadow-sm p-4">
+      <i class="fas fa-shopping-cart fa-4x text-warning mb-3"></i>
+      <h3>Your Cart is Empty</h3>
+      <p class="text-muted">Explore our delicious menu items and add them to your cart.</p>
+      <a routerLink="/menu" class="btn btn-warning btn-lg mt-2">
+        <i class="fas fa-utensils me-1"></i> Browse Menu
+      </a>
+    </div>
+  } @else {
+    <div class="row g-4">
+      <!-- Left Column: Cart Items -->
+      <div class="col-lg-7">
+        <div class="card bg-dark text-light border-secondary shadow-sm mb-4">
+          <div class="card-header border-secondary d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-warning fw-bold">Cart Items ({{ cartService.totalQuantity() }})</h5>
+            <button (click)="cartService.clearCart()" class="btn btn-sm btn-outline-danger">
+              <i class="fas fa-trash me-1"></i> Clear Cart
+            </button>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-dark table-hover mb-0 align-middle">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th class="text-center">Price</th>
+                    <th class="text-center">Quantity</th>
+                    <th class="text-end">Subtotal</th>
+                    <th class="text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of cartService.items(); track item.foodItem.id) {
+                    <tr>
+                      <td>
+                        <div class="fw-bold">{{ item.foodItem.name }}</div>
+                      </td>
+                      <td class="text-center">${{ item.foodItem.price | number:'1.2-2' }}</td>
+                      <td class="text-center">
+                        <div class="btn-group btn-group-sm">
+                          <button (click)="cartService.decreaseQuantity(item.foodItem.id)" class="btn btn-outline-warning">
+                            <i class="fas fa-minus"></i>
+                          </button>
+                          <span class="btn btn-secondary disabled text-light px-3 fw-bold">{{ item.quantity }}</span>
+                          <button (click)="cartService.increaseQuantity(item.foodItem.id)" class="btn btn-warning">
+                            <i class="fas fa-plus"></i>
+                          </button>
+                        </div>
+                      </td>
+                      <td class="text-end fw-bold text-warning">
+                        ${{ (item.foodItem.price * item.quantity) | number:'1.2-2' }}
+                      </td>
+                      <td class="text-center">
+                        <button (click)="cartService.removeFromCart(item.foodItem.id)" class="btn btn-sm btn-link text-danger p-0" title="Remove Item">
+                          <i class="fas fa-times fa-lg"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card-footer border-secondary d-flex justify-content-between align-items-center">
+            <span class="fs-5">Subtotal:</span>
+            <span class="fs-4 fw-bold text-warning">${{ cartService.subtotal() | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Order Type & Options -->
+      <div class="col-lg-5">
+        <div class="card bg-dark text-light border-secondary shadow-sm mb-4">
+          <div class="card-header border-secondary">
+            <h5 class="mb-0 text-warning fw-bold">Order Details</h5>
+          </div>
+          <div class="card-body">
+
+            <!-- Branch Selection -->
+            <div class="mb-3">
+              <label for="checkoutBranch" class="form-label fw-bold">Select Branch:</label>
+              <select
+                id="checkoutBranch"
+                class="form-select border-warning bg-dark text-light"
+                [ngModel]="selectedBranchId()"
+                (change)="onBranchChange($event)">
+                @for (b of branches(); track b.id) {
+                  <option [value]="b.id">{{ b.name }} ({{ b.district }}, {{ b.state }})</option>
+                }
+              </select>
+            </div>
+
+            <!-- Order Type Selection -->
+            <div class="mb-4">
+              <label class="form-label fw-bold">Select Order Type:</label>
+              <div class="btn-group w-100" role="group">
+                <button
+                  type="button"
+                  class="btn"
+                  [class.btn-warning]="selectedOrderType() === 'DINE_IN'"
+                  [class.btn-outline-warning]="selectedOrderType() !== 'DINE_IN'"
+                  (click)="onOrderTypeChange('DINE_IN')">
+                  <i class="fas fa-utensils me-1"></i> Dine-In
+                </button>
+
+                <button
+                  type="button"
+                  class="btn"
+                  [class.btn-warning]="selectedOrderType() === 'TAKEAWAY'"
+                  [class.btn-outline-warning]="selectedOrderType() !== 'TAKEAWAY'"
+                  (click)="onOrderTypeChange('TAKEAWAY')">
+                  <i class="fas fa-shopping-bag me-1"></i> Takeaway
+                </button>
+
+                <button
+                  type="button"
+                  class="btn"
+                  [class.btn-warning]="selectedOrderType() === 'DELIVERY'"
+                  [class.btn-outline-warning]="selectedOrderType() !== 'DELIVERY'"
+                  (click)="onOrderTypeChange('DELIVERY')">
+                  <i class="fas fa-motorcycle me-1"></i> Delivery
+                </button>
+              </div>
+            </div>
+
+            <!-- DINE_IN Section -->
+            @if (selectedOrderType() === 'DINE_IN') {
+              <div class="p-3 bg-secondary bg-opacity-20 border border-secondary rounded mb-3">
+                <h6 class="text-warning fw-bold"><i class="fas fa-chair me-1"></i> Dine-In Table Selection</h6>
+                <div class="mt-2">
+                  <label for="tableSelect" class="form-label">Available Table:</label>
+                  <select
+                    id="tableSelect"
+                    class="form-select border-warning bg-dark text-light"
+                    [ngModel]="selectedTableId()"
+                    (change)="onTableChange($event)">
+                    @for (t of tables(); track t.id) {
+                      <option [value]="t.id">Table {{ t.tableNumber }} (Capacity: {{ t.capacity }})</option>
+                    }
+                  </select>
+                  @if (tables().length === 0) {
+                    <small class="text-danger d-block mt-1">No available tables found for this branch.</small>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- TAKEAWAY Section -->
+            @if (selectedOrderType() === 'TAKEAWAY') {
+              <div class="p-3 bg-secondary bg-opacity-20 border border-secondary rounded mb-3">
+                <h6 class="text-warning fw-bold"><i class="fas fa-store me-1"></i> Takeaway Information</h6>
+                <p class="small text-muted mb-0">
+                  Your order will be prepared for pickup at the selected branch. No table or delivery fee required.
+                </p>
+              </div>
+            }
+
+            <!-- DELIVERY Section -->
+            @if (selectedOrderType() === 'DELIVERY') {
+              <div class="p-3 bg-secondary bg-opacity-20 border border-secondary rounded mb-3">
+                <h6 class="text-warning fw-bold"><i class="fas fa-map-marker-alt me-1"></i> Home Delivery Location</h6>
+                
+                <div class="mb-2">
+                  <label for="deliveryAddressInput" class="form-label">Delivery Address:</label>
+                  <input
+                    type="text"
+                    id="deliveryAddressInput"
+                    class="form-control bg-dark text-light border-secondary"
+                    [(ngModel)]="deliveryAddress"
+                    placeholder="Enter full street address">
+                </div>
+
+                <div class="row g-2 mb-2">
+                  <div class="col-6">
+                    <label for="latitudeInput" class="form-label small">Latitude:</label>
+                    <input
+                      type="number"
+                      step="any"
+                      id="latitudeInput"
+                      class="form-control form-control-sm bg-dark text-light border-secondary"
+                      [(ngModel)]="latitude">
+                  </div>
+                  <div class="col-6">
+                    <label for="longitudeInput" class="form-label small">Longitude:</label>
+                    <input
+                      type="number"
+                      step="any"
+                      id="longitudeInput"
+                      class="form-control form-control-sm bg-dark text-light border-secondary"
+                      [(ngModel)]="longitude">
+                  </div>
+                </div>
+
+                <button
+                  (click)="validateDeliveryRadius()"
+                  [disabled]="validatingDelivery()"
+                  class="btn btn-outline-warning btn-sm w-100 mt-1">
+                  @if (validatingDelivery()) {
+                    <span class="spinner-border spinner-border-sm me-1"></span> Validating...
+                  } @else {
+                    <i class="fas fa-compass me-1"></i> Validate 10 km Radius
+                  }
+                </button>
+
+                @if (deliveryValid() !== null) {
+                  <div class="mt-2 p-2 rounded" [class.bg-success]="deliveryValid()" [class.bg-danger]="!deliveryValid()" class="text-light small">
+                    <i [class]="deliveryValid() ? 'fas fa-check-circle me-1' : 'fas fa-times-circle me-1'"></i>
+                    {{ deliveryMsg() }}
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Summary & Submit -->
+            <div class="border-top border-secondary pt-3 mt-3">
+              <div class="d-flex justify-content-between mb-2">
+                <span>Items Subtotal:</span>
+                <span>${{ cartService.subtotal() | number:'1.2-2' }}</span>
+              </div>
+              <div class="d-flex justify-content-between mb-3 fs-4 fw-bold text-warning">
+                <span>Total Amount:</span>
+                <span>${{ cartService.total() | number:'1.2-2' }}</span>
+              </div>
+
+              @if (!authService.isLoggedIn()) {
+                <a routerLink="/login" [queryParams]="{ returnUrl: '/checkout' }" class="btn btn-warning w-100 btn-lg">
+                  <i class="fas fa-sign-in-alt me-1"></i> Login to Complete Order
+                </a>
+              } @else {
+                <button
+                  (click)="submitOrder()"
+                  [disabled]="submitting()"
+                  class="btn btn-warning w-100 btn-lg fw-bold">
+                  @if (submitting()) {
+                    <span class="spinner-border spinner-border-sm me-2"></span> Placing Order...
+                  } @else {
+                    <i class="fas fa-check-circle me-1"></i> Confirm & Place Order
+                  }
+                </button>
+              }
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

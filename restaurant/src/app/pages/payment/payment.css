@@ -1,0 +1,4 @@
+.payment-section {
+  min-height: calc(100vh - 70px);
+  padding-top: 90px;
+}

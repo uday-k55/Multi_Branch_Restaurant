@@ -1,0 +1,126 @@
+/* ================= REGISTER SECTION ================= */
+.login-section {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 120px 0 80px 0; /* Add padding top to prevent overlap with fixed navbar */
+  background:
+    linear-gradient(rgba(15, 23, 43, 0.92), rgba(15, 23, 43, 0.92)),
+    url("https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600");
+  background-size: cover;
+  background-position: center;
+}
+
+.login-content {
+  color: #fff;
+}
+
+.login-content h1 {
+  font-size: 52px;
+  font-weight: 700;
+}
+
+.login-content p {
+  font-size: 18px;
+  color: #ddd;
+}
+
+.login-content img {
+  max-width: 85%;
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-15px); }
+  100% { transform: translateY(0); }
+}
+
+/* ================= CARD ================= */
+.login-card {
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.login-card .card-body {
+  padding: 40px;
+}
+
+/* ================= FORM ================= */
+.form-label {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.form-control {
+  height: 50px;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.form-control:focus {
+  border-color: #FEA116;
+  box-shadow: none;
+}
+
+.form-check-input:checked {
+  background-color: #FEA116;
+  border-color: #FEA116;
+}
+
+.form-check {
+  margin-right: 20px;
+}
+
+/* ================= BUTTON ================= */
+.btn-warning {
+  background: #FEA116;
+  border: none;
+  color: #fff;
+  border-radius: 10px;
+  font-weight: 600;
+  transition: 0.3s;
+}
+
+.btn-warning:hover {
+  background: #df8e00;
+  color: #fff;
+}
+
+/* ================= LINKS ================= */
+a {
+  transition: 0.3s;
+}
+
+a:hover {
+  opacity: 0.8;
+}
+
+/* ================= RESPONSIVE ================= */
+@media(max-width: 992px) {
+  .login-section {
+    padding: 100px 0 60px 0;
+    text-align: center;
+  }
+  .login-content {
+    margin-bottom: 40px;
+  }
+  .login-content h1 {
+    font-size: 40px;
+  }
+  .login-content img {
+    max-width: 70%;
+  }
+}
+
+@media(max-width: 768px) {
+  .login-content h1 {
+    font-size: 32px;
+  }
+  .login-content p {
+    font-size: 16px;
+  }
+  .login-card .card-body {
+    padding: 30px;
+  }
+}

@@ -1,0 +1,81 @@
+<section class="qr-order-section py-5 min-vh-100 d-flex align-items-center bg-dark text-white">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-8 col-lg-6">
+        <div class="card bg-secondary text-white border-0 shadow-lg rounded-4 p-4 text-center">
+          
+          <div class="mb-4">
+            <div class="icon-circle mx-auto mb-3 bg-warning text-dark d-flex align-items-center justify-content-center rounded-circle" style="width: 80px; height: 80px;">
+              <i class="fas fa-qrcode fa-3x"></i>
+            </div>
+            <h2 class="fw-bold text-warning mb-1">Dine-In QR Ordering</h2>
+            <p class="text-muted">Resolving table session from QR code...</p>
+          </div>
+
+          @if (loading()) {
+            <div class="py-4">
+              <div class="spinner-border text-warning" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Validating QR Code...</span>
+              </div>
+              <p class="mt-3 text-white-50">Validating table & restaurant branch...</p>
+            </div>
+          }
+
+          @if (errorMsg()) {
+            <div class="alert alert-danger shadow-sm py-3 mb-4 text-start" role="alert">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle fa-2x me-3 text-danger"></i>
+                <div>
+                  <h6 class="fw-bold mb-1">Invalid Table QR Code</h6>
+                  <p class="mb-0 small">{{ errorMsg() }}</p>
+                </div>
+              </div>
+            </div>
+            <div class="d-grid gap-2">
+              <a routerLink="/menu" class="btn btn-warning fw-bold py-2">
+                <i class="fas fa-utensils me-2"></i> Browse Menu Standard
+              </a>
+              <a routerLink="/" class="btn btn-outline-light py-2">
+                <i class="fas fa-home me-2"></i> Return to Home
+              </a>
+            </div>
+          }
+
+          @if (successMsg()) {
+            <div class="alert alert-success shadow-sm py-3 mb-4 text-start" role="alert">
+              <div class="d-flex align-items-center">
+                <i class="fas fa-check-circle fa-2x me-3 text-success"></i>
+                <div>
+                  <h6 class="fw-bold mb-1">Table Verified!</h6>
+                  <p class="mb-0 small">{{ successMsg() }}</p>
+                </div>
+              </div>
+            </div>
+
+            @if (table() && branch()) {
+              <div class="card bg-dark border-secondary p-3 mb-4 text-start">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="text-muted small">Restaurant Branch</span>
+                  <strong class="text-warning">{{ branch()?.name }}</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="text-muted small">Table Number</span>
+                  <span class="badge bg-warning text-dark fs-6">Table {{ table()?.tableNumber }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="text-muted small">Capacity</span>
+                  <span class="text-white">{{ table()?.capacity }} Seats</span>
+                </div>
+              </div>
+            }
+
+            <button class="btn btn-warning btn-lg fw-bold w-100 py-3 shadow" (click)="proceedToMenu()">
+              <i class="fas fa-utensils me-2"></i> Open Menu & Start Ordering
+            </button>
+          }
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

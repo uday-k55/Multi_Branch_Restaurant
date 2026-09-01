@@ -1,0 +1,10 @@
+.qr-order-section {
+  min-height: calc(100vh - 70px);
+  padding-top: 90px;
+}
+.icon-circle {
+  transition: transform 0.3s ease;
+}
+.icon-circle:hover {
+  transform: scale(1.05);
+}

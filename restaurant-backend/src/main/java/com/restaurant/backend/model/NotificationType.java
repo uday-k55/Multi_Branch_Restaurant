@@ -1,0 +1,12 @@
+package com.restaurant.backend.model;
+
+public enum NotificationType {
+    CHEF_NEW_ORDER,
+    EMPLOYEE_PICKUP_READY,
+    EMPLOYEE_NEW_DELIVERY,
+    CUSTOMER_ORDER_READY,
+    CUSTOMER_ACCEPTED,
+    CUSTOMER_PICKED_UP,
+    CUSTOMER_OUT_FOR_DELIVERY,
+    CUSTOMER_DELIVERED
+}
