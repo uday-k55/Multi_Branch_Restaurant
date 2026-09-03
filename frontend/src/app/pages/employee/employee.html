@@ -1,0 +1,292 @@
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="bi bi-truck text-primary me-2"></i>Employee Delivery Operations</h2>
+      <p class="text-muted mb-0">Branch Delivery Management Portal</p>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+      <span class="badge bg-primary fs-6 px-3 py-2">
+        <i class="bi bi-building me-1"></i> Branch ID: {{ authService.getBranchId() }}
+      </span>
+      <button class="btn btn-outline-secondary btn-sm" (click)="loadAllData()">
+        <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage()" class="alert alert-danger mb-4">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ errorMessage() }}
+  </div>
+
+  <!-- Real-time Food Ready to Serve Banner for Dine-In -->
+  <div *ngIf="readyDineInOrders().length > 0" class="alert alert-warning border-warning shadow-sm mb-4 d-flex justify-content-between align-items-center">
+    <div>
+      <h5 class="alert-heading fw-bold mb-1"><i class="bi bi-bell-fill text-danger me-2"></i>Food Ready to Serve! ({{ readyDineInOrders().length }} Order{{ readyDineInOrders().length > 1 ? 's' : '' }})</h5>
+      <p class="mb-0 small">Chef has marked food ready for table: 
+        <strong *ngFor="let ord of readyDineInOrders(); let isLast = last">
+          Table {{ ord.tableNumber }} (Order #{{ ord.id }}){{ isLast ? '' : ', ' }}
+        </strong>
+      </p>
+    </div>
+    <button class="btn btn-warning text-dark fw-bold btn-sm ms-3" (click)="activeTab.set('dinein')">
+      <i class="bi bi-eye me-1"></i> View Ready Food
+    </button>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <ul class="nav nav-pills mb-4">
+    <li class="nav-item">
+      <button 
+        class="nav-link fw-bold px-4 position-relative" 
+        [class.active]="activeTab() === 'available'" 
+        (click)="activeTab.set('available')">
+        <i class="bi bi-box-seam me-2"></i> Available Deliveries
+        <span *ngIf="availableDeliveries().length > 0" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+          {{ availableDeliveries().length }}
+        </span>
+      </button>
+    </li>
+    <li class="nav-item">
+      <button 
+        class="nav-link fw-bold px-4 position-relative" 
+        [class.active]="activeTab() === 'my'" 
+        (click)="activeTab.set('my')">
+        <i class="bi bi-person-badge me-2"></i> My Active Deliveries
+        <span *ngIf="myDeliveries().length > 0" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success">
+          {{ myDeliveries().length }}
+        </span>
+      </button>
+    </li>
+    <li class="nav-item">
+      <button 
+        class="nav-link fw-bold px-4 position-relative" 
+        [class.active]="activeTab() === 'dinein'" 
+        (click)="activeTab.set('dinein')">
+        <i class="bi bi-bell-fill me-2 text-warning"></i> Food Ready to Serve (Dine-In)
+        <span *ngIf="readyDineInOrders().length > 0" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">
+          {{ readyDineInOrders().length }}
+        </span>
+      </button>
+    </li>
+  </ul>
+
+  <div *ngIf="isLoading()" class="text-center py-5">
+    <div class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading deliveries...</span>
+    </div>
+    <p class="mt-2 text-muted">Loading live delivery list...</p>
+  </div>
+
+  <div *ngIf="!isLoading()">
+    <!-- TAB 1: AVAILABLE DELIVERIES -->
+    <div *ngIf="activeTab() === 'available'">
+      <div *ngIf="availableDeliveries().length === 0" class="text-center py-5 bg-light rounded border">
+        <i class="bi bi-check-circle text-success fs-1 mb-2"></i>
+        <h5 class="fw-bold">No Available Deliveries</h5>
+        <p class="text-muted mb-0">All current branch delivery orders have been accepted or completed.</p>
+      </div>
+
+      <div class="row g-3">
+        <div *ngFor="let order of availableDeliveries()" class="col-12 col-md-6 col-lg-4">
+          <div class="card h-100 border-primary shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+              <span class="fw-bold">Order #{{ order.id }}</span>
+              <span class="badge bg-white text-primary fw-bold">{{ order.status }}</span>
+            </div>
+            <div class="card-body">
+              <p class="mb-1"><i class="bi bi-person fw-bold me-1"></i> <strong>Customer:</strong> {{ order.customerName }}</p>
+              <p class="mb-2 text-truncate"><i class="bi bi-geo-alt-fill text-danger me-1"></i> <strong>Address:</strong> {{ order.deliveryAddress }}</p>
+              <p class="fw-bold text-success mb-2">Total Amount: ₹{{ order.totalAmount }}</p>
+
+              <div class="border-top pt-2 mt-2">
+                <p class="small text-muted mb-1 fw-bold">Items Summary:</p>
+                <ul class="list-unstyled mb-2 small">
+                  <li *ngFor="let item of order.items" class="d-flex justify-content-between">
+                    <span>{{ item.quantity }}x {{ item.foodItemName }}</span>
+                    <span>₹{{ item.subtotal }}</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button class="btn btn-primary w-100 mt-2 fw-bold" (click)="acceptDelivery(order.id)" [disabled]="actionLoadingId() === order.id">
+                <span *ngIf="actionLoadingId() === order.id" class="spinner-border spinner-border-sm me-1"></span>
+                <i *ngIf="actionLoadingId() !== order.id" class="bi bi-hand-thumbs-up me-1"></i> Accept Delivery
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: MY ACTIVE DELIVERIES -->
+    <div *ngIf="activeTab() === 'my'">
+      <div *ngIf="myDeliveries().length === 0" class="text-center py-5 bg-light rounded border">
+        <i class="bi bi-inbox text-muted fs-1 mb-2"></i>
+        <h5 class="fw-bold">No Active Deliveries Assigned</h5>
+        <p class="text-muted mb-0">Accept available deliveries from the Available Deliveries tab.</p>
+      </div>
+
+      <div class="row g-3">
+        <div *ngFor="let order of myDeliveries()" class="col-12 col-md-6 col-lg-4">
+          <div class="card h-100 border-dark shadow-sm">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+              <span class="fw-bold">Order #{{ order.id }}</span>
+              <span class="badge" [ngClass]="{
+                'bg-warning text-dark': order.status === 'ACCEPTED',
+                'bg-info text-dark': order.status === 'PICKED_UP',
+                'bg-primary': order.status === 'OUT_FOR_DELIVERY',
+                'bg-success': order.status === 'DELIVERED' || order.status === 'COMPLETED'
+              }">{{ order.status }}</span>
+            </div>
+            <div class="card-body">
+              <p class="mb-1"><i class="bi bi-person fw-bold me-1"></i> <strong>Customer:</strong> {{ order.customerName }}</p>
+              <p class="mb-2 text-truncate"><i class="bi bi-geo-alt-fill text-danger me-1"></i> <strong>Address:</strong> {{ order.deliveryAddress }}</p>
+              <p class="fw-bold text-success mb-2">Total Amount: ₹{{ order.totalAmount }}</p>
+
+              <div class="border-top pt-2 mt-2">
+                <p class="small text-muted mb-1 fw-bold">Items Summary:</p>
+                <ul class="list-unstyled mb-2 small">
+                  <li *ngFor="let item of order.items" class="d-flex justify-content-between">
+                    <span>{{ item.quantity }}x {{ item.foodItemName }}</span>
+                    <span>₹{{ item.subtotal }}</span>
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Customer Delivery Location Section for Home Delivery Orders -->
+              <div *ngIf="order.orderType === 'DELIVERY'" class="border rounded-3 p-3 bg-light my-3 shadow-sm">
+                <div class="d-flex align-items-center mb-2">
+                  <h6 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>📍 Customer Delivery Location
+                  </h6>
+                </div>
+                <div class="mb-2">
+                  <span class="small text-muted d-block fw-bold">Delivery Address:</span>
+                  <p class="mb-0 text-dark small fw-semibold text-break">{{ order.deliveryAddress || 'No address specified' }}</p>
+                </div>
+                <div class="d-flex gap-2 mt-2">
+                  <button class="btn btn-outline-primary btn-sm flex-fill fw-bold" 
+                          (click)="openCustomerLocationModal(order)"
+                          [disabled]="!order.latitude || !order.longitude"
+                          title="View Customer Location on Map">
+                    <i class="bi bi-map me-1"></i> 🗺️ View Customer Location
+                  </button>
+                  <button class="btn btn-outline-success btn-sm flex-fill fw-bold" 
+                          (click)="navigateToCustomer(order)"
+                          [disabled]="!order.latitude || !order.longitude"
+                          title="Navigate to Customer Location">
+                    <i class="bi bi-compass me-1"></i> 🧭 Navigate to Customer
+                  </button>
+                </div>
+                <div *ngIf="!order.latitude || !order.longitude" class="text-muted small mt-1 fst-italic">
+                  <i class="bi bi-info-circle me-1"></i> Coordinates unavailable for this order.
+                </div>
+              </div>
+
+              <!-- Workflow action buttons -->
+              <div class="mt-3">
+                <button *ngIf="order.status === 'ACCEPTED'" class="btn btn-warning text-dark w-100 fw-bold" (click)="updateStatus(order.id, 'PICKED_UP')" [disabled]="actionLoadingId() === order.id">
+                  <span *ngIf="actionLoadingId() === order.id" class="spinner-border spinner-border-sm me-1"></span>
+                  <i *ngIf="actionLoadingId() !== order.id" class="bi bi-bag-check me-1"></i> Mark Picked Up
+                </button>
+                <button *ngIf="order.status === 'PICKED_UP'" class="btn btn-primary w-100 fw-bold" (click)="updateStatus(order.id, 'OUT_FOR_DELIVERY')" [disabled]="actionLoadingId() === order.id">
+                  <span *ngIf="actionLoadingId() === order.id" class="spinner-border spinner-border-sm me-1"></span>
+                  <i *ngIf="actionLoadingId() !== order.id" class="bi bi-bicycle me-1"></i> Start Delivery (Out For Delivery)
+                </button>
+                <button *ngIf="order.status === 'OUT_FOR_DELIVERY'" class="btn btn-success w-100 fw-bold" (click)="updateStatus(order.id, 'DELIVERED')" [disabled]="actionLoadingId() === order.id">
+                  <span *ngIf="actionLoadingId() === order.id" class="spinner-border spinner-border-sm me-1"></span>
+                  <i *ngIf="actionLoadingId() !== order.id" class="bi bi-check-circle me-1"></i> Mark Delivered
+                </button>
+                <div *ngIf="order.status === 'DELIVERED' || order.status === 'COMPLETED'" class="badge bg-success text-white w-100 py-2 fs-6">
+                  <i class="bi bi-check-all me-1"></i> Delivered Successfully
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: FOOD READY TO SERVE (DINE-IN) -->
+    <div *ngIf="activeTab() === 'dinein'">
+      <div *ngIf="readyDineInOrders().length === 0" class="text-center py-5 bg-light rounded border">
+        <i class="bi bi-check-circle text-success fs-1 mb-2"></i>
+        <h5 class="fw-bold">No Dine-In Orders Waiting to Serve</h5>
+        <p class="text-muted mb-0">When chef finishes preparing food for a dine-in table, it will appear here immediately.</p>
+      </div>
+
+      <div class="row g-3">
+        <div *ngFor="let order of readyDineInOrders()" class="col-12 col-md-6 col-lg-4">
+          <div class="card h-100 border-warning shadow-sm">
+            <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+              <span class="fw-bold fs-6"><i class="bi bi-bell-fill me-1"></i> Food Ready to Serve</span>
+              <span class="badge bg-dark text-warning fw-bold fs-6">Table No: {{ order.tableNumber || 'N/A' }}</span>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-bold fs-6">Order #{{ order.id }}</span>
+                <span class="badge bg-success">Ready to serve</span>
+              </div>
+              <p class="mb-2 text-muted small"><i class="bi bi-person me-1"></i> Customer: {{ order.customerName }}</p>
+
+              <div class="border-top pt-2 mt-2">
+                <p class="small text-muted mb-1 fw-bold">Ordered Food:</p>
+                <ul class="list-unstyled mb-2 small">
+                  <li *ngFor="let item of order.items" class="d-flex justify-content-between py-1">
+                    <span><strong>{{ item.quantity }}x</strong> {{ item.foodItemName }}</span>
+                    <span>₹{{ item.subtotal }}</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button class="btn btn-success w-100 mt-3 fw-bold" (click)="updateStatus(order.id, 'COMPLETED')" [disabled]="actionLoadingId() === order.id">
+                <span *ngIf="actionLoadingId() === order.id" class="spinner-border spinner-border-sm me-1"></span>
+                <i *ngIf="actionLoadingId() !== order.id" class="bi bi-check2-circle me-1"></i> Mark Served
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- View Customer Location Modal -->
+<div *ngIf="showLocationModal()" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.65); z-index: 1060;">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-geo-alt-fill text-danger me-2"></i>🗺️ View Customer Location
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeCustomerLocationModal()"></button>
+      </div>
+      <div class="modal-body p-3">
+        <div class="alert alert-light border shadow-sm mb-3">
+          <div class="d-flex align-items-start gap-2">
+            <span class="fs-4 text-danger">📍</span>
+            <div>
+              <strong class="d-block text-dark">Customer Delivery Address:</strong>
+              <p class="mb-1 text-secondary">{{ viewingOrderLocation()?.deliveryAddress }}</p>
+              <div class="small text-muted">
+                <strong>Recipient:</strong> {{ viewingOrderLocation()?.customerName }} &bull; 
+                <strong>Order ID:</strong> #{{ viewingOrderLocation()?.id }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Leaflet Map Container -->
+        <div id="customer-delivery-map" style="height: 380px; width: 100%; border-radius: 8px; border: 1px solid #ced4da;"></div>
+      </div>
+      <div class="modal-footer bg-light d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeCustomerLocationModal()">
+          Close
+        </button>
+        <button *ngIf="viewingOrderLocation()" type="button" class="btn btn-success fw-bold" (click)="navigateToCustomer(viewingOrderLocation()!)">
+          <i class="bi bi-compass me-1"></i> 🧭 Navigate to Customer
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

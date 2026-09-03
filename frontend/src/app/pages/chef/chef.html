@@ -1,0 +1,176 @@
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold mb-1"><i class="bi bi-fire text-warning me-2"></i>Kitchen Display System (KDS)</h2>
+      <p class="text-muted mb-0">Live Branch Kitchen Queue Management</p>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+      <span class="badge bg-primary fs-6 px-3 py-2">
+        <i class="bi bi-building me-1"></i> Branch ID: {{ authService.getBranchId() }}
+      </span>
+      <button class="btn btn-outline-secondary btn-sm" (click)="loadOrders()">
+        <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="errorMessage()" class="alert alert-danger mb-4">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ errorMessage() }}
+  </div>
+
+  <div *ngIf="isLoading()" class="text-center py-5">
+    <div class="spinner-border text-warning" role="status">
+      <span class="visually-hidden">Loading kitchen queue...</span>
+    </div>
+    <p class="mt-2 text-muted">Loading live kitchen orders...</p>
+  </div>
+
+  <div *ngIf="!isLoading()" class="row g-3">
+    <!-- NEW ORDERS (PLACED) -->
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="card h-100 border-danger shadow-sm">
+        <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
+          <span class="fw-bold"><i class="bi bi-bell-fill me-2"></i>New Orders</span>
+          <span class="badge bg-white text-danger fw-bold">{{ placedOrders().length }}</span>
+        </div>
+        <div class="card-body overflow-auto p-2" style="max-height: 75vh;">
+          <div *ngIf="placedOrders().length === 0" class="text-center text-muted py-4 small">
+            No new orders
+          </div>
+          <div *ngFor="let order of placedOrders()" class="card mb-3 border">
+            <div class="card-body p-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-bold">#{{ order.id }}</span>
+                <span class="badge bg-secondary">{{ order.orderType }}</span>
+              </div>
+              <p class="small text-muted mb-1"><i class="bi bi-person me-1"></i> {{ order.customerName }}</p>
+              <p *ngIf="order.tableNumber" class="small fw-bold text-primary mb-1"><i class="bi bi-grid-3x3-gap me-1"></i> Table: {{ order.tableNumber }}</p>
+              <div class="border-top pt-2 mt-2">
+                <ul class="list-unstyled mb-2 small">
+                  <li *ngFor="let item of order.items" class="d-flex justify-content-between">
+                    <span>{{ item.quantity }}x {{ item.foodItemName }}</span>
+                    <span class="fw-bold">₹{{ item.subtotal }}</span>
+                  </li>
+                </ul>
+              </div>
+              <button class="btn btn-danger btn-sm w-100 mt-2 fw-bold" (click)="updateStatus(order.id, 'CONFIRMED')" [disabled]="actionLoadingId() === order.id">
+                <span *ngIf="actionLoadingId() === order.id" class="spinner-border spinner-border-sm me-1"></span>
+                <i *ngIf="actionLoadingId() !== order.id" class="bi bi-check-circle me-1"></i> Confirm Order
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIRMED ORDERS -->
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="card h-100 border-warning shadow-sm">
+        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+          <span class="fw-bold"><i class="bi bi-check2-square me-2"></i>Confirmed</span>
+          <span class="badge bg-dark text-white fw-bold">{{ confirmedOrders().length }}</span>
+        </div>
+        <div class="card-body overflow-auto p-2" style="max-height: 75vh;">
+          <div *ngIf="confirmedOrders().length === 0" class="text-center text-muted py-4 small">
+            No confirmed orders
+          </div>
+          <div *ngFor="let order of confirmedOrders()" class="card mb-3 border">
+            <div class="card-body p-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-bold">#{{ order.id }}</span>
+                <span class="badge bg-secondary">{{ order.orderType }}</span>
+              </div>
+              <p class="small text-muted mb-1"><i class="bi bi-person me-1"></i> {{ order.customerName }}</p>
+              <p *ngIf="order.tableNumber" class="small fw-bold text-primary mb-1"><i class="bi bi-grid-3x3-gap me-1"></i> Table: {{ order.tableNumber }}</p>
+              <div class="border-top pt-2 mt-2">
+                <ul class="list-unstyled mb-2 small">
+                  <li *ngFor="let item of order.items" class="d-flex justify-content-between">
+                    <span>{{ item.quantity }}x {{ item.foodItemName }}</span>
+                    <span class="fw-bold">₹{{ item.subtotal }}</span>
+                  </li>
+                </ul>
+              </div>
+              <button class="btn btn-warning text-dark btn-sm w-100 mt-2 fw-bold" (click)="updateStatus(order.id, 'PREPARING')" [disabled]="actionLoadingId() === order.id">
+                <span *ngIf="actionLoadingId() === order.id" class="spinner-border spinner-border-sm me-1"></span>
+                <i *ngIf="actionLoadingId() !== order.id" class="bi bi-fire me-1"></i> Start Preparing
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREPARING ORDERS -->
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="card h-100 border-info shadow-sm">
+        <div class="card-header bg-info text-dark d-flex justify-content-between align-items-center">
+          <span class="fw-bold"><i class="bi bi-clock-history me-2"></i>Preparing</span>
+          <span class="badge bg-dark text-white fw-bold">{{ preparingOrders().length }}</span>
+        </div>
+        <div class="card-body overflow-auto p-2" style="max-height: 75vh;">
+          <div *ngIf="preparingOrders().length === 0" class="text-center text-muted py-4 small">
+            No orders being prepared
+          </div>
+          <div *ngFor="let order of preparingOrders()" class="card mb-3 border">
+            <div class="card-body p-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-bold">#{{ order.id }}</span>
+                <span class="badge bg-secondary">{{ order.orderType }}</span>
+              </div>
+              <p class="small text-muted mb-1"><i class="bi bi-person me-1"></i> {{ order.customerName }}</p>
+              <p *ngIf="order.tableNumber" class="small fw-bold text-primary mb-1"><i class="bi bi-grid-3x3-gap me-1"></i> Table: {{ order.tableNumber }}</p>
+              <div class="border-top pt-2 mt-2">
+                <ul class="list-unstyled mb-2 small">
+                  <li *ngFor="let item of order.items" class="d-flex justify-content-between">
+                    <span>{{ item.quantity }}x {{ item.foodItemName }}</span>
+                    <span class="fw-bold">₹{{ item.subtotal }}</span>
+                  </li>
+                </ul>
+              </div>
+              <button class="btn btn-info text-dark btn-sm w-100 mt-2 fw-bold" (click)="updateStatus(order.id, 'READY')" [disabled]="actionLoadingId() === order.id">
+                <span *ngIf="actionLoadingId() === order.id" class="spinner-border spinner-border-sm me-1"></span>
+                <i *ngIf="actionLoadingId() !== order.id" class="bi bi-bag-check me-1"></i> Mark Ready
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- READY ORDERS -->
+    <div class="col-12 col-md-6 col-lg-3">
+      <div class="card h-100 border-success shadow-sm">
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+          <span class="fw-bold"><i class="bi bi-check-all me-2"></i>Ready</span>
+          <span class="badge bg-white text-success fw-bold">{{ readyOrders().length }}</span>
+        </div>
+        <div class="card-body overflow-auto p-2" style="max-height: 75vh;">
+          <div *ngIf="readyOrders().length === 0" class="text-center text-muted py-4 small">
+            No ready orders
+          </div>
+          <div *ngFor="let order of readyOrders()" class="card mb-3 border">
+            <div class="card-body p-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-bold">#{{ order.id }}</span>
+                <span class="badge bg-success">{{ order.orderType }}</span>
+              </div>
+              <p class="small text-muted mb-1"><i class="bi bi-person me-1"></i> {{ order.customerName }}</p>
+              <p *ngIf="order.tableNumber" class="small fw-bold text-primary mb-1"><i class="bi bi-grid-3x3-gap me-1"></i> Table: {{ order.tableNumber }}</p>
+              <div class="border-top pt-2 mt-2">
+                <ul class="list-unstyled mb-2 small">
+                  <li *ngFor="let item of order.items" class="d-flex justify-content-between">
+                    <span>{{ item.quantity }}x {{ item.foodItemName }}</span>
+                    <span class="fw-bold">₹{{ item.subtotal }}</span>
+                  </li>
+                </ul>
+              </div>
+              <div class="badge bg-light text-dark w-100 py-2 border mt-2">
+                Status: {{ order.status }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
