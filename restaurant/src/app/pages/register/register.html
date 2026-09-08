@@ -48,9 +48,19 @@
                          class="form-control"
                          placeholder="First Name"
                          required
+                         pattern="^[a-zA-Z]+$"
                          [(ngModel)]="user.firstName"
                          #firstInput="ngModel"
                          [class.is-invalid]="firstInput.invalid && firstInput.touched">
+                  @if (firstInput.invalid && firstInput.touched) {
+                    <div class="invalid-feedback">
+                      @if (firstInput.errors?.['required']) {
+                        First name is required.
+                      } @else if (firstInput.errors?.['pattern']) {
+                        First name must contain alphabetic characters only.
+                      }
+                    </div>
+                  }
                 </div>
 
                 <div class="col-md-6 mb-3">
@@ -63,9 +73,19 @@
                          class="form-control"
                          placeholder="Last Name"
                          required
+                         pattern="^[a-zA-Z]+$"
                          [(ngModel)]="user.lastName"
                          #lastInput="ngModel"
                          [class.is-invalid]="lastInput.invalid && lastInput.touched">
+                  @if (lastInput.invalid && lastInput.touched) {
+                    <div class="invalid-feedback">
+                      @if (lastInput.errors?.['required']) {
+                        Last name is required.
+                      } @else if (lastInput.errors?.['pattern']) {
+                        Last name must contain alphabetic characters only.
+                      }
+                    </div>
+                  }
                 </div>
               </div>
 
@@ -80,9 +100,15 @@
                        placeholder="Enter Email"
                        required
                        email
+                       pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
                        [(ngModel)]="user.email"
                        #emailInput="ngModel"
                        [class.is-invalid]="emailInput.invalid && emailInput.touched">
+                @if (emailInput.invalid && emailInput.touched) {
+                  <div class="invalid-feedback">
+                    Please enter a valid email address.
+                  </div>
+                }
               </div>
 
               <div class="mb-3">
@@ -95,9 +121,16 @@
                        class="form-control"
                        placeholder="Enter Phone Number"
                        required
+                       pattern="^[0-9]{10}$"
+                       maxlength="10"
                        [(ngModel)]="user.phoneNumber"
                        #phoneInput="ngModel"
                        [class.is-invalid]="phoneInput.invalid && phoneInput.touched">
+                @if (phoneInput.invalid && phoneInput.touched) {
+                  <div class="invalid-feedback">
+                    Phone number must contain exactly 10 digits.
+                  </div>
+                }
               </div>
 
               <div class="mb-3">
@@ -151,12 +184,31 @@
                        class="form-control"
                        placeholder="Create Password"
                        required
+                       maxlength="12"
                        [(ngModel)]="user.password"
                        #passInput="ngModel"
-                       [class.is-invalid]="passInput.invalid && passInput.touched">
+                       [class.is-invalid]="(passInput.invalid || !isPasswordValid) && passInput.touched">
+
+                <div class="password-requirements mt-2">
+                  <div class="password-req" [class.satisfied]="isMinLength" [class.unsatisfied]="!isMinLength">
+                    <span class="req-icon">{{ isMinLength ? '✓' : '✗' }}</span> Minimum 4 characters
+                  </div>
+                  <div class="password-req" [class.satisfied]="isMaxLength" [class.unsatisfied]="!isMaxLength">
+                    <span class="req-icon">{{ isMaxLength ? '✓' : '✗' }}</span> Maximum 12 characters
+                  </div>
+                  <div class="password-req" [class.satisfied]="hasUppercase" [class.unsatisfied]="!hasUppercase">
+                    <span class="req-icon">{{ hasUppercase ? '✓' : '✗' }}</span> At least 1 uppercase letter
+                  </div>
+                  <div class="password-req" [class.satisfied]="hasNumber" [class.unsatisfied]="!hasNumber">
+                    <span class="req-icon">{{ hasNumber ? '✓' : '✗' }}</span> At least 1 number
+                  </div>
+                  <div class="password-req" [class.satisfied]="hasSpecialChar" [class.unsatisfied]="!hasSpecialChar">
+                    <span class="req-icon">{{ hasSpecialChar ? '✓' : '✗' }}</span> At least 1 special character
+                  </div>
+                </div>
               </div>
 
-              <button type="submit" class="btn btn-warning w-100 py-3" [disabled]="registerForm.invalid">
+              <button type="submit" class="btn btn-warning w-100 py-3" [disabled]="registerForm.invalid || !isPasswordValid">
                 Create Account
               </button>
             </form>

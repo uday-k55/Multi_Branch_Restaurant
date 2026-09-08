@@ -487,15 +487,64 @@ export class AdminComponent implements OnInit {
     this.employeeModalError = '';
   }
 
+  get isEmpMinLength(): boolean {
+    return !!this.employeeForm.password && this.employeeForm.password.length >= 4;
+  }
+
+  get isEmpMaxLength(): boolean {
+    return !!this.employeeForm.password && this.employeeForm.password.length <= 12;
+  }
+
+  get hasEmpUppercase(): boolean {
+    return /[A-Z]/.test(this.employeeForm.password || '');
+  }
+
+  get hasEmpNumber(): boolean {
+    return /[0-9]/.test(this.employeeForm.password || '');
+  }
+
+  get hasEmpSpecialChar(): boolean {
+    return /[^a-zA-Z0-9]/.test(this.employeeForm.password || '');
+  }
+
+  get isEmpPasswordValid(): boolean {
+    return this.isEmpMinLength && this.isEmpMaxLength && this.hasEmpUppercase && this.hasEmpNumber && this.hasEmpSpecialChar;
+  }
+
   saveEmployee(): void {
     this.clearMessages();
-    if (!this.employeeForm.firstName || !this.employeeForm.lastName || !this.employeeForm.email) {
-      this.employeeModalError = 'First name, last name, and email are required.';
+    if (!this.employeeForm.firstName || !/^[a-zA-Z]+$/.test(this.employeeForm.firstName)) {
+      this.employeeModalError = 'First name is required and must contain alphabetic characters only.';
       return;
     }
 
-    if (!this.isEditingEmployee && !this.employeeForm.password) {
-      this.employeeModalError = 'Password is required for new employee onboarding.';
+    if (!this.employeeForm.lastName || !/^[a-zA-Z]+$/.test(this.employeeForm.lastName)) {
+      this.employeeModalError = 'Last name is required and must contain alphabetic characters only.';
+      return;
+    }
+
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!this.employeeForm.email || !emailPattern.test(this.employeeForm.email)) {
+      this.employeeModalError = 'Please enter a valid email address.';
+      return;
+    }
+
+    if (this.employeeForm.phoneNumber && !/^[0-9]{10}$/.test(this.employeeForm.phoneNumber)) {
+      this.employeeModalError = 'Phone number must contain exactly 10 digits.';
+      return;
+    }
+
+    if (!this.isEditingEmployee) {
+      if (!this.employeeForm.password) {
+        this.employeeModalError = 'Password is required for new employee onboarding.';
+        return;
+      }
+      if (!this.isEmpPasswordValid) {
+        this.employeeModalError = 'Password does not meet all required criteria.';
+        return;
+      }
+    } else if (this.employeeForm.password && !this.isEmpPasswordValid) {
+      this.employeeModalError = 'Password does not meet all required criteria.';
       return;
     }
 

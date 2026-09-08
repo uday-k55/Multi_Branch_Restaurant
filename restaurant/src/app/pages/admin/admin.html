@@ -1003,27 +1003,93 @@
         <div *ngIf="employeeModalError" class="alert alert-danger py-2 px-3 small mb-3">
           <i class="fas fa-exclamation-triangle me-2"></i>{{ employeeModalError }}
         </div>
-        <form (ngSubmit)="saveEmployee()">
+        <form (ngSubmit)="saveEmployee()" #empForm="ngForm">
           <div class="row g-3">
             <div class="col-md-6">
               <label class="form-label text-warning fw-semibold">First Name *</label>
-              <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="employeeForm.firstName" name="firstName" required>
+              <input type="text"
+                     class="form-control bg-secondary text-white border-0"
+                     [(ngModel)]="employeeForm.firstName"
+                     name="firstName"
+                     required
+                     pattern="^[a-zA-Z]+$"
+                     #empFirstName="ngModel"
+                     [class.is-invalid]="empFirstName.invalid && empFirstName.touched">
+              <div *ngIf="empFirstName.invalid && empFirstName.touched" class="text-danger small mt-1">
+                First name must contain alphabetic characters only.
+              </div>
             </div>
             <div class="col-md-6">
               <label class="form-label text-warning fw-semibold">Last Name *</label>
-              <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="employeeForm.lastName" name="lastName" required>
+              <input type="text"
+                     class="form-control bg-secondary text-white border-0"
+                     [(ngModel)]="employeeForm.lastName"
+                     name="lastName"
+                     required
+                     pattern="^[a-zA-Z]+$"
+                     #empLastName="ngModel"
+                     [class.is-invalid]="empLastName.invalid && empLastName.touched">
+              <div *ngIf="empLastName.invalid && empLastName.touched" class="text-danger small mt-1">
+                Last name must contain alphabetic characters only.
+              </div>
             </div>
             <div class="col-md-6">
               <label class="form-label text-warning fw-semibold">Email *</label>
-              <input type="email" class="form-control bg-secondary text-white border-0" [(ngModel)]="employeeForm.email" name="email" required>
+              <input type="email"
+                     class="form-control bg-secondary text-white border-0"
+                     [(ngModel)]="employeeForm.email"
+                     name="email"
+                     required
+                     email
+                     pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                     #empEmail="ngModel"
+                     [class.is-invalid]="empEmail.invalid && empEmail.touched">
+              <div *ngIf="empEmail.invalid && empEmail.touched" class="text-danger small mt-1">
+                Please enter a valid email address.
+              </div>
             </div>
             <div class="col-md-6">
               <label class="form-label text-warning fw-semibold">Phone Number</label>
-              <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="employeeForm.phoneNumber" name="phoneNumber">
+              <input type="tel"
+                     class="form-control bg-secondary text-white border-0"
+                     [(ngModel)]="employeeForm.phoneNumber"
+                     name="phoneNumber"
+                     pattern="^[0-9]{10}$"
+                     maxlength="10"
+                     #empPhone="ngModel"
+                     [class.is-invalid]="empPhone.invalid && empPhone.touched">
+              <div *ngIf="empPhone.invalid && empPhone.touched" class="text-danger small mt-1">
+                Phone number must be exactly 10 digits.
+              </div>
             </div>
             <div class="col-md-6">
               <label class="form-label text-warning fw-semibold">Password *</label>
-              <input type="password" class="form-control bg-secondary text-white border-0" [(ngModel)]="employeeForm.password" name="password" [required]="!isEditingEmployee">
+              <input type="password"
+                     class="form-control bg-secondary text-white border-0"
+                     [(ngModel)]="employeeForm.password"
+                     name="password"
+                     [required]="!isEditingEmployee"
+                     maxlength="12"
+                     #empPass="ngModel"
+                     [class.is-invalid]="(!isEditingEmployee && !isEmpPasswordValid && empPass.touched) || (isEditingEmployee && employeeForm.password && !isEmpPasswordValid && empPass.touched)">
+
+              <div class="password-requirements mt-2" *ngIf="!isEditingEmployee || employeeForm.password">
+                <div class="password-req" [class.satisfied]="isEmpMinLength" [class.unsatisfied]="!isEmpMinLength">
+                  <span class="req-icon">{{ isEmpMinLength ? '✓' : '✗' }}</span> Minimum 4 characters
+                </div>
+                <div class="password-req" [class.satisfied]="isEmpMaxLength" [class.unsatisfied]="!isEmpMaxLength">
+                  <span class="req-icon">{{ isEmpMaxLength ? '✓' : '✗' }}</span> Maximum 12 characters
+                </div>
+                <div class="password-req" [class.satisfied]="hasEmpUppercase" [class.unsatisfied]="!hasEmpUppercase">
+                  <span class="req-icon">{{ hasEmpUppercase ? '✓' : '✗' }}</span> At least 1 uppercase letter
+                </div>
+                <div class="password-req" [class.satisfied]="hasEmpNumber" [class.unsatisfied]="!hasEmpNumber">
+                  <span class="req-icon">{{ hasEmpNumber ? '✓' : '✗' }}</span> At least 1 number
+                </div>
+                <div class="password-req" [class.satisfied]="hasEmpSpecialChar" [class.unsatisfied]="!hasEmpSpecialChar">
+                  <span class="req-icon">{{ hasEmpSpecialChar ? '✓' : '✗' }}</span> At least 1 special character
+                </div>
+              </div>
             </div>
             <div class="col-md-6">
               <label class="form-label text-warning fw-semibold">Role *</label>
@@ -1042,7 +1108,7 @@
           </div>
           <div class="modal-footer border-secondary mt-4 px-0 pb-0">
             <button type="button" class="btn btn-outline-secondary text-white" (click)="closeEmployeeModal()" [disabled]="isEmployeeSaving">Cancel</button>
-            <button type="submit" class="btn btn-warning fw-bold px-4" [disabled]="isEmployeeSaving">
+            <button type="submit" class="btn btn-warning fw-bold px-4" [disabled]="isEmployeeSaving || empForm.invalid || (!isEditingEmployee && !isEmpPasswordValid) || (isEditingEmployee && employeeForm.password && !isEmpPasswordValid)">
               <span *ngIf="isEmployeeSaving" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
               {{ isEmployeeSaving ? 'Saving...' : 'Save Employee' }}
             </button>

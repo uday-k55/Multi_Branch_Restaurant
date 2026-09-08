@@ -27,7 +27,35 @@ export class RegisterComponent {
   message = '';
   errorMessage = '';
 
+  get isMinLength(): boolean {
+    return !!this.user.password && this.user.password.length >= 4;
+  }
+
+  get isMaxLength(): boolean {
+    return !!this.user.password && this.user.password.length <= 12;
+  }
+
+  get hasUppercase(): boolean {
+    return /[A-Z]/.test(this.user.password || '');
+  }
+
+  get hasNumber(): boolean {
+    return /[0-9]/.test(this.user.password || '');
+  }
+
+  get hasSpecialChar(): boolean {
+    return /[^a-zA-Z0-9]/.test(this.user.password || '');
+  }
+
+  get isPasswordValid(): boolean {
+    return this.isMinLength && this.isMaxLength && this.hasUppercase && this.hasNumber && this.hasSpecialChar;
+  }
+
   onSubmit(): void {
+    if (!this.isPasswordValid) {
+      return;
+    }
+
     this.message = '';
     this.errorMessage = '';
 

@@ -100,3 +100,41 @@
     font-size: 32px;
   }
 }
+
+/* ================= PASSWORD REQUIREMENTS LIVE UI ================= */
+.password-requirements {
+  font-size: 0.85rem;
+  padding: 10px 12px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+}
+
+.password-req {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  transition: color 0.2s ease;
+}
+
+.password-req:last-child {
+  margin-bottom: 0;
+}
+
+.password-req.satisfied {
+  color: #2ea043;
+  font-weight: 600;
+}
+
+.password-req.unsatisfied {
+  color: #f85149;
+  font-weight: 400;
+}
+
+.req-icon {
+  font-weight: bold;
+  display: inline-block;
+  width: 14px;
+}
