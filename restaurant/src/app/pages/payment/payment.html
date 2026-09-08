@@ -44,7 +44,7 @@
               </div>
               <div class="d-flex justify-content-between align-items-center">
                 <span class="text-muted">Total Amount Due:</span>
-                <span class="fs-4 fw-bold text-success">${{ amount() | number:'1.2-2' }}</span>
+                <span class="fs-4 fw-bold text-success">₹{{ amount() | number:'1.2-2' }}</span>
               </div>
             </div>
 
@@ -80,7 +80,7 @@
                       @if (processing()) {
                         <span class="spinner-border spinner-border-sm me-1"></span> Authorizing Payment...
                       } @else {
-                        <i class="fas fa-lock me-2"></i> Pay ${{ amount() | number:'1.2-2' }} (Simulate Success)
+                        <i class="fas fa-lock me-2"></i> Pay ₹{{ amount() | number:'1.2-2' }} (Simulate Success)
                       }
                     </button>
 

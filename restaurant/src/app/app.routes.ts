@@ -19,23 +19,25 @@ import { MyReservationsComponent } from './pages/my-reservations/my-reservations
 import { adminGuard } from './guards/admin.guard';
 import { chefGuard } from './guards/chef.guard';
 import { employeeGuard } from './guards/employee.guard';
+import { customerGuard } from './guards/customer.guard';
+import { authGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
-  { path: '', component: HomeComponent },
-  { path: 'menu', component: MenuComponent },
-  { path: 'qr/:qrCode', component: QrOrderComponent },
-  { path: 'reservations', component: ReservationsComponent },
-  { path: 'my-reservations', component: MyReservationsComponent },
-  { path: 'cart', component: CheckoutComponent },
-  { path: 'checkout', component: CheckoutComponent },
-  { path: 'payment/:paymentId', component: PaymentComponent },
-  { path: 'order-success/:id', component: OrderSuccessComponent },
-  { path: 'my-orders', component: MyOrdersComponent },
-  { path: 'profile', component: ProfileComponent },
+  { path: '', component: HomeComponent, canActivate: [customerGuard] },
+  { path: 'menu', component: MenuComponent, canActivate: [customerGuard] },
+  { path: 'qr/:qrCode', component: QrOrderComponent, canActivate: [customerGuard] },
+  { path: 'reservations', component: ReservationsComponent, canActivate: [customerGuard] },
+  { path: 'my-reservations', component: MyReservationsComponent, canActivate: [customerGuard, authGuard] },
+  { path: 'cart', component: CheckoutComponent, canActivate: [customerGuard] },
+  { path: 'checkout', component: CheckoutComponent, canActivate: [customerGuard] },
+  { path: 'payment/:paymentId', component: PaymentComponent, canActivate: [customerGuard] },
+  { path: 'order-success/:id', component: OrderSuccessComponent, canActivate: [customerGuard] },
+  { path: 'my-orders', component: MyOrdersComponent, canActivate: [customerGuard, authGuard] },
+  { path: 'profile', component: ProfileComponent, canActivate: [customerGuard, authGuard] },
   { path: 'chef', component: ChefComponent, canActivate: [chefGuard] },
   { path: 'employee', component: EmployeeComponent, canActivate: [employeeGuard] },
-  { path: 'about', component: AboutComponent },
-  { path: 'contact', component: ContactComponent },
+  { path: 'about', component: AboutComponent, canActivate: [customerGuard] },
+  { path: 'contact', component: ContactComponent, canActivate: [customerGuard] },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   { path: 'admin', component: AdminComponent, canActivate: [adminGuard] },

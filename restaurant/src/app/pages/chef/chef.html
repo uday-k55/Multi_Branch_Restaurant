@@ -53,8 +53,9 @@
                   </li>
                 </ul>
               </div>
-              <button class="btn btn-danger btn-sm w-100 mt-2 fw-bold" (click)="updateStatus(order.id, 'CONFIRMED')">
-                <i class="bi bi-check-circle me-1"></i> Confirm Order
+              <button class="btn btn-danger btn-sm w-100 mt-2 fw-bold" (click)="updateStatus(order.id, 'CONFIRMED')" [disabled]="actionLoadingId() === order.id">
+                <span *ngIf="actionLoadingId() === order.id" class="spinner-border spinner-border-sm me-1"></span>
+                <i *ngIf="actionLoadingId() !== order.id" class="bi bi-check-circle me-1"></i> Confirm Order
               </button>
             </div>
           </div>
@@ -89,8 +90,9 @@
                   </li>
                 </ul>
               </div>
-              <button class="btn btn-warning text-dark btn-sm w-100 mt-2 fw-bold" (click)="updateStatus(order.id, 'PREPARING')">
-                <i class="bi bi-fire me-1"></i> Start Preparing
+              <button class="btn btn-warning text-dark btn-sm w-100 mt-2 fw-bold" (click)="updateStatus(order.id, 'PREPARING')" [disabled]="actionLoadingId() === order.id">
+                <span *ngIf="actionLoadingId() === order.id" class="spinner-border spinner-border-sm me-1"></span>
+                <i *ngIf="actionLoadingId() !== order.id" class="bi bi-fire me-1"></i> Start Preparing
               </button>
             </div>
           </div>
@@ -125,8 +127,9 @@
                   </li>
                 </ul>
               </div>
-              <button class="btn btn-info text-dark btn-sm w-100 mt-2 fw-bold" (click)="updateStatus(order.id, 'READY')">
-                <i class="bi bi-bag-check me-1"></i> Mark Ready
+              <button class="btn btn-info text-dark btn-sm w-100 mt-2 fw-bold" (click)="updateStatus(order.id, 'READY')" [disabled]="actionLoadingId() === order.id">
+                <span *ngIf="actionLoadingId() === order.id" class="spinner-border spinner-border-sm me-1"></span>
+                <i *ngIf="actionLoadingId() !== order.id" class="bi bi-bag-check me-1"></i> Mark Ready
               </button>
             </div>
           </div>

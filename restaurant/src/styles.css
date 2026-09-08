@@ -38,6 +38,75 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* ================= HIGH CONTRAST & VISIBILITY FIXES ================= */
+
+/* Muted and secondary text visibility on dark backgrounds */
+body.dark-theme .text-muted,
+.bg-dark .text-muted,
+.bg-secondary .text-muted,
+.card.bg-dark .text-muted,
+.card-body .text-muted,
+.card-text.text-muted,
+.table-dark .text-muted,
+.text-muted {
+  color: #cbd5e1 !important; /* High contrast light slate gray */
+  opacity: 1 !important;
+}
+
+body.light-theme .text-muted {
+  color: #334155 !important;
+}
+
+/* Form Select Dropdown Options Visibility Fix */
+select option {
+  background-color: #0F172B !important;
+  color: #ffffff !important;
+  padding: 8px;
+}
+
+body.light-theme select option {
+  background-color: #ffffff !important;
+  color: #0F172B !important;
+}
+
+/* Form controls contrast - ensure typed text is always dark on light inputs and white on dark inputs */
+.form-control,
+.form-select {
+  color: #0F172B;
+}
+
+.login-card .form-control,
+.login-card .form-select,
+.register-card .form-control,
+.register-card .form-select,
+.card:not(.bg-dark):not(.bg-secondary) .form-control,
+.card:not(.bg-dark):not(.bg-secondary) .form-select {
+  background-color: #ffffff !important;
+  color: #0F172B !important;
+  border: 1px solid #cbd5e1 !important;
+}
+
+.login-card .form-control:focus,
+.register-card .form-control:focus {
+  background-color: #ffffff !important;
+  color: #0F172B !important;
+  border-color: #FEA116 !important;
+}
+
+.bg-dark .form-control,
+.bg-dark .form-select,
+.bg-secondary .form-control,
+.bg-secondary .form-select,
+.modal-content.bg-dark .form-control,
+.modal-content.bg-dark .form-select {
+  color: #ffffff !important;
+}
+
+.form-control::placeholder,
+.form-select::placeholder {
+  color: #64748b !important;
+}
+
 /* Light Theme Component Overrides */
 body.light-theme .navbar {
   background-color: #ffffff !important;

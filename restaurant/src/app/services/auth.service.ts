@@ -72,20 +72,58 @@ export class AuthService {
     return localStorage.getItem('token');
   }
 
+  getRole(): string {
+    return this.userRoleSignal() || localStorage.getItem('userRole') || '';
+  }
+
+  getPermittedUrlForRole(role?: string): string {
+    const r = (role || this.getRole()).toUpperCase();
+    switch (r) {
+      case 'ADMIN':
+      case 'BRANCH_MANAGER':
+        return '/admin';
+      case 'CHEF':
+        return '/chef';
+      case 'EMPLOYEE':
+        return '/employee';
+      case 'CUSTOMER':
+      default:
+        return '/';
+    }
+  }
+
   isAdmin(): boolean {
-    return this.isLoggedInSignal() && this.userRoleSignal() === 'ADMIN';
+    return this.isLoggedInSignal() && this.userRoleSignal().toUpperCase() === 'ADMIN';
   }
 
   isBranchManager(): boolean {
-    return this.isLoggedInSignal() && (this.userRoleSignal() === 'BRANCH_MANAGER' || this.userRoleSignal() === 'ADMIN');
+    return this.isLoggedInSignal() && (this.userRoleSignal().toUpperCase() === 'BRANCH_MANAGER' || this.userRoleSignal().toUpperCase() === 'ADMIN');
+  }
+
+  isStrictBranchManager(): boolean {
+    return this.isLoggedInSignal() && this.userRoleSignal().toUpperCase() === 'BRANCH_MANAGER';
   }
 
   isChef(): boolean {
-    return this.isLoggedInSignal() && (this.userRoleSignal() === 'CHEF' || this.userRoleSignal() === 'ADMIN');
+    return this.isLoggedInSignal() && (this.userRoleSignal().toUpperCase() === 'CHEF' || this.userRoleSignal().toUpperCase() === 'ADMIN');
+  }
+
+  isStrictChef(): boolean {
+    return this.isLoggedInSignal() && this.userRoleSignal().toUpperCase() === 'CHEF';
   }
 
   isEmployee(): boolean {
-    return this.isLoggedInSignal() && (this.userRoleSignal() === 'EMPLOYEE' || this.userRoleSignal() === 'ADMIN');
+    return this.isLoggedInSignal() && (this.userRoleSignal().toUpperCase() === 'EMPLOYEE' || this.userRoleSignal().toUpperCase() === 'ADMIN');
+  }
+
+  isStrictEmployee(): boolean {
+    return this.isLoggedInSignal() && this.userRoleSignal().toUpperCase() === 'EMPLOYEE';
+  }
+
+  isCustomer(): boolean {
+    if (!this.isLoggedInSignal()) return true;
+    const r = this.userRoleSignal().toUpperCase();
+    return r === 'CUSTOMER' || r === '';
   }
 
   getBranchId(): number | null {

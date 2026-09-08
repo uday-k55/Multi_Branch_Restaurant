@@ -57,7 +57,14 @@ public class EmployeeController {
     public ResponseEntity<Void> deleteEmployee(
             @PathVariable Long id,
             Authentication authentication) {
-        String currentAdminEmail = authentication != null ? authentication.getName() : "";
+        String currentAdminEmail = "";
+        if (authentication != null) {
+            if (authentication.getPrincipal() instanceof User u) {
+                currentAdminEmail = u.getEmail();
+            } else {
+                currentAdminEmail = authentication.getName();
+            }
+        }
         employeeService.deleteEmployee(id, currentAdminEmail);
         return ResponseEntity.noContent().build();
     }

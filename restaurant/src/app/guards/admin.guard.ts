@@ -6,11 +6,17 @@ export const adminGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
+  if (!authService.isLoggedIn()) {
+    router.navigate(['/login']);
+    return false;
+  }
+
   if (authService.isAdmin() || authService.isBranchManager()) {
     return true;
   }
 
-  console.warn('Unauthorized access to admin/manager route, redirecting to login...');
-  router.navigate(['/login']);
+  const targetUrl = authService.getPermittedUrlForRole();
+  console.warn(`Unauthorized access to admin route by ${authService.getRole()}, redirecting to ${targetUrl}`);
+  router.navigate([targetUrl]);
   return false;
 };

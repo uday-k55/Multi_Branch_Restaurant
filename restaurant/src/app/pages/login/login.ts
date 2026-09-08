@@ -32,11 +32,8 @@ export class LoginComponent {
       .subscribe({
         next: (response) => {
           this.loading = false;
-          if (response.role === 'ADMIN') {
-            this.router.navigate(['/admin']);
-          } else {
-            this.router.navigate(['/']);
-          }
+          const targetUrl = this.authService.getPermittedUrlForRole(response.role);
+          this.router.navigate([targetUrl]);
         },
         error: (err) => {
           this.loading = false;

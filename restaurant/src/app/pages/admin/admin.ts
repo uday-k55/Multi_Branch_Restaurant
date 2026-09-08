@@ -58,6 +58,38 @@ export class AdminComponent implements OnInit {
     { id: 'settings', label: 'Settings', icon: 'fas fa-cog' }
   ];
 
+  get visibleSections() {
+    if (this.authService.isStrictBranchManager()) {
+      return this.sections.filter(s => s.id !== 'branches' && s.id !== 'users' && s.id !== 'settings');
+    }
+    return this.sections;
+  }
+
+  // Modal Loading & Specific Error States
+  isBranchSaving = false;
+  branchModalError = '';
+
+  isEmployeeSaving = false;
+  employeeModalError = '';
+
+  isCategorySaving = false;
+  categoryModalError = '';
+
+  isFoodItemSaving = false;
+  foodItemModalError = '';
+
+  isInventoryCategorySaving = false;
+  inventoryCategoryModalError = '';
+
+  isInventoryItemSaving = false;
+  inventoryItemModalError = '';
+
+  isStockAdjustSaving = false;
+  stockAdjustModalError = '';
+
+  isTableSaving = false;
+  tableModalError = '';
+
   // Active Selected Branch for branch-scoped management (Menu, Inventory, Tables, Reservations)
   selectedBranchId: number | null = null;
 
@@ -177,6 +209,10 @@ export class AdminComponent implements OnInit {
   }
 
   setSection(sectionId: string): void {
+    if (this.authService.isStrictBranchManager() && (sectionId === 'branches' || sectionId === 'users' || sectionId === 'settings')) {
+      this.activeSection = 'dashboard';
+      return;
+    }
     this.activeSection = sectionId;
     this.clearMessages();
 
@@ -209,17 +245,35 @@ export class AdminComponent implements OnInit {
 
   initBranchScopedSection(callback: () => void): void {
     // If Branch Manager, force assigned branch
-    if (this.authService.userRoleSignal() === 'BRANCH_MANAGER') {
+    if (this.authService.isStrictBranchManager()) {
       this.selectedBranchId = this.authService.getBranchId();
       callback();
       return;
     }
 
     // If Admin, ensure branch is selected
-    if (!this.selectedBranchId && this.branches.length > 0) {
-      this.selectedBranchId = this.branches[0].id;
+    if (this.selectedBranchId) {
+      callback();
+      return;
     }
-    callback();
+
+    if (this.branches.length > 0) {
+      this.selectedBranchId = this.branches[0].id;
+      callback();
+      return;
+    }
+
+    // Fetch branches first so selectedBranchId is populated for data queries
+    this.adminService.getBranches().subscribe({
+      next: (bList) => {
+        this.branches = bList;
+        if (bList.length > 0) {
+          this.selectedBranchId = bList[0].id;
+        }
+        callback();
+      },
+      error: () => callback()
+    });
   }
 
   onScopedBranchChange(branchId: number): void {
@@ -263,6 +317,8 @@ export class AdminComponent implements OnInit {
 
   openAddBranchModal(): void {
     this.clearMessages();
+    this.branchModalError = '';
+    this.isBranchSaving = false;
     this.isEditingBranch = false;
     this.branchForm = {
       name: '',
@@ -281,6 +337,8 @@ export class AdminComponent implements OnInit {
 
   openEditBranchModal(branch: Branch): void {
     this.clearMessages();
+    this.branchModalError = '';
+    this.isBranchSaving = false;
     this.isEditingBranch = true;
     this.branchForm = { ...branch };
     this.showBranchModal = true;
@@ -288,6 +346,8 @@ export class AdminComponent implements OnInit {
 
   closeBranchModal(): void {
     this.showBranchModal = false;
+    this.isBranchSaving = false;
+    this.branchModalError = '';
   }
 
   viewBranchDetails(branch: Branch): void {
@@ -301,37 +361,38 @@ export class AdminComponent implements OnInit {
   saveBranch(): void {
     this.clearMessages();
     if (!this.branchForm.name || !this.branchForm.state || !this.branchForm.district) {
-      this.errorMessage = 'Branch Name, State, and District are required.';
+      this.branchModalError = 'Branch Name, State, and District are required.';
       return;
     }
 
-    this.loading = true;
+    this.isBranchSaving = true;
+    this.branchModalError = '';
     if (this.isEditingBranch && this.branchForm.id) {
       this.adminService.updateBranch(this.branchForm.id, this.branchForm).subscribe({
         next: (res) => {
-          this.loading = false;
+          this.isBranchSaving = false;
           this.successMessage = `Branch "${res.name}" updated successfully!`;
           this.closeBranchModal();
           this.loadBranches();
           this.fetchDashboardStats();
         },
         error: (err) => {
-          this.loading = false;
-          this.errorMessage = err.error?.message || 'Failed to update branch.';
+          this.isBranchSaving = false;
+          this.branchModalError = err.error?.message || 'Failed to update branch.';
         }
       });
     } else {
       this.adminService.createBranch(this.branchForm).subscribe({
         next: (res) => {
-          this.loading = false;
+          this.isBranchSaving = false;
           this.successMessage = `Branch "${res.name}" created successfully!`;
           this.closeBranchModal();
           this.loadBranches();
           this.fetchDashboardStats();
         },
         error: (err) => {
-          this.loading = false;
-          this.errorMessage = err.error?.message || 'Failed to create branch.';
+          this.isBranchSaving = false;
+          this.branchModalError = err.error?.message || 'Failed to create branch.';
         }
       });
     }
@@ -382,6 +443,8 @@ export class AdminComponent implements OnInit {
 
   openAddEmployeeModal(defaultRole?: 'BRANCH_MANAGER' | 'CHEF' | 'EMPLOYEE'): void {
     this.clearMessages();
+    this.employeeModalError = '';
+    this.isEmployeeSaving = false;
     this.isEditingEmployee = false;
     this.editingEmployeeId = null;
     const firstBranchId = this.branches.length > 0 ? this.branches[0].id : 0;
@@ -401,6 +464,8 @@ export class AdminComponent implements OnInit {
 
   openEditEmployeeModal(emp: Employee): void {
     this.clearMessages();
+    this.employeeModalError = '';
+    this.isEmployeeSaving = false;
     this.isEditingEmployee = true;
     this.editingEmployeeId = emp.id;
     this.employeeForm = {
@@ -418,47 +483,50 @@ export class AdminComponent implements OnInit {
 
   closeEmployeeModal(): void {
     this.showEmployeeModal = false;
+    this.isEmployeeSaving = false;
+    this.employeeModalError = '';
   }
 
   saveEmployee(): void {
     this.clearMessages();
     if (!this.employeeForm.firstName || !this.employeeForm.lastName || !this.employeeForm.email) {
-      this.errorMessage = 'First name, last name, and email are required.';
+      this.employeeModalError = 'First name, last name, and email are required.';
       return;
     }
 
     if (!this.isEditingEmployee && !this.employeeForm.password) {
-      this.errorMessage = 'Password is required for new employee onboarding.';
+      this.employeeModalError = 'Password is required for new employee onboarding.';
       return;
     }
 
-    this.loading = true;
+    this.isEmployeeSaving = true;
+    this.employeeModalError = '';
     if (this.isEditingEmployee && this.editingEmployeeId) {
       this.adminService.updateEmployee(this.editingEmployeeId, this.employeeForm).subscribe({
         next: (res) => {
-          this.loading = false;
+          this.isEmployeeSaving = false;
           this.successMessage = `Employee "${res.firstName} ${res.lastName}" updated successfully!`;
           this.closeEmployeeModal();
           this.loadEmployees();
           this.fetchDashboardStats();
         },
         error: (err) => {
-          this.loading = false;
-          this.errorMessage = err.error?.message || 'Failed to update employee.';
+          this.isEmployeeSaving = false;
+          this.employeeModalError = err.error?.message || 'Failed to update employee.';
         }
       });
     } else {
       this.adminService.createEmployee(this.employeeForm).subscribe({
         next: (res) => {
-          this.loading = false;
+          this.isEmployeeSaving = false;
           this.successMessage = `Employee "${res.firstName} ${res.lastName}" (${res.role}) onboarded successfully!`;
           this.closeEmployeeModal();
           this.loadEmployees();
           this.fetchDashboardStats();
         },
         error: (err) => {
-          this.loading = false;
-          this.errorMessage = err.error?.message || 'Failed to create employee.';
+          this.isEmployeeSaving = false;
+          this.employeeModalError = err.error?.message || 'Failed to create employee.';
         }
       });
     }
@@ -503,6 +571,8 @@ export class AdminComponent implements OnInit {
 
   openAddCategoryModal(): void {
     this.clearMessages();
+    this.categoryModalError = '';
+    this.isCategorySaving = false;
     this.isEditingCategory = false;
     this.editingCategoryId = null;
     this.categoryForm = { name: '', description: '' };
@@ -511,43 +581,53 @@ export class AdminComponent implements OnInit {
 
   openEditCategoryModal(cat: MenuCategory): void {
     this.clearMessages();
+    this.categoryModalError = '';
+    this.isCategorySaving = false;
     this.isEditingCategory = true;
     this.editingCategoryId = cat.id;
     this.categoryForm = { name: cat.name, description: cat.description };
     this.showCategoryModal = true;
   }
 
+  closeCategoryModal(): void {
+    this.showCategoryModal = false;
+    this.isCategorySaving = false;
+    this.categoryModalError = '';
+  }
+
   saveCategory(): void {
+    this.clearMessages();
     if (!this.selectedBranchId || !this.categoryForm.name?.trim()) {
-      this.errorMessage = 'Category name is required.';
+      this.categoryModalError = 'Category name is required.';
       return;
     }
 
-    this.loading = true;
+    this.isCategorySaving = true;
+    this.categoryModalError = '';
     if (this.isEditingCategory && this.editingCategoryId) {
       this.adminService.updateCategory(this.editingCategoryId, this.categoryForm).subscribe({
         next: () => {
-          this.loading = false;
+          this.isCategorySaving = false;
           this.successMessage = 'Menu category updated successfully!';
           this.showCategoryModal = false;
           this.loadMenuSection();
         },
         error: (err) => {
-          this.loading = false;
-          this.errorMessage = err.error?.message || 'Failed to update category.';
+          this.isCategorySaving = false;
+          this.categoryModalError = err.error?.message || 'Failed to update category.';
         }
       });
     } else {
       this.adminService.addCategory(this.selectedBranchId, this.categoryForm).subscribe({
         next: () => {
-          this.loading = false;
+          this.isCategorySaving = false;
           this.successMessage = 'Menu category created successfully!';
           this.showCategoryModal = false;
           this.loadMenuSection();
         },
         error: (err) => {
-          this.loading = false;
-          this.errorMessage = err.error?.message || 'Failed to create category.';
+          this.isCategorySaving = false;
+          this.categoryModalError = err.error?.message || 'Failed to create category.';
         }
       });
     }
@@ -569,6 +649,8 @@ export class AdminComponent implements OnInit {
 
   openAddFoodItemModal(): void {
     this.clearMessages();
+    this.foodItemModalError = '';
+    this.isFoodItemSaving = false;
     this.isEditingFoodItem = false;
     this.editingFoodItemId = null;
     const defaultCatId = this.menuCategories.length > 0 ? this.menuCategories[0].id : 0;
@@ -587,43 +669,53 @@ export class AdminComponent implements OnInit {
 
   openEditFoodItemModal(item: FoodItemAdmin): void {
     this.clearMessages();
+    this.foodItemModalError = '';
+    this.isFoodItemSaving = false;
     this.isEditingFoodItem = true;
     this.editingFoodItemId = item.id;
     this.foodItemForm = { ...item };
     this.showFoodItemModal = true;
   }
 
+  closeFoodItemModal(): void {
+    this.showFoodItemModal = false;
+    this.isFoodItemSaving = false;
+    this.foodItemModalError = '';
+  }
+
   saveFoodItem(): void {
+    this.clearMessages();
     if (!this.selectedBranchId || !this.foodItemForm.name?.trim() || !this.foodItemForm.categoryId) {
-      this.errorMessage = 'Dish Name, Category, and Price are required.';
+      this.foodItemModalError = 'Dish Name, Category, and Price are required.';
       return;
     }
 
-    this.loading = true;
+    this.isFoodItemSaving = true;
+    this.foodItemModalError = '';
     if (this.isEditingFoodItem && this.editingFoodItemId) {
       this.adminService.updateFoodItem(this.editingFoodItemId, this.foodItemForm).subscribe({
         next: () => {
-          this.loading = false;
+          this.isFoodItemSaving = false;
           this.successMessage = 'Food item updated successfully!';
           this.showFoodItemModal = false;
           this.loadMenuSection();
         },
         error: (err) => {
-          this.loading = false;
-          this.errorMessage = err.error?.message || 'Failed to update food item.';
+          this.isFoodItemSaving = false;
+          this.foodItemModalError = err.error?.message || 'Failed to update food item.';
         }
       });
     } else {
       this.adminService.addFoodItem(this.selectedBranchId, this.foodItemForm.categoryId, this.foodItemForm).subscribe({
         next: () => {
-          this.loading = false;
+          this.isFoodItemSaving = false;
           this.successMessage = 'Food item created successfully!';
           this.showFoodItemModal = false;
           this.loadMenuSection();
         },
         error: (err) => {
-          this.loading = false;
-          this.errorMessage = err.error?.message || 'Failed to add food item.';
+          this.isFoodItemSaving = false;
+          this.foodItemModalError = err.error?.message || 'Failed to add food item.';
         }
       });
     }
@@ -692,33 +784,45 @@ export class AdminComponent implements OnInit {
 
   openAddInventoryCategoryModal(): void {
     this.clearMessages();
+    this.inventoryCategoryModalError = '';
+    this.isInventoryCategorySaving = false;
     this.inventoryCategoryForm = { name: '', description: '' };
     this.showInventoryCategoryModal = true;
   }
 
+  closeInventoryCategoryModal(): void {
+    this.showInventoryCategoryModal = false;
+    this.isInventoryCategorySaving = false;
+    this.inventoryCategoryModalError = '';
+  }
+
   saveInventoryCategory(): void {
+    this.clearMessages();
     if (!this.selectedBranchId || !this.inventoryCategoryForm.name?.trim()) {
-      this.errorMessage = 'Inventory category name is required.';
+      this.inventoryCategoryModalError = 'Inventory category name is required.';
       return;
     }
 
-    this.loading = true;
+    this.isInventoryCategorySaving = true;
+    this.inventoryCategoryModalError = '';
     this.adminService.addInventoryCategory(this.selectedBranchId, this.inventoryCategoryForm).subscribe({
       next: () => {
-        this.loading = false;
+        this.isInventoryCategorySaving = false;
         this.successMessage = 'Inventory category created successfully!';
         this.showInventoryCategoryModal = false;
         this.loadInventorySection();
       },
       error: (err) => {
-        this.loading = false;
-        this.errorMessage = err.error?.message || 'Failed to create inventory category.';
+        this.isInventoryCategorySaving = false;
+        this.inventoryCategoryModalError = err.error?.message || 'Failed to create inventory category.';
       }
     });
   }
 
   openAddInventoryItemModal(): void {
     this.clearMessages();
+    this.inventoryItemModalError = '';
+    this.isInventoryItemSaving = false;
     this.isEditingInventoryItem = false;
     this.editingInventoryItemId = null;
     const defaultCatId = this.inventoryCategories.length > 0 ? this.inventoryCategories[0].id : 0;
@@ -736,43 +840,53 @@ export class AdminComponent implements OnInit {
 
   openEditInventoryItemModal(item: InventoryItemAdmin): void {
     this.clearMessages();
+    this.inventoryItemModalError = '';
+    this.isInventoryItemSaving = false;
     this.isEditingInventoryItem = true;
     this.editingInventoryItemId = item.id;
     this.inventoryItemForm = { ...item };
     this.showInventoryItemModal = true;
   }
 
+  closeInventoryItemModal(): void {
+    this.showInventoryItemModal = false;
+    this.isInventoryItemSaving = false;
+    this.inventoryItemModalError = '';
+  }
+
   saveInventoryItem(): void {
+    this.clearMessages();
     if (!this.selectedBranchId || !this.inventoryItemForm.name?.trim() || !this.inventoryItemForm.categoryId) {
-      this.errorMessage = 'Item Name, Category, and Unit are required.';
+      this.inventoryItemModalError = 'Item Name, Category, and Unit are required.';
       return;
     }
 
-    this.loading = true;
+    this.isInventoryItemSaving = true;
+    this.inventoryItemModalError = '';
     if (this.isEditingInventoryItem && this.editingInventoryItemId) {
       this.adminService.updateInventoryItem(this.editingInventoryItemId, this.inventoryItemForm).subscribe({
         next: () => {
-          this.loading = false;
+          this.isInventoryItemSaving = false;
           this.successMessage = 'Inventory item updated successfully!';
           this.showInventoryItemModal = false;
           this.loadInventorySection();
         },
         error: (err) => {
-          this.loading = false;
-          this.errorMessage = err.error?.message || 'Failed to update inventory item.';
+          this.isInventoryItemSaving = false;
+          this.inventoryItemModalError = err.error?.message || 'Failed to update inventory item.';
         }
       });
     } else {
       this.adminService.addInventoryItem(this.selectedBranchId, this.inventoryItemForm.categoryId, this.inventoryItemForm).subscribe({
         next: () => {
-          this.loading = false;
+          this.isInventoryItemSaving = false;
           this.successMessage = 'Inventory item created successfully!';
           this.showInventoryItemModal = false;
           this.loadInventorySection();
         },
         error: (err) => {
-          this.loading = false;
-          this.errorMessage = err.error?.message || 'Failed to add inventory item.';
+          this.isInventoryItemSaving = false;
+          this.inventoryItemModalError = err.error?.message || 'Failed to add inventory item.';
         }
       });
     }
@@ -780,6 +894,8 @@ export class AdminComponent implements OnInit {
 
   openStockAdjustModal(item: InventoryItemAdmin): void {
     this.clearMessages();
+    this.stockAdjustModalError = '';
+    this.isStockAdjustSaving = false;
     this.selectedItemForStock = item;
     this.stockAdjustForm = {
       quantity: 1,
@@ -791,20 +907,28 @@ export class AdminComponent implements OnInit {
     this.showStockAdjustModal = true;
   }
 
+  closeStockAdjustModal(): void {
+    this.showStockAdjustModal = false;
+    this.isStockAdjustSaving = false;
+    this.stockAdjustModalError = '';
+  }
+
   saveStockAdjustment(): void {
+    this.clearMessages();
     if (!this.selectedItemForStock) return;
 
-    this.loading = true;
+    this.isStockAdjustSaving = true;
+    this.stockAdjustModalError = '';
     this.adminService.adjustStock(this.selectedItemForStock.id, this.stockAdjustForm).subscribe({
       next: () => {
-        this.loading = false;
+        this.isStockAdjustSaving = false;
         this.successMessage = `Stock adjusted for "${this.selectedItemForStock?.name}" (${this.stockAdjustForm.transactionType}: ${this.stockAdjustForm.quantity} ${this.selectedItemForStock?.unit})`;
         this.showStockAdjustModal = false;
         this.loadInventorySection();
       },
       error: (err) => {
-        this.loading = false;
-        this.errorMessage = err.error?.message || 'Failed to adjust stock.';
+        this.isStockAdjustSaving = false;
+        this.stockAdjustModalError = err.error?.message || 'Failed to adjust stock.';
       }
     });
   }
@@ -847,6 +971,8 @@ export class AdminComponent implements OnInit {
 
   openAddTableModal(): void {
     this.clearMessages();
+    this.tableModalError = '';
+    this.isTableSaving = false;
     this.isEditingTable = false;
     this.editingTableId = null;
     this.tableForm = {
@@ -859,43 +985,53 @@ export class AdminComponent implements OnInit {
 
   openEditTableModal(table: TableAdmin): void {
     this.clearMessages();
+    this.tableModalError = '';
+    this.isTableSaving = false;
     this.isEditingTable = true;
     this.editingTableId = table.id;
     this.tableForm = { ...table };
     this.showTableModal = true;
   }
 
+  closeTableModal(): void {
+    this.showTableModal = false;
+    this.isTableSaving = false;
+    this.tableModalError = '';
+  }
+
   saveTable(): void {
+    this.clearMessages();
     if (!this.selectedBranchId || !this.tableForm.tableNumber?.trim()) {
-      this.errorMessage = 'Table number is required.';
+      this.tableModalError = 'Table number is required.';
       return;
     }
 
-    this.loading = true;
+    this.isTableSaving = true;
+    this.tableModalError = '';
     if (this.isEditingTable && this.editingTableId) {
       this.adminService.updateTable(this.editingTableId, this.tableForm).subscribe({
         next: () => {
-          this.loading = false;
+          this.isTableSaving = false;
           this.successMessage = 'Table updated successfully!';
           this.showTableModal = false;
           this.loadReservationsSection();
         },
         error: (err) => {
-          this.loading = false;
-          this.errorMessage = err.error?.message || 'Failed to update table.';
+          this.isTableSaving = false;
+          this.tableModalError = err.error?.message || 'Failed to update table.';
         }
       });
     } else {
       this.adminService.addTable(this.selectedBranchId, this.tableForm).subscribe({
         next: () => {
-          this.loading = false;
+          this.isTableSaving = false;
           this.successMessage = 'Table created successfully!';
           this.showTableModal = false;
           this.loadReservationsSection();
         },
         error: (err) => {
-          this.loading = false;
-          this.errorMessage = err.error?.message || 'Failed to add table.';
+          this.isTableSaving = false;
+          this.tableModalError = err.error?.message || 'Failed to add table.';
         }
       });
     }

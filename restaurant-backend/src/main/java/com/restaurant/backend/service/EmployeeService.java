@@ -16,7 +16,10 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Service
+@Transactional
 public class EmployeeService {
 
     @Autowired
@@ -157,7 +160,11 @@ public class EmployeeService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete currently authenticated admin account");
         }
 
-        userRepository.delete(user);
+        try {
+            userRepository.delete(user);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot delete user with associated data: " + e.getMessage());
+        }
     }
 
     private EmployeeDTO mapToDTO(User user) {

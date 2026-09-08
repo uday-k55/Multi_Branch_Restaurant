@@ -82,12 +82,17 @@ export class ChefComponent implements OnInit, OnDestroy {
     });
   }
 
+  actionLoadingId = signal<number | null>(null);
+
   updateStatus(orderId: number, nextStatus: string): void {
+    this.actionLoadingId.set(orderId);
     this.http.patch<Order>(`http://localhost:8080/api/orders/${orderId}/status?status=${nextStatus}`, {}).subscribe({
       next: () => {
+        this.actionLoadingId.set(null);
         this.loadOrders();
       },
       error: (err) => {
+        this.actionLoadingId.set(null);
         alert(err.error?.message || 'Failed to update order status');
       }
     });

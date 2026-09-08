@@ -6,11 +6,17 @@ export const employeeGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
+  if (!authService.isLoggedIn()) {
+    router.navigate(['/login']);
+    return false;
+  }
+
   if (authService.isEmployee()) {
     return true;
   }
 
-  console.warn('Unauthorized access to employee route, redirecting to login...');
-  router.navigate(['/login']);
+  const targetUrl = authService.getPermittedUrlForRole();
+  console.warn(`Unauthorized access to employee route by ${authService.getRole()}, redirecting to ${targetUrl}`);
+  router.navigate([targetUrl]);
   return false;
 };

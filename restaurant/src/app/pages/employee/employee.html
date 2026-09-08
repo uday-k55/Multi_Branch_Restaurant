@@ -82,8 +82,9 @@
                 </ul>
               </div>
 
-              <button class="btn btn-primary w-100 mt-2 fw-bold" (click)="acceptDelivery(order.id)">
-                <i class="bi bi-hand-thumbs-up me-1"></i> Accept Delivery
+              <button class="btn btn-primary w-100 mt-2 fw-bold" (click)="acceptDelivery(order.id)" [disabled]="actionLoadingId() === order.id">
+                <span *ngIf="actionLoadingId() === order.id" class="spinner-border spinner-border-sm me-1"></span>
+                <i *ngIf="actionLoadingId() !== order.id" class="bi bi-hand-thumbs-up me-1"></i> Accept Delivery
               </button>
             </div>
           </div>
@@ -128,14 +129,17 @@
 
               <!-- Workflow action buttons -->
               <div class="mt-3">
-                <button *ngIf="order.status === 'ACCEPTED'" class="btn btn-warning text-dark w-100 fw-bold" (click)="updateStatus(order.id, 'PICKED_UP')">
-                  <i class="bi bi-bag-check me-1"></i> Mark Picked Up
+                <button *ngIf="order.status === 'ACCEPTED'" class="btn btn-warning text-dark w-100 fw-bold" (click)="updateStatus(order.id, 'PICKED_UP')" [disabled]="actionLoadingId() === order.id">
+                  <span *ngIf="actionLoadingId() === order.id" class="spinner-border spinner-border-sm me-1"></span>
+                  <i *ngIf="actionLoadingId() !== order.id" class="bi bi-bag-check me-1"></i> Mark Picked Up
                 </button>
-                <button *ngIf="order.status === 'PICKED_UP'" class="btn btn-primary w-100 fw-bold" (click)="updateStatus(order.id, 'OUT_FOR_DELIVERY')">
-                  <i class="bi bi-bicycle me-1"></i> Start Delivery (Out For Delivery)
+                <button *ngIf="order.status === 'PICKED_UP'" class="btn btn-primary w-100 fw-bold" (click)="updateStatus(order.id, 'OUT_FOR_DELIVERY')" [disabled]="actionLoadingId() === order.id">
+                  <span *ngIf="actionLoadingId() === order.id" class="spinner-border spinner-border-sm me-1"></span>
+                  <i *ngIf="actionLoadingId() !== order.id" class="bi bi-bicycle me-1"></i> Start Delivery (Out For Delivery)
                 </button>
-                <button *ngIf="order.status === 'OUT_FOR_DELIVERY'" class="btn btn-success w-100 fw-bold" (click)="updateStatus(order.id, 'DELIVERED')">
-                  <i class="bi bi-check-circle me-1"></i> Mark Delivered
+                <button *ngIf="order.status === 'OUT_FOR_DELIVERY'" class="btn btn-success w-100 fw-bold" (click)="updateStatus(order.id, 'DELIVERED')" [disabled]="actionLoadingId() === order.id">
+                  <span *ngIf="actionLoadingId() === order.id" class="spinner-border spinner-border-sm me-1"></span>
+                  <i *ngIf="actionLoadingId() !== order.id" class="bi bi-check-circle me-1"></i> Mark Delivered
                 </button>
                 <div *ngIf="order.status === 'DELIVERED' || order.status === 'COMPLETED'" class="badge bg-success text-white w-100 py-2 fs-6">
                   <i class="bi bi-check-all me-1"></i> Delivered Successfully

@@ -90,14 +90,18 @@ export class EmployeeComponent implements OnInit, OnDestroy {
     });
   }
 
+  actionLoadingId = signal<number | null>(null);
+
   acceptDelivery(orderId: number): void {
+    this.actionLoadingId.set(orderId);
     this.http.post<Order>(`http://localhost:8080/api/orders/${orderId}/accept-delivery`, {}).subscribe({
       next: () => {
-        alert('Delivery accepted successfully!');
+        this.actionLoadingId.set(null);
         this.activeTab.set('my');
         this.loadAllData();
       },
       error: (err) => {
+        this.actionLoadingId.set(null);
         alert(err.error?.message || 'Failed to accept delivery. It may have already been accepted by another employee.');
         this.loadAllData();
       }
@@ -105,11 +109,14 @@ export class EmployeeComponent implements OnInit, OnDestroy {
   }
 
   updateStatus(orderId: number, nextStatus: string): void {
+    this.actionLoadingId.set(orderId);
     this.http.patch<Order>(`http://localhost:8080/api/orders/${orderId}/status?status=${nextStatus}`, {}).subscribe({
       next: () => {
+        this.actionLoadingId.set(null);
         this.loadAllData();
       },
       error: (err) => {
+        this.actionLoadingId.set(null);
         alert(err.error?.message || 'Failed to update delivery status');
       }
     });
