@@ -3,6 +3,7 @@ package com.restaurant.backend.controller;
 import com.restaurant.backend.dto.CreateEmployeeRequestDTO;
 import com.restaurant.backend.dto.EmployeeDTO;
 import com.restaurant.backend.model.Role;
+import com.restaurant.backend.model.User;
 import com.restaurant.backend.service.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,7 +22,7 @@ public class EmployeeController {
     private EmployeeService employeeService;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_MANAGER')")
     public ResponseEntity<List<EmployeeDTO>> getAllEmployees(
             @RequestParam(required = false) Long branchId,
             @RequestParam(required = false) Role role) {
@@ -30,7 +31,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_MANAGER')")
     public ResponseEntity<EmployeeDTO> getEmployeeById(@PathVariable Long id) {
         EmployeeDTO employee = employeeService.getEmployeeById(id);
         return ResponseEntity.ok(employee);

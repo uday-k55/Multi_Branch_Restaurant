@@ -82,6 +82,16 @@ public class NotificationService {
             employeeNotif.setMessage("New delivery available");
             employeeNotif.setCreatedAt(LocalDateTime.now());
             notificationRepository.save(employeeNotif);
+        } else if (order.getOrderType() == OrderType.DINE_IN) {
+            String tableNum = order.getTable() != null ? order.getTable().getTableNumber() : "N/A";
+            Notification employeeNotif = new Notification();
+            employeeNotif.setRecipientRole(Role.EMPLOYEE);
+            employeeNotif.setBranch(order.getBranch());
+            employeeNotif.setOrderId(order.getId());
+            employeeNotif.setNotificationType(NotificationType.EMPLOYEE_DINE_IN_READY);
+            employeeNotif.setMessage("Food Ready to Serve - Table No: " + tableNum + " (Order #" + order.getId() + ")");
+            employeeNotif.setCreatedAt(LocalDateTime.now());
+            notificationRepository.save(employeeNotif);
         }
     }
 

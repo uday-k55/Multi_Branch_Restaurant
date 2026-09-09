@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService, UserProfile } from '../../services/auth.service';
+import { LocationPickerModalComponent, LocationSelectedResult } from '../../components/location-picker-modal/location-picker-modal';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LocationPickerModalComponent],
   templateUrl: './profile.html',
   styleUrl: './profile.css'
 })
@@ -25,6 +26,29 @@ export class ProfileComponent implements OnInit {
   lastName = signal<string>('');
   phoneNumber = signal<string>('');
   gender = signal<string>('male');
+  address = signal<string>(localStorage.getItem('userAddress') || '');
+  latitude = signal<number | null>(null);
+  longitude = signal<number | null>(null);
+  gettingLocation = signal<boolean>(false);
+  locationError = signal<string>('');
+  showMapPicker = signal<boolean>(false);
+
+  openMapPicker(): void {
+    this.locationError.set('');
+    this.showMapPicker.set(true);
+  }
+
+  closeMapPicker(): void {
+    this.showMapPicker.set(false);
+  }
+
+  onLocationChosenFromMap(result: LocationSelectedResult): void {
+    this.showMapPicker.set(false);
+    this.latitude.set(result.lat);
+    this.longitude.set(result.lng);
+    this.address.set(result.address);
+    localStorage.setItem('userAddress', result.address);
+  }
 
   successMsg = signal<string>('');
   errorMsg = signal<string>('');
@@ -63,6 +87,46 @@ export class ProfileComponent implements OnInit {
   clearMessages(): void {
     this.successMsg.set('');
     this.errorMsg.set('');
+    this.locationError.set('');
+  }
+
+  useCurrentLocation(): void {
+    this.locationError.set('');
+    if (!navigator.geolocation) {
+      this.locationError.set('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    this.gettingLocation.set(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        this.latitude.set(lat);
+        this.longitude.set(lon);
+
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+          .then(res => res.json())
+          .then(data => {
+            this.gettingLocation.set(false);
+            if (data && data.display_name) {
+              this.address.set(data.display_name);
+              localStorage.setItem('userAddress', data.display_name);
+            }
+          })
+          .catch(() => {
+            this.gettingLocation.set(false);
+            const addr = `Current Location (${lat.toFixed(4)}, ${lon.toFixed(4)})`;
+            this.address.set(addr);
+            localStorage.setItem('userAddress', addr);
+          });
+      },
+      (error) => {
+        this.gettingLocation.set(false);
+        this.locationError.set('Unable to retrieve your current location. Please enter your address manually.');
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
   }
 
   saveProfile(): void {
@@ -70,6 +134,10 @@ export class ProfileComponent implements OnInit {
     if (!this.firstName().trim() || !this.lastName().trim()) {
       this.errorMsg.set('First name and last name are required.');
       return;
+    }
+
+    if (this.address().trim()) {
+      localStorage.setItem('userAddress', this.address().trim());
     }
 
     this.saving.set(true);

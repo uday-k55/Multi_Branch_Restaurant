@@ -280,14 +280,96 @@ public class OrderService {
         return mapToDTO(updated);
     }
 
+    @Transactional
+    public OrderDTO cancelOrder(User currentUser, Long orderId) {
+        if (currentUser == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User must be logged in");
+        }
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with ID: " + orderId));
+
+        if (currentUser.getRole() != Role.ADMIN && (order.getUser() == null || !order.getUser().getId().equals(currentUser.getId()))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied: You can only cancel your own orders");
+        }
+
+        if (order.getStatus() != OrderStatus.PLACED && order.getStatus() != OrderStatus.CONFIRMED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order cannot be cancelled in status: " + order.getStatus());
+        }
+
+        order.setStatus(OrderStatus.CANCELLED);
+        Order updated = orderRepository.save(order);
+        if (notificationService != null) {
+            notificationService.onOrderStatusChanged(updated.getId(), OrderStatus.CANCELLED);
+        }
+        return mapToDTO(updated);
+    }
+
+    @Transactional
+    public OrderDTO updateOrderItems(User currentUser, Long orderId, UpdateOrderRequestDTO dto) {
+        if (currentUser == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User must be logged in");
+        }
+
+        if (dto == null || dto.getItems() == null || dto.getItems().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order must contain at least one item");
+        }
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found with ID: " + orderId));
+
+        if (currentUser.getRole() != Role.ADMIN && (order.getUser() == null || !order.getUser().getId().equals(currentUser.getId()))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied: You can only edit your own orders");
+        }
+
+        if (order.getStatus() != OrderStatus.PLACED && order.getStatus() != OrderStatus.CONFIRMED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order cannot be edited once preparation has started (current status: " + order.getStatus() + ")");
+        }
+
+        order.getItems().clear();
+        double totalSubtotal = 0.0;
+
+        for (OrderItemRequestDTO itemReq : dto.getItems()) {
+            if (itemReq.getQuantity() == null || itemReq.getQuantity() <= 0) {
+                continue;
+            }
+
+            FoodItem foodItem = foodItemRepository.findById(itemReq.getFoodItemId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Food item not found with ID: " + itemReq.getFoodItemId()));
+
+            double unitPrice = foodItem.getPrice();
+            double itemSubtotal = unitPrice * itemReq.getQuantity();
+
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(order);
+            orderItem.setFoodItem(foodItem);
+            orderItem.setQuantity(itemReq.getQuantity());
+            orderItem.setPricePerUnit(unitPrice);
+            orderItem.setSubtotal(itemSubtotal);
+
+            order.getItems().add(orderItem);
+            totalSubtotal += itemSubtotal;
+        }
+
+        if (order.getItems().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order must have at least one valid item with quantity > 0");
+        }
+
+        order.setSubtotal(totalSubtotal);
+        order.setTotalAmount(totalSubtotal);
+
+        Order saved = orderRepository.save(order);
+        return mapToDTO(saved);
+    }
+
     private boolean isValidStatusTransition(OrderStatus current, OrderStatus next, OrderType orderType) {
         if (current == next) return true;
 
         switch (current) {
             case PLACED:
-                return next == OrderStatus.CONFIRMED || next == OrderStatus.PREPARING;
+                return next == OrderStatus.CONFIRMED || next == OrderStatus.PREPARING || next == OrderStatus.CANCELLED;
             case CONFIRMED:
-                return next == OrderStatus.PREPARING;
+                return next == OrderStatus.PREPARING || next == OrderStatus.CANCELLED;
             case PREPARING:
                 return next == OrderStatus.READY || next == OrderStatus.AVAILABLE_FOR_DELIVERY;
             case READY:
@@ -303,6 +385,7 @@ public class OrderService {
             case DELIVERED:
                 return next == OrderStatus.COMPLETED;
             case COMPLETED:
+            case CANCELLED:
                 return false;
             default:
                 return false;

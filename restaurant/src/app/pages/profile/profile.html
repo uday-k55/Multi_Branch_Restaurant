@@ -100,6 +100,11 @@
                   <label class="text-muted small d-block">Assigned Role (Read-only)</label>
                   <span class="text-white fs-6">{{ profile()?.role }}</span>
                 </div>
+
+                <div class="col-12" *ngIf="address()">
+                  <label class="text-muted small d-block">Address</label>
+                  <span class="text-white fs-6"><i class="fas fa-map-marker-alt me-1 text-warning"></i>{{ address() }}</span>
+                </div>
               </div>
             } @else {
               <!-- Edit Form -->
@@ -127,6 +132,28 @@
                       <option value="female">Female</option>
                       <option value="other">Other</option>
                     </select>
+                  </div>
+
+                  <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
+                      <label class="form-label text-warning fw-semibold mb-0">Address</label>
+                      <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-warning btn-sm py-0 px-2" (click)="useCurrentLocation()" [disabled]="gettingLocation()">
+                          @if (gettingLocation()) {
+                            <span class="spinner-border spinner-border-sm me-1"></span> Locating...
+                          } @else {
+                            📍 Use My Current Location
+                          }
+                        </button>
+                        <button type="button" class="btn btn-outline-warning btn-sm py-0 px-2" (click)="openMapPicker()">
+                          🗺️ Choose Location from Map
+                        </button>
+                      </div>
+                    </div>
+                    <input type="text" class="form-control bg-dark text-white border-secondary" [ngModel]="address()" (ngModelChange)="address.set($event)" name="address" placeholder="Enter street address or choose from map">
+                    @if (locationError()) {
+                      <small class="text-danger mt-1 d-block"><i class="fas fa-exclamation-circle me-1"></i>{{ locationError() }}</small>
+                    }
                   </div>
 
                   <!-- Read-only Security Notice -->
@@ -183,4 +210,13 @@
       </div>
     </div>
   </div>
+  <app-location-picker-modal
+    [isOpen]="showMapPicker()"
+    [modalTitle]="'🗺️ Choose Address from Map'"
+    [initialLat]="latitude()"
+    [initialLng]="longitude()"
+    [initialAddress]="address()"
+    (confirmed)="onLocationChosenFromMap($event)"
+    (cancelled)="closeMapPicker()">
+  </app-location-picker-modal>
 </section>

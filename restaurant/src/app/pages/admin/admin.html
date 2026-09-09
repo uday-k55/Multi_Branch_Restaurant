@@ -963,13 +963,17 @@
               <label class="form-label text-warning fw-semibold">Phone</label>
               <input type="text" class="form-control bg-secondary text-white border-0" [(ngModel)]="branchForm.phone" name="phone">
             </div>
-            <div class="col-md-3">
-              <label class="form-label text-warning fw-semibold">Latitude *</label>
-              <input type="number" step="any" class="form-control bg-secondary text-white border-0" [(ngModel)]="branchForm.latitude" name="latitude" required>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label text-warning fw-semibold">Longitude *</label>
-              <input type="number" step="any" class="form-control bg-secondary text-white border-0" [(ngModel)]="branchForm.longitude" name="longitude" required>
+            <div class="col-md-6">
+              <label class="form-label text-warning fw-semibold">Branch Location *</label>
+              <div>
+                <button type="button" class="btn btn-outline-warning w-100" (click)="openBranchMapPicker()">
+                  🗺️ Choose Branch Location
+                </button>
+                <div *ngIf="branchForm.latitude && branchForm.longitude" class="small text-success mt-1 d-flex align-items-center">
+                  <i class="fas fa-check-circle me-1"></i>
+                  <span>Location Fixed: ({{ branchForm.latitude | number:'1.4-4' }}, {{ branchForm.longitude | number:'1.4-4' }})</span>
+                </div>
+              </div>
             </div>
             <div class="col-12 mt-3">
               <div class="form-check form-switch">
@@ -1389,3 +1393,14 @@
     </div>
   </div>
 </div>
+
+<app-location-picker-modal
+  [isOpen]="showBranchMapPicker"
+  [modalTitle]="'🗺️ Choose Branch Location'"
+  [initialLat]="branchForm.latitude"
+  [initialLng]="branchForm.longitude"
+  [initialAddress]="branchForm.address || ''"
+  (confirmed)="onBranchLocationChosen($event)"
+  (cancelled)="closeBranchMapPicker()">
+</app-location-picker-modal>
+

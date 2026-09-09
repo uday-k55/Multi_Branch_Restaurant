@@ -106,4 +106,25 @@ public class OrderController {
         OrderDTO accepted = orderService.acceptDelivery(currentUser, id);
         return ResponseEntity.ok(accepted);
     }
+
+    @PatchMapping("/{id}/cancel")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<OrderDTO> cancelOrder(
+            Authentication authentication,
+            @PathVariable Long id) {
+        User currentUser = getAuthenticatedUser(authentication);
+        OrderDTO cancelled = orderService.cancelOrder(currentUser, id);
+        return ResponseEntity.ok(cancelled);
+    }
+
+    @PutMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<OrderDTO> updateOrder(
+            Authentication authentication,
+            @PathVariable Long id,
+            @RequestBody com.restaurant.backend.dto.UpdateOrderRequestDTO dto) {
+        User currentUser = getAuthenticatedUser(authentication);
+        OrderDTO updated = orderService.updateOrderItems(currentUser, id, dto);
+        return ResponseEntity.ok(updated);
+    }
 }

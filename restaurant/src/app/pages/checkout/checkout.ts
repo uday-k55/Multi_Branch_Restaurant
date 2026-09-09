@@ -5,11 +5,12 @@ import { Router, RouterModule } from '@angular/router';
 import { CartService, OrderType, Branch } from '../../services/cart.service';
 import { OrderService, RestaurantTable } from '../../services/order.service';
 import { AuthService } from '../../services/auth.service';
+import { LocationPickerModalComponent, LocationSelectedResult } from '../../components/location-picker-modal/location-picker-modal';
 
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LocationPickerModalComponent],
   templateUrl: './checkout.html',
   styleUrl: './checkout.css'
 })
@@ -107,13 +108,142 @@ export class CheckoutComponent implements OnInit {
     this.cartService.setTable(tableId, tbl ? tbl.tableNumber : null);
   }
 
+  gettingLocation = signal<boolean>(false);
+  locationError = signal<string>('');
+  showMapPicker = signal<boolean>(false);
+
+  openMapPicker(): void {
+    this.locationError.set('');
+    this.showMapPicker.set(true);
+  }
+
+  closeMapPicker(): void {
+    this.showMapPicker.set(false);
+  }
+
+  onLocationChosenFromMap(result: LocationSelectedResult): void {
+    this.showMapPicker.set(false);
+    this.latitude.set(result.lat);
+    this.longitude.set(result.lng);
+    this.deliveryAddress.set(result.address);
+
+    if (this.selectedBranchId()) {
+      this.validatingDelivery.set(true);
+      this.orderService.validateDelivery(this.selectedBranchId()!, result.lat, result.lng).subscribe({
+        next: (res) => {
+          this.validatingDelivery.set(false);
+          this.deliveryValid.set(res.allowed);
+          if (res.allowed) {
+            this.deliveryMsg.set(`Home delivery is available! (${res.distanceKm?.toFixed(1) || '0'} km from branch)`);
+          } else {
+            this.deliveryMsg.set('Home delivery is available only within 10 km of the selected branch.');
+          }
+          this.deliveryDistance.set(res.distanceKm ?? null);
+          this.cartService.setDeliveryInfo(result.address, result.lat, result.lng);
+        },
+        error: () => {
+          this.validatingDelivery.set(false);
+          this.deliveryValid.set(false);
+          this.deliveryMsg.set('Home delivery is available only within 10 km of the selected branch.');
+        }
+      });
+    } else {
+      this.cartService.setDeliveryInfo(result.address, result.lat, result.lng);
+    }
+  }
+
+  useCurrentLocation(): void {
+    this.locationError.set('');
+    this.deliveryMsg.set('');
+
+    if (!navigator.geolocation) {
+      this.locationError.set('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    if (!this.selectedBranchId()) {
+      this.locationError.set('Please select a branch first.');
+      return;
+    }
+
+    this.gettingLocation.set(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        if (isNaN(lat) || isNaN(lon)) {
+          this.gettingLocation.set(false);
+          this.locationError.set('Invalid coordinates received.');
+          return;
+        }
+
+        this.latitude.set(lat);
+        this.longitude.set(lon);
+
+        // Reverse geocode to populate delivery address text
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data.display_name && !this.deliveryAddress().trim()) {
+              this.deliveryAddress.set(data.display_name);
+            }
+          })
+          .catch(() => {
+            if (!this.deliveryAddress().trim()) {
+              this.deliveryAddress.set(`Current Location (${lat.toFixed(4)}, ${lon.toFixed(4)})`);
+            }
+          });
+
+        // Validate 10 km radius with selected branch
+        this.orderService.validateDelivery(this.selectedBranchId()!, lat, lon).subscribe({
+          next: (res) => {
+            this.gettingLocation.set(false);
+            this.deliveryValid.set(res.allowed);
+            if (res.allowed) {
+              this.deliveryMsg.set(`Home delivery is available! (${res.distanceKm?.toFixed(1) || '0'} km from branch)`);
+            } else {
+              this.deliveryMsg.set('Home delivery is available only within 10 km of the selected branch.');
+            }
+            this.deliveryDistance.set(res.distanceKm ?? null);
+            this.cartService.setDeliveryInfo(this.deliveryAddress(), lat, lon);
+          },
+          error: () => {
+            this.gettingLocation.set(false);
+            this.deliveryValid.set(false);
+            this.deliveryMsg.set('Home delivery is available only within 10 km of the selected branch.');
+          }
+        });
+      },
+      (error) => {
+        this.gettingLocation.set(false);
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            this.locationError.set('Location permission was denied. Please enter your address manually.');
+            break;
+          case error.POSITION_UNAVAILABLE:
+            this.locationError.set('Location information is unavailable. Please enter your address manually.');
+            break;
+          case error.TIMEOUT:
+            this.locationError.set('Location request timed out. Please enter your address manually.');
+            break;
+          default:
+            this.locationError.set('Unable to retrieve your current location. Please enter your address manually.');
+            break;
+        }
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+    );
+  }
+
   validateDeliveryRadius(): void {
     if (!this.selectedBranchId()) {
       this.errorMsg.set('Please select a branch first.');
       return;
     }
     if (this.latitude() === null || this.longitude() === null) {
-      this.errorMsg.set('Latitude and Longitude are required for delivery validation.');
+      this.errorMsg.set('Please click "📍 Use My Current Location" or enter coordinates.');
       return;
     }
 
@@ -123,14 +253,18 @@ export class CheckoutComponent implements OnInit {
       next: (res) => {
         this.validatingDelivery.set(false);
         this.deliveryValid.set(res.allowed);
-        this.deliveryMsg.set(res.message);
+        if (res.allowed) {
+          this.deliveryMsg.set(res.message);
+        } else {
+          this.deliveryMsg.set('Home delivery is available only within 10 km of the selected branch.');
+        }
         this.deliveryDistance.set(res.distanceKm ?? null);
         this.cartService.setDeliveryInfo(this.deliveryAddress(), this.latitude(), this.longitude());
       },
-      error: (err) => {
+      error: () => {
         this.validatingDelivery.set(false);
         this.deliveryValid.set(false);
-        this.deliveryMsg.set(err.error?.message || 'Failed to validate delivery radius.');
+        this.deliveryMsg.set('Home delivery is available only within 10 km of the selected branch.');
       }
     });
   }

@@ -187,6 +187,14 @@ export class OrderService {
     return this.http.get<OrderResponse>(`${this.apiUrl}/orders/${id}`);
   }
 
+  cancelOrder(orderId: number): Observable<OrderResponse> {
+    return this.http.patch<OrderResponse>(`${this.apiUrl}/orders/${orderId}/cancel`, {});
+  }
+
+  updateOrder(orderId: number, items: { foodItemId: number; quantity: number }[]): Observable<OrderResponse> {
+    return this.http.put<OrderResponse>(`${this.apiUrl}/orders/${orderId}`, { items });
+  }
+
   // --- Payment Endpoints ---
 
   initiatePayment(payload: PaymentRequest): Observable<PaymentResponse> {

@@ -20,6 +20,8 @@ export interface Order {
   branchName: string;
   orderType: string;
   status: string;
+  tableId?: number;
+  tableNumber?: string;
   deliveryAddress?: string;
   latitude?: number;
   longitude?: number;
@@ -41,9 +43,10 @@ export class EmployeeComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
   public authService = inject(AuthService);
 
-  activeTab = signal<'available' | 'my'>('available');
+  activeTab = signal<'available' | 'my' | 'dinein'>('available');
   availableDeliveries = signal<Order[]>([]);
   myDeliveries = signal<Order[]>([]);
+  readyDineInOrders = signal<Order[]>([]);
   isLoading = signal<boolean>(true);
   errorMessage = signal<string>('');
   private pollInterval: any;
@@ -86,6 +89,17 @@ export class EmployeeComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Error loading my deliveries', err);
+      }
+    });
+
+    // Load ready dine-in orders for table serving
+    this.http.get<Order[]>(`http://localhost:8080/api/orders/branch/${branchId}`).subscribe({
+      next: (data) => {
+        const readyDineIn = (data || []).filter(o => o.orderType === 'DINE_IN' && o.status === 'READY');
+        this.readyDineInOrders.set(readyDineIn);
+      },
+      error: (err) => {
+        console.error('Error loading branch orders for dine-in serving', err);
       }
     });
   }

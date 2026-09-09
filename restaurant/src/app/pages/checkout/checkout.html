@@ -187,40 +187,34 @@
                     placeholder="Enter full street address">
                 </div>
 
-                <div class="row g-2 mb-2">
-                  <div class="col-6">
-                    <label for="latitudeInput" class="form-label small">Latitude:</label>
-                    <input
-                      type="number"
-                      step="any"
-                      id="latitudeInput"
-                      class="form-control form-control-sm bg-dark text-light border-secondary"
-                      [(ngModel)]="latitude">
-                  </div>
-                  <div class="col-6">
-                    <label for="longitudeInput" class="form-label small">Longitude:</label>
-                    <input
-                      type="number"
-                      step="any"
-                      id="longitudeInput"
-                      class="form-control form-control-sm bg-dark text-light border-secondary"
-                      [(ngModel)]="longitude">
-                  </div>
+                <div class="d-flex flex-column flex-sm-row gap-2 mt-2">
+                  <button
+                    type="button"
+                    (click)="useCurrentLocation()"
+                    [disabled]="gettingLocation()"
+                    class="btn btn-outline-warning btn-sm flex-fill">
+                    @if (gettingLocation()) {
+                      <span class="spinner-border spinner-border-sm me-1"></span> Locating & Validating...
+                    } @else {
+                      📍 Use My Current Location
+                    }
+                  </button>
+                  <button
+                    type="button"
+                    (click)="openMapPicker()"
+                    class="btn btn-outline-warning btn-sm flex-fill">
+                    🗺️ Choose Location from Map
+                  </button>
                 </div>
 
-                <button
-                  (click)="validateDeliveryRadius()"
-                  [disabled]="validatingDelivery()"
-                  class="btn btn-outline-warning btn-sm w-100 mt-1">
-                  @if (validatingDelivery()) {
-                    <span class="spinner-border spinner-border-sm me-1"></span> Validating...
-                  } @else {
-                    <i class="fas fa-compass me-1"></i> Validate 10 km Radius
-                  }
-                </button>
+                @if (locationError()) {
+                  <div class="alert alert-danger py-1 px-2 mt-2 mb-0 small">
+                    <i class="fas fa-exclamation-circle me-1"></i> {{ locationError() }}
+                  </div>
+                }
 
                 @if (deliveryValid() !== null) {
-                  <div class="mt-2 p-2 rounded" [class.bg-success]="deliveryValid()" [class.bg-danger]="!deliveryValid()" class="text-light small">
+                  <div class="mt-2 p-2 rounded small" [ngClass]="deliveryValid() ? 'bg-success text-white' : 'bg-danger text-white'">
                     <i [class]="deliveryValid() ? 'fas fa-check-circle me-1' : 'fas fa-times-circle me-1'"></i>
                     {{ deliveryMsg() }}
                   </div>
@@ -262,4 +256,14 @@
       </div>
     </div>
   }
+
+  <app-location-picker-modal
+    [isOpen]="showMapPicker()"
+    [modalTitle]="'🗺️ Choose Delivery Location from Map'"
+    [initialLat]="latitude()"
+    [initialLng]="longitude()"
+    [initialAddress]="deliveryAddress()"
+    (confirmed)="onLocationChosenFromMap($event)"
+    (cancelled)="closeMapPicker()">
+  </app-location-picker-modal>
 </div>

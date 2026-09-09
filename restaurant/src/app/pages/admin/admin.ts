@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { RouterModule, ActivatedRoute } from '@angular/router';
 import {
   AdminService, DashboardStats, Employee, CreateEmployeeRequest,
   MenuCategory, FoodItemAdmin, InventoryCategory, InventoryItemAdmin,
@@ -12,11 +12,12 @@ import { Branch } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
 import { OrderService } from '../../services/order.service';
 import { ThemeService } from '../../services/theme.service';
+import { LocationPickerModalComponent, LocationSelectedResult } from '../../components/location-picker-modal/location-picker-modal';
 
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LocationPickerModalComponent],
   templateUrl: './admin.html',
   styleUrl: './admin.css'
 })
@@ -25,6 +26,7 @@ export class AdminComponent implements OnInit {
   protected authService = inject(AuthService);
   protected orderService = inject(OrderService);
   protected themeService = inject(ThemeService);
+  private route = inject(ActivatedRoute);
 
   activeSection: string = 'dashboard';
   lastAction = '';
@@ -206,6 +208,14 @@ export class AdminComponent implements OnInit {
     this.fetchDashboardStats();
     this.loadBranches();
     this.loadEmployees();
+    this.loadUsersSection();
+
+    this.route.queryParams.subscribe(params => {
+      const section = params['section'] || params['tab'];
+      if (section) {
+        this.setSection(section);
+      }
+    });
   }
 
   setSection(sectionId: string): void {
@@ -224,7 +234,11 @@ export class AdminComponent implements OnInit {
       this.loadBranches();
     } else if (sectionId === 'employees') {
       this.loadEmployees();
-      this.loadBranches();
+      if (this.branches.length === 0) {
+        this.adminService.getBranches().subscribe({
+          next: (b) => { this.branches = b || []; }
+        });
+      }
     } else if (sectionId === 'menu') {
       this.initBranchScopedSection(() => this.loadMenuSection());
     } else if (sectionId === 'inventory') {
@@ -284,6 +298,10 @@ export class AdminComponent implements OnInit {
       this.loadInventorySection();
     } else if (this.activeSection === 'reservations') {
       this.loadReservationsSection();
+    } else if (this.activeSection === 'orders') {
+      this.loadOrdersSection();
+    } else if (this.activeSection === 'reports') {
+      this.loadReportsSection();
     }
   }
 
@@ -307,6 +325,9 @@ export class AdminComponent implements OnInit {
           this.selectedBranchId = data[0].id;
         }
         this.loading = false;
+        if (['menu', 'inventory', 'reservations', 'orders', 'reports'].includes(this.activeSection)) {
+          this.setSection(this.activeSection);
+        }
       },
       error: (err) => {
         this.loading = false;
@@ -348,6 +369,32 @@ export class AdminComponent implements OnInit {
     this.showBranchModal = false;
     this.isBranchSaving = false;
     this.branchModalError = '';
+    this.showBranchMapPicker = false;
+  }
+
+  showBranchMapPicker = false;
+
+  openBranchMapPicker(): void {
+    this.showBranchMapPicker = true;
+  }
+
+  closeBranchMapPicker(): void {
+    this.showBranchMapPicker = false;
+  }
+
+  onBranchLocationChosen(result: LocationSelectedResult): void {
+    this.showBranchMapPicker = false;
+    this.branchForm.latitude = result.lat;
+    this.branchForm.longitude = result.lng;
+    if (!this.branchForm.address || !this.branchForm.address.trim()) {
+      this.branchForm.address = result.address;
+    }
+    if (result.state && (!this.branchForm.state || !this.branchForm.state.trim())) {
+      this.branchForm.state = result.state;
+    }
+    if (result.district && (!this.branchForm.district || !this.branchForm.district.trim())) {
+      this.branchForm.district = result.district;
+    }
   }
 
   viewBranchDetails(branch: Branch): void {

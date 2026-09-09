@@ -1,0 +1,88 @@
+<div *ngIf="isOpen" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.75); z-index: 1060;">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content bg-dark text-white border-warning shadow-lg">
+      <div class="modal-header border-secondary py-3">
+        <h5 class="modal-title text-warning fw-bold">
+          <i class="fas fa-map-marked-alt me-2"></i>{{ modalTitle }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" aria-label="Close" (click)="cancel()"></button>
+      </div>
+
+      <div class="modal-body p-3 p-md-4">
+        <!-- Search bar: PIN code or Place Search -->
+        <div class="mb-3">
+          <label class="form-label text-warning small fw-semibold">Search by PIN Code or Place Name:</label>
+          <div class="input-group">
+            <span class="input-group-text bg-secondary text-warning border-secondary">
+              <i class="fas fa-search-location"></i>
+            </span>
+            <input
+              type="text"
+              class="form-control bg-secondary text-white border-secondary"
+              [(ngModel)]="searchQuery"
+              (keyup.enter)="searchLocation()"
+              placeholder="Enter PIN code (e.g. 682001) or area name">
+            <button
+              class="btn btn-warning fw-semibold px-3"
+              type="button"
+              (click)="searchLocation()"
+              [disabled]="searching">
+              @if (searching) {
+                <span class="spinner-border spinner-border-sm me-1"></span> Searching...
+              } @else {
+                <i class="fas fa-search me-1"></i> Find on Map
+              }
+            </button>
+          </div>
+          <small class="text-muted d-block mt-1">
+            <i class="fas fa-info-circle me-1 text-warning"></i>
+            Tip: You can search by 6-digit PIN code or drag the map pin to adjust your exact location.
+          </small>
+        </div>
+
+        @if (searchError) {
+          <div class="alert alert-warning py-2 px-3 small mb-3 d-flex align-items-center" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <div>{{ searchError }}</div>
+          </div>
+        }
+
+        <!-- Interactive Leaflet Map Container -->
+        <div class="position-relative rounded overflow-hidden border border-secondary shadow-sm mb-3">
+          <div [id]="mapId" style="height: 360px; width: 100%; min-height: 360px; background: #2b3035;"></div>
+        </div>
+
+        <!-- Selected Address Info Card -->
+        <div class="p-3 bg-secondary bg-opacity-25 border border-secondary rounded">
+          <div class="d-flex align-items-start">
+            <i class="fas fa-map-pin text-warning mt-1 me-2 fs-5"></i>
+            <div class="flex-grow-1">
+              <div class="fw-bold text-warning small text-uppercase">Selected Address:</div>
+              <div class="text-white small mt-1" style="word-break: break-word;">
+                {{ readableAddress || 'Click anywhere on the map or drag the pin to select location' }}
+              </div>
+              @if (extractedPincode) {
+                <span class="badge bg-dark border border-warning text-warning mt-1 me-1">PIN: {{ extractedPincode }}</span>
+              }
+              @if (extractedDistrict) {
+                <span class="badge bg-dark border border-secondary text-light mt-1 me-1">{{ extractedDistrict }}</span>
+              }
+              @if (extractedState) {
+                <span class="badge bg-dark border border-secondary text-light mt-1">{{ extractedState }}</span>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer border-secondary py-3">
+        <button type="button" class="btn btn-outline-secondary text-white px-4" (click)="cancel()">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-warning fw-bold px-4 shadow-sm" (click)="confirmLocation()">
+          <i class="fas fa-check-circle me-1"></i> Confirm Location
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -18,6 +18,21 @@
     <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ errorMessage() }}
   </div>
 
+  <!-- Real-time Food Ready to Serve Banner for Dine-In -->
+  <div *ngIf="readyDineInOrders().length > 0" class="alert alert-warning border-warning shadow-sm mb-4 d-flex justify-content-between align-items-center">
+    <div>
+      <h5 class="alert-heading fw-bold mb-1"><i class="bi bi-bell-fill text-danger me-2"></i>Food Ready to Serve! ({{ readyDineInOrders().length }} Order{{ readyDineInOrders().length > 1 ? 's' : '' }})</h5>
+      <p class="mb-0 small">Chef has marked food ready for table: 
+        <strong *ngFor="let ord of readyDineInOrders(); let isLast = last">
+          Table {{ ord.tableNumber }} (Order #{{ ord.id }}){{ isLast ? '' : ', ' }}
+        </strong>
+      </p>
+    </div>
+    <button class="btn btn-warning text-dark fw-bold btn-sm ms-3" (click)="activeTab.set('dinein')">
+      <i class="bi bi-eye me-1"></i> View Ready Food
+    </button>
+  </div>
+
   <!-- Navigation Tabs -->
   <ul class="nav nav-pills mb-4">
     <li class="nav-item">
@@ -39,6 +54,17 @@
         <i class="bi bi-person-badge me-2"></i> My Active Deliveries
         <span *ngIf="myDeliveries().length > 0" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success">
           {{ myDeliveries().length }}
+        </span>
+      </button>
+    </li>
+    <li class="nav-item">
+      <button 
+        class="nav-link fw-bold px-4 position-relative" 
+        [class.active]="activeTab() === 'dinein'" 
+        (click)="activeTab.set('dinein')">
+        <i class="bi bi-bell-fill me-2 text-warning"></i> Food Ready to Serve (Dine-In)
+        <span *ngIf="readyDineInOrders().length > 0" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">
+          {{ readyDineInOrders().length }}
         </span>
       </button>
     </li>
@@ -145,6 +171,48 @@
                   <i class="bi bi-check-all me-1"></i> Delivered Successfully
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: FOOD READY TO SERVE (DINE-IN) -->
+    <div *ngIf="activeTab() === 'dinein'">
+      <div *ngIf="readyDineInOrders().length === 0" class="text-center py-5 bg-light rounded border">
+        <i class="bi bi-check-circle text-success fs-1 mb-2"></i>
+        <h5 class="fw-bold">No Dine-In Orders Waiting to Serve</h5>
+        <p class="text-muted mb-0">When chef finishes preparing food for a dine-in table, it will appear here immediately.</p>
+      </div>
+
+      <div class="row g-3">
+        <div *ngFor="let order of readyDineInOrders()" class="col-12 col-md-6 col-lg-4">
+          <div class="card h-100 border-warning shadow-sm">
+            <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+              <span class="fw-bold fs-6"><i class="bi bi-bell-fill me-1"></i> Food Ready to Serve</span>
+              <span class="badge bg-dark text-warning fw-bold fs-6">Table No: {{ order.tableNumber || 'N/A' }}</span>
+            </div>
+            <div class="card-body">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-bold fs-6">Order #{{ order.id }}</span>
+                <span class="badge bg-success">Ready to serve</span>
+              </div>
+              <p class="mb-2 text-muted small"><i class="bi bi-person me-1"></i> Customer: {{ order.customerName }}</p>
+
+              <div class="border-top pt-2 mt-2">
+                <p class="small text-muted mb-1 fw-bold">Ordered Food:</p>
+                <ul class="list-unstyled mb-2 small">
+                  <li *ngFor="let item of order.items" class="d-flex justify-content-between py-1">
+                    <span><strong>{{ item.quantity }}x</strong> {{ item.foodItemName }}</span>
+                    <span>₹{{ item.subtotal }}</span>
+                  </li>
+                </ul>
+              </div>
+
+              <button class="btn btn-success w-100 mt-3 fw-bold" (click)="updateStatus(order.id, 'COMPLETED')" [disabled]="actionLoadingId() === order.id">
+                <span *ngIf="actionLoadingId() === order.id" class="spinner-border spinner-border-sm me-1"></span>
+                <i *ngIf="actionLoadingId() !== order.id" class="bi bi-check2-circle me-1"></i> Mark Served
+              </button>
             </div>
           </div>
         </div>
