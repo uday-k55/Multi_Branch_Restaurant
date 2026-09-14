@@ -106,14 +106,19 @@
                 <span class="text-muted small me-3">Total items: {{ ord.items.length }}</span>
                 <span class="fs-5 fw-bold text-warning">Total: ₹{{ ord.totalAmount | number:'1.2-2' }}</span>
               </div>
-              <div class="d-flex gap-2" *ngIf="canModifyOrder(ord.status)">
-                <button class="btn btn-outline-warning btn-sm fw-semibold" (click)="openEditModal(ord)">
-                  <i class="fas fa-edit me-1"></i> Edit Order
-                </button>
-                <button class="btn btn-outline-danger btn-sm fw-semibold" (click)="cancelOrder(ord)" [disabled]="cancellingOrderId() === ord.id">
-                  <span *ngIf="cancellingOrderId() === ord.id" class="spinner-border spinner-border-sm me-1"></span>
-                  <i *ngIf="cancellingOrderId() !== ord.id" class="fas fa-times-circle me-1"></i> Cancel Order
-                </button>
+              <div class="d-flex align-items-center flex-wrap gap-2" *ngIf="canModifyOrder(ord)">
+                <span class="badge bg-warning text-dark px-2 py-1 fw-bold fs-6">
+                  ⏱️ Edit/Cancel available for {{ getRemainingCountdownFormatted(ord) }}
+                </span>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-outline-warning btn-sm fw-semibold" (click)="openEditModal(ord)">
+                    <i class="fas fa-edit me-1"></i> Edit Order
+                  </button>
+                  <button class="btn btn-outline-danger btn-sm fw-semibold" (click)="openCancelConfirmation(ord)" [disabled]="cancellingOrderId() === ord.id">
+                    <span *ngIf="cancellingOrderId() === ord.id" class="spinner-border spinner-border-sm me-1"></span>
+                    <i *ngIf="cancellingOrderId() !== ord.id" class="fas fa-times-circle me-1"></i> Cancel Order
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -121,6 +126,33 @@
       }
     </div>
   }
+
+  <!-- Cancel Confirmation Modal -->
+  <div *ngIf="confirmCancelOrder()" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.75); z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-dark text-light border border-secondary shadow-lg">
+        <div class="modal-header border-secondary">
+          <h5 class="modal-title text-warning fw-bold">
+            <i class="fas fa-times-circle me-2"></i>Cancel Order #{{ confirmCancelOrder()?.id }}
+          </h5>
+          <button type="button" class="btn-close btn-close-white" (click)="closeCancelConfirmation()"></button>
+        </div>
+        <div class="modal-body text-center py-4">
+          <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+          <p class="fs-5 mb-0">Are you sure you want to cancel this order?</p>
+        </div>
+        <div class="modal-footer border-secondary justify-content-center">
+          <button type="button" class="btn btn-outline-secondary px-4" (click)="closeCancelConfirmation()" [disabled]="cancellingOrderId() !== null">
+            Keep Order
+          </button>
+          <button type="button" class="btn btn-danger fw-bold px-4" (click)="proceedCancelOrder()" [disabled]="cancellingOrderId() !== null">
+            <span *ngIf="cancellingOrderId() !== null" class="spinner-border spinner-border-sm me-1"></span>
+            Yes, Cancel Order
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Edit Order Modal -->
   <div *ngIf="editingOrder()" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.75);">

@@ -23,8 +23,8 @@ export interface LocationSelectedResult {
 export class LocationPickerModalComponent implements OnInit, OnChanges, OnDestroy {
   @Input() isOpen = false;
   @Input() modalTitle = '🗺️ Choose Location from Map';
-  @Input() initialLat: number | null = null;
-  @Input() initialLng: number | null = null;
+  @Input() initialLat: number | null | undefined = null;
+  @Input() initialLng: number | null | undefined = null;
   @Input() initialAddress = '';
 
   @Output() confirmed = new EventEmitter<LocationSelectedResult>();
@@ -125,46 +125,54 @@ export class LocationPickerModalComponent implements OnInit, OnChanges, OnDestro
     }
   }
 
+  searchResults: any[] = [];
+
   searchLocation(): void {
     const query = this.searchQuery.trim();
     if (!query) return;
 
     this.searching = true;
     this.searchError = '';
+    this.searchResults = [];
 
     const isPincode = /^\d{5,6}$/.test(query);
     let url = '';
     if (isPincode) {
-      url = `https://nominatim.openstreetmap.org/search?format=json&postalcode=${query}&countrycodes=in&addressdetails=1`;
+      url = `https://nominatim.openstreetmap.org/search?format=json&postalcode=${query}&countrycodes=in&addressdetails=1&limit=5`;
     } else {
-      url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=in&addressdetails=1`;
+      url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=in&addressdetails=1&limit=5`;
     }
 
     fetch(url)
       .then(res => res.json())
-      .then(data => {
+      .then((data: any[]) => {
         this.searching = false;
         if (data && data.length > 0) {
-          const item = data[0];
-          const lat = parseFloat(item.lat);
-          const lon = parseFloat(item.lon);
-          this.selectedLat = lat;
-          this.selectedLng = lon;
-          this.readableAddress = item.display_name || query;
-          this.extractDetailsFromAddress(item.address);
-
-          if (this.map && this.marker) {
-            this.map.setView([lat, lon], 15);
-            this.marker.setLatLng([lat, lon]);
-          }
+          this.searchResults = data;
+          this.selectSearchResult(data[0]);
         } else {
-          this.searchError = `No locations found for "${query}". Please check the PIN code or search for a nearby city/landmark.`;
+          this.searchError = `No locations found for "${query}". Try searching for a nearby area, street, or landmark.`;
         }
       })
       .catch(() => {
         this.searching = false;
         this.searchError = 'Location search service is temporarily unavailable. You can click on the map to place the pin directly.';
       });
+  }
+
+  selectSearchResult(item: any): void {
+    if (!item) return;
+    const lat = parseFloat(item.lat);
+    const lon = parseFloat(item.lon);
+    this.selectedLat = lat;
+    this.selectedLng = lon;
+    this.readableAddress = item.display_name || this.searchQuery;
+    this.extractDetailsFromAddress(item.address);
+
+    if (this.map && this.marker) {
+      this.map.setView([lat, lon], 16);
+      this.marker.setLatLng([lat, lon]);
+    }
   }
 
   private onLocationChanged(lat: number, lng: number): void {

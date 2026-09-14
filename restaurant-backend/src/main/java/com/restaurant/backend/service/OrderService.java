@@ -293,8 +293,25 @@ public class OrderService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied: You can only cancel your own orders");
         }
 
-        if (order.getStatus() != OrderStatus.PLACED && order.getStatus() != OrderStatus.CONFIRMED) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order cannot be cancelled in status: " + order.getStatus());
+        if (order.getStatus() == OrderStatus.PREPARING ||
+            order.getStatus() == OrderStatus.READY ||
+            order.getStatus() == OrderStatus.AVAILABLE_FOR_DELIVERY ||
+            order.getStatus() == OrderStatus.ACCEPTED ||
+            order.getStatus() == OrderStatus.PICKED_UP ||
+            order.getStatus() == OrderStatus.OUT_FOR_DELIVERY ||
+            order.getStatus() == OrderStatus.DELIVERED ||
+            order.getStatus() == OrderStatus.COMPLETED ||
+            order.getStatus() == OrderStatus.CANCELLED) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order cannot be cancelled in current status: " + order.getStatus());
+        }
+
+        if (currentUser.getRole() != Role.ADMIN) {
+            if (order.getCreatedAt() != null) {
+                long secondsElapsed = java.time.Duration.between(order.getCreatedAt(), LocalDateTime.now()).getSeconds();
+                if (secondsElapsed > 300) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cancellation window has expired. Orders can only be cancelled within 5 minutes of placing.");
+                }
+            }
         }
 
         order.setStatus(OrderStatus.CANCELLED);
@@ -322,8 +339,25 @@ public class OrderService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access Denied: You can only edit your own orders");
         }
 
-        if (order.getStatus() != OrderStatus.PLACED && order.getStatus() != OrderStatus.CONFIRMED) {
+        if (order.getStatus() == OrderStatus.PREPARING ||
+            order.getStatus() == OrderStatus.READY ||
+            order.getStatus() == OrderStatus.AVAILABLE_FOR_DELIVERY ||
+            order.getStatus() == OrderStatus.ACCEPTED ||
+            order.getStatus() == OrderStatus.PICKED_UP ||
+            order.getStatus() == OrderStatus.OUT_FOR_DELIVERY ||
+            order.getStatus() == OrderStatus.DELIVERED ||
+            order.getStatus() == OrderStatus.COMPLETED ||
+            order.getStatus() == OrderStatus.CANCELLED) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Order cannot be edited once preparation has started (current status: " + order.getStatus() + ")");
+        }
+
+        if (currentUser.getRole() != Role.ADMIN) {
+            if (order.getCreatedAt() != null) {
+                long secondsElapsed = java.time.Duration.between(order.getCreatedAt(), LocalDateTime.now()).getSeconds();
+                if (secondsElapsed > 300) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Edit window has expired. Orders can only be edited within 5 minutes of placing.");
+                }
+            }
         }
 
         order.getItems().clear();

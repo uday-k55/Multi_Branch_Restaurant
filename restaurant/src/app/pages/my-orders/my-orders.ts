@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
@@ -11,7 +11,7 @@ import { OrderService, OrderResponse } from '../../services/order.service';
   templateUrl: './my-orders.html',
   styleUrl: './my-orders.css'
 })
-export class MyOrdersComponent implements OnInit {
+export class MyOrdersComponent implements OnInit, OnDestroy {
   private orderService = inject(OrderService);
 
   orders = signal<OrderResponse[]>([]);
@@ -19,6 +19,11 @@ export class MyOrdersComponent implements OnInit {
   errorMsg = signal<string>('');
   successMsg = signal<string>('');
   cancellingOrderId = signal<number | null>(null);
+  confirmCancelOrder = signal<OrderResponse | null>(null);
+
+  // Live timer for 5-minute window
+  currentTime = signal<number>(Date.now());
+  private timerInterval: any = null;
 
   // Edit order modal state
   editingOrder = signal<OrderResponse | null>(null);
@@ -29,6 +34,15 @@ export class MyOrdersComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadOrders();
+    this.timerInterval = setInterval(() => {
+      this.currentTime.set(Date.now());
+    }, 1000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+    }
   }
 
   loadOrders(): void {
@@ -45,17 +59,57 @@ export class MyOrdersComponent implements OnInit {
     });
   }
 
-  canModifyOrder(status: string): boolean {
-    return status === 'PLACED' || status === 'PENDING' || status === 'CONFIRMED';
+  getOrderRemainingSeconds(order: OrderResponse): number {
+    if (!order || !order.createdAt) return 0;
+    const ineligible = [
+      'PREPARING', 'READY', 'AVAILABLE_FOR_DELIVERY', 'ACCEPTED',
+      'PICKED_UP', 'OUT_FOR_DELIVERY', 'DELIVERED', 'COMPLETED', 'CANCELLED'
+    ];
+    if (ineligible.includes(order.status)) return 0;
+
+    const createdTime = new Date(order.createdAt).getTime();
+    if (isNaN(createdTime)) return 0;
+
+    const expiresAt = createdTime + 5 * 60 * 1000;
+    const diffSeconds = Math.floor((expiresAt - this.currentTime()) / 1000);
+    return Math.max(0, diffSeconds);
   }
 
-  cancelOrder(order: OrderResponse): void {
-    if (!this.canModifyOrder(order.status)) {
-      this.errorMsg.set('This order is already being prepared or completed and cannot be cancelled.');
+  isOrderEligibleForEditCancel(order: OrderResponse): boolean {
+    return this.getOrderRemainingSeconds(order) > 0;
+  }
+
+  getRemainingCountdownFormatted(order: OrderResponse): string {
+    const totalSeconds = this.getOrderRemainingSeconds(order);
+    if (totalSeconds <= 0) return '';
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  }
+
+  canModifyOrder(order: OrderResponse): boolean {
+    return this.isOrderEligibleForEditCancel(order);
+  }
+
+  openCancelConfirmation(order: OrderResponse): void {
+    if (!this.canModifyOrder(order)) {
+      this.errorMsg.set('Cancellation window has expired or order is already being prepared.');
       return;
     }
+    this.confirmCancelOrder.set(order);
+  }
 
-    if (!confirm('Are you sure you want to cancel this order?')) {
+  closeCancelConfirmation(): void {
+    this.confirmCancelOrder.set(null);
+  }
+
+  proceedCancelOrder(): void {
+    const order = this.confirmCancelOrder();
+    if (!order) return;
+
+    if (!this.canModifyOrder(order)) {
+      this.confirmCancelOrder.set(null);
+      this.errorMsg.set('Cancellation window has expired or order is already being prepared.');
       return;
     }
 
@@ -66,19 +120,22 @@ export class MyOrdersComponent implements OnInit {
     this.orderService.cancelOrder(order.id).subscribe({
       next: () => {
         this.cancellingOrderId.set(null);
+        this.confirmCancelOrder.set(null);
         this.successMsg.set(`Order #${order.id} has been cancelled successfully.`);
         this.loadOrders();
       },
       error: (err) => {
         this.cancellingOrderId.set(null);
+        this.confirmCancelOrder.set(null);
         this.errorMsg.set(err.error?.message || 'Failed to cancel order.');
+        this.loadOrders();
       }
     });
   }
 
   openEditModal(order: OrderResponse): void {
-    if (!this.canModifyOrder(order.status)) {
-      this.errorMsg.set('This order is already being prepared and cannot be edited.');
+    if (!this.canModifyOrder(order)) {
+      this.errorMsg.set('Edit window has expired or order is already being prepared and cannot be edited.');
       return;
     }
 

@@ -245,7 +245,7 @@ export class AdminComponent implements OnInit {
       this.initBranchScopedSection(() => this.loadInventorySection());
     } else if (sectionId === 'orders') {
       this.initBranchScopedSection(() => this.loadOrdersSection());
-    } else if (sectionId === 'reservations') {
+    } else if (sectionId === 'reservations' || sectionId === 'tables') {
       this.initBranchScopedSection(() => this.loadReservationsSection());
     } else if (sectionId === 'reports') {
       this.initBranchScopedSection(() => this.loadReportsSection());
@@ -280,9 +280,9 @@ export class AdminComponent implements OnInit {
     // Fetch branches first so selectedBranchId is populated for data queries
     this.adminService.getBranches().subscribe({
       next: (bList) => {
-        this.branches = bList;
-        if (bList.length > 0) {
-          this.selectedBranchId = bList[0].id;
+        this.branches = bList || [];
+        if (this.branches.length > 0) {
+          this.selectedBranchId = this.branches[0].id;
         }
         callback();
       },
@@ -296,7 +296,7 @@ export class AdminComponent implements OnInit {
       this.loadMenuSection();
     } else if (this.activeSection === 'inventory') {
       this.loadInventorySection();
-    } else if (this.activeSection === 'reservations') {
+    } else if (this.activeSection === 'reservations' || this.activeSection === 'tables') {
       this.loadReservationsSection();
     } else if (this.activeSection === 'orders') {
       this.loadOrdersSection();
@@ -320,12 +320,12 @@ export class AdminComponent implements OnInit {
     this.loading = true;
     this.adminService.getBranches().subscribe({
       next: (data) => {
-        this.branches = data;
-        if (!this.selectedBranchId && data.length > 0) {
-          this.selectedBranchId = data[0].id;
+        this.branches = data || [];
+        if (!this.selectedBranchId && this.branches.length > 0) {
+          this.selectedBranchId = this.branches[0].id;
         }
         this.loading = false;
-        if (['menu', 'inventory', 'reservations', 'orders', 'reports'].includes(this.activeSection)) {
+        if (['menu', 'inventory', 'reservations', 'tables', 'orders', 'reports'].includes(this.activeSection)) {
           this.setSection(this.activeSection);
         }
       },
@@ -370,6 +370,19 @@ export class AdminComponent implements OnInit {
     this.isBranchSaving = false;
     this.branchModalError = '';
     this.showBranchMapPicker = false;
+    this.isEditingBranch = false;
+    this.branchForm = {
+      name: '',
+      state: '',
+      district: '',
+      address: '',
+      phone: '',
+      latitude: 12.9716,
+      longitude: 77.5946,
+      openingHours: '09:00 AM',
+      closingHours: '10:00 PM',
+      active: true
+    };
   }
 
   showBranchMapPicker = false;
@@ -532,6 +545,19 @@ export class AdminComponent implements OnInit {
     this.showEmployeeModal = false;
     this.isEmployeeSaving = false;
     this.employeeModalError = '';
+    this.isEditingEmployee = false;
+    this.editingEmployeeId = null;
+    const firstBranchId = this.branches.length > 0 ? this.branches[0].id : 0;
+    this.employeeForm = {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phoneNumber: '',
+      gender: 'male',
+      password: '',
+      role: 'EMPLOYEE',
+      branchId: firstBranchId
+    };
   }
 
   get isEmpMinLength(): boolean {
@@ -647,15 +673,20 @@ export class AdminComponent implements OnInit {
   // --- MENU MANAGEMENT ---
   // ==========================================
   loadMenuSection(): void {
-    if (!this.selectedBranchId) return;
+    const branchId = this.selectedBranchId || (this.branches.length > 0 ? this.branches[0].id : null);
+    if (!branchId) {
+      this.initBranchScopedSection(() => this.loadMenuSection());
+      return;
+    }
+    this.selectedBranchId = branchId;
     this.loading = true;
 
-    this.adminService.getCategories(this.selectedBranchId).subscribe({
+    this.adminService.getCategories(branchId).subscribe({
       next: (cats) => {
-        this.menuCategories = cats;
-        this.adminService.getFoodItems(this.selectedBranchId!).subscribe({
+        this.menuCategories = cats || [];
+        this.adminService.getFoodItems(branchId).subscribe({
           next: (items) => {
-            this.foodItems = items;
+            this.foodItems = items || [];
             this.loading = false;
           },
           error: () => { this.loading = false; }
@@ -689,6 +720,9 @@ export class AdminComponent implements OnInit {
     this.showCategoryModal = false;
     this.isCategorySaving = false;
     this.categoryModalError = '';
+    this.isEditingCategory = false;
+    this.editingCategoryId = null;
+    this.categoryForm = { name: '', description: '' };
   }
 
   saveCategory(): void {
@@ -705,7 +739,7 @@ export class AdminComponent implements OnInit {
         next: () => {
           this.isCategorySaving = false;
           this.successMessage = 'Menu category updated successfully!';
-          this.showCategoryModal = false;
+          this.closeCategoryModal();
           this.loadMenuSection();
         },
         error: (err) => {
@@ -718,7 +752,7 @@ export class AdminComponent implements OnInit {
         next: () => {
           this.isCategorySaving = false;
           this.successMessage = 'Menu category created successfully!';
-          this.showCategoryModal = false;
+          this.closeCategoryModal();
           this.loadMenuSection();
         },
         error: (err) => {
@@ -777,6 +811,18 @@ export class AdminComponent implements OnInit {
     this.showFoodItemModal = false;
     this.isFoodItemSaving = false;
     this.foodItemModalError = '';
+    this.isEditingFoodItem = false;
+    this.editingFoodItemId = null;
+    const defaultCatId = this.menuCategories.length > 0 ? this.menuCategories[0].id : 0;
+    this.foodItemForm = {
+      name: '',
+      description: '',
+      price: 10.0,
+      imageUrl: '',
+      categoryId: defaultCatId,
+      enabled: true,
+      isSeasonal: false
+    };
   }
 
   saveFoodItem(): void {
@@ -793,7 +839,7 @@ export class AdminComponent implements OnInit {
         next: () => {
           this.isFoodItemSaving = false;
           this.successMessage = 'Food item updated successfully!';
-          this.showFoodItemModal = false;
+          this.closeFoodItemModal();
           this.loadMenuSection();
         },
         error: (err) => {
@@ -806,7 +852,7 @@ export class AdminComponent implements OnInit {
         next: () => {
           this.isFoodItemSaving = false;
           this.successMessage = 'Food item created successfully!';
-          this.showFoodItemModal = false;
+          this.closeFoodItemModal();
           this.loadMenuSection();
         },
         error: (err) => {
@@ -848,21 +894,26 @@ export class AdminComponent implements OnInit {
   // --- INVENTORY MANAGEMENT ---
   // ==========================================
   loadInventorySection(): void {
-    if (!this.selectedBranchId) return;
+    const branchId = this.selectedBranchId || (this.branches.length > 0 ? this.branches[0].id : null);
+    if (!branchId) {
+      this.initBranchScopedSection(() => this.loadInventorySection());
+      return;
+    }
+    this.selectedBranchId = branchId;
     this.loading = true;
 
-    this.adminService.getInventoryCategories(this.selectedBranchId).subscribe({
+    this.adminService.getInventoryCategories(branchId).subscribe({
       next: (cats) => {
-        this.inventoryCategories = cats;
-        this.adminService.getInventoryItems(this.selectedBranchId!).subscribe({
+        this.inventoryCategories = cats || [];
+        this.adminService.getInventoryItems(branchId).subscribe({
           next: (items) => {
-            this.inventoryItems = items;
-            this.adminService.getLowStockItems(this.selectedBranchId!).subscribe({
+            this.inventoryItems = items || [];
+            this.adminService.getLowStockItems(branchId).subscribe({
               next: (low) => {
-                this.lowStockItems = low;
-                this.adminService.getInventoryTransactions(this.selectedBranchId!).subscribe({
+                this.lowStockItems = low || [];
+                this.adminService.getInventoryTransactions(branchId).subscribe({
                   next: (txs) => {
-                    this.inventoryTransactions = txs;
+                    this.inventoryTransactions = txs || [];
                     this.loading = false;
                   },
                   error: () => { this.loading = false; }
@@ -890,6 +941,7 @@ export class AdminComponent implements OnInit {
     this.showInventoryCategoryModal = false;
     this.isInventoryCategorySaving = false;
     this.inventoryCategoryModalError = '';
+    this.inventoryCategoryForm = { name: '', description: '' };
   }
 
   saveInventoryCategory(): void {
@@ -905,7 +957,7 @@ export class AdminComponent implements OnInit {
       next: () => {
         this.isInventoryCategorySaving = false;
         this.successMessage = 'Inventory category created successfully!';
-        this.showInventoryCategoryModal = false;
+        this.closeInventoryCategoryModal();
         this.loadInventorySection();
       },
       error: (err) => {
@@ -948,6 +1000,17 @@ export class AdminComponent implements OnInit {
     this.showInventoryItemModal = false;
     this.isInventoryItemSaving = false;
     this.inventoryItemModalError = '';
+    this.isEditingInventoryItem = false;
+    this.editingInventoryItemId = null;
+    const defaultCatId = this.inventoryCategories.length > 0 ? this.inventoryCategories[0].id : 0;
+    this.inventoryItemForm = {
+      name: '',
+      categoryId: defaultCatId,
+      unit: 'KG',
+      currentStock: 0,
+      minStockThreshold: 5,
+      costPerUnit: 0
+    };
   }
 
   saveInventoryItem(): void {
@@ -964,7 +1027,7 @@ export class AdminComponent implements OnInit {
         next: () => {
           this.isInventoryItemSaving = false;
           this.successMessage = 'Inventory item updated successfully!';
-          this.showInventoryItemModal = false;
+          this.closeInventoryItemModal();
           this.loadInventorySection();
         },
         error: (err) => {
@@ -977,7 +1040,7 @@ export class AdminComponent implements OnInit {
         next: () => {
           this.isInventoryItemSaving = false;
           this.successMessage = 'Inventory item created successfully!';
-          this.showInventoryItemModal = false;
+          this.closeInventoryItemModal();
           this.loadInventorySection();
         },
         error: (err) => {
@@ -1007,6 +1070,14 @@ export class AdminComponent implements OnInit {
     this.showStockAdjustModal = false;
     this.isStockAdjustSaving = false;
     this.stockAdjustModalError = '';
+    this.selectedItemForStock = null;
+    this.stockAdjustForm = {
+      quantity: 1,
+      transactionType: 'STOCK_IN',
+      unitPrice: 0,
+      reason: 'Routine Restock',
+      referenceNumber: ''
+    };
   }
 
   saveStockAdjustment(): void {
@@ -1019,7 +1090,7 @@ export class AdminComponent implements OnInit {
       next: () => {
         this.isStockAdjustSaving = false;
         this.successMessage = `Stock adjusted for "${this.selectedItemForStock?.name}" (${this.stockAdjustForm.transactionType}: ${this.stockAdjustForm.quantity} ${this.selectedItemForStock?.unit})`;
-        this.showStockAdjustModal = false;
+        this.closeStockAdjustModal();
         this.loadInventorySection();
       },
       error: (err) => {
@@ -1047,15 +1118,20 @@ export class AdminComponent implements OnInit {
   // --- RESERVATIONS & TABLES MANAGEMENT ---
   // ==========================================
   loadReservationsSection(): void {
-    if (!this.selectedBranchId) return;
+    const branchId = this.selectedBranchId || (this.branches.length > 0 ? this.branches[0].id : null);
+    if (!branchId) {
+      this.initBranchScopedSection(() => this.loadReservationsSection());
+      return;
+    }
+    this.selectedBranchId = branchId;
     this.loading = true;
 
-    this.adminService.getTables(this.selectedBranchId).subscribe({
+    this.adminService.getTables(branchId).subscribe({
       next: (tbls) => {
-        this.tables = tbls;
-        this.adminService.getReservations(this.selectedBranchId!).subscribe({
+        this.tables = tbls || [];
+        this.adminService.getReservations(branchId).subscribe({
           next: (resList) => {
-            this.reservations = resList;
+            this.reservations = resList || [];
             this.loading = false;
           },
           error: () => { this.loading = false; }
@@ -1093,6 +1169,13 @@ export class AdminComponent implements OnInit {
     this.showTableModal = false;
     this.isTableSaving = false;
     this.tableModalError = '';
+    this.isEditingTable = false;
+    this.editingTableId = null;
+    this.tableForm = {
+      tableNumber: '',
+      capacity: 4,
+      active: true
+    };
   }
 
   saveTable(): void {
@@ -1109,7 +1192,7 @@ export class AdminComponent implements OnInit {
         next: () => {
           this.isTableSaving = false;
           this.successMessage = 'Table updated successfully!';
-          this.showTableModal = false;
+          this.closeTableModal();
           this.loadReservationsSection();
         },
         error: (err) => {
@@ -1122,7 +1205,7 @@ export class AdminComponent implements OnInit {
         next: () => {
           this.isTableSaving = false;
           this.successMessage = 'Table created successfully!';
-          this.showTableModal = false;
+          this.closeTableModal();
           this.loadReservationsSection();
         },
         error: (err) => {
