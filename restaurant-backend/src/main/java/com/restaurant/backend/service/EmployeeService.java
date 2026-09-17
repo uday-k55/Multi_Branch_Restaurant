@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @Service
 @Transactional
@@ -162,8 +163,14 @@ public class EmployeeService {
 
         try {
             userRepository.delete(user);
+            userRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Cannot delete user \"" + user.getEmail() + "\" because existing records (such as orders, reservations, or branch assignments) depend on this account."
+            );
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot delete user with associated data: " + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot delete user: " + e.getMessage());
         }
     }
 

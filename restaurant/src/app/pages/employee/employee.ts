@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 
+declare const L: any;
+
 export interface OrderItem {
   id: number;
   foodItemId: number;
@@ -51,6 +53,11 @@ export class EmployeeComponent implements OnInit, OnDestroy {
   errorMessage = signal<string>('');
   private pollInterval: any;
 
+  viewingOrderLocation = signal<Order | null>(null);
+  showLocationModal = signal<boolean>(false);
+  private customerMap: any = null;
+  private customerMarker: any = null;
+
   ngOnInit(): void {
     this.loadAllData();
     this.pollInterval = setInterval(() => this.loadAllData(), 4000);
@@ -59,6 +66,10 @@ export class EmployeeComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.pollInterval) {
       clearInterval(this.pollInterval);
+    }
+    if (this.customerMap) {
+      this.customerMap.remove();
+      this.customerMap = null;
     }
   }
 
@@ -134,5 +145,78 @@ export class EmployeeComponent implements OnInit, OnDestroy {
         alert(err.error?.message || 'Failed to update delivery status');
       }
     });
+  }
+
+  openCustomerLocationModal(order: Order): void {
+    if (order.latitude == null || order.longitude == null) {
+      alert('Customer coordinates are not available for this order.');
+      return;
+    }
+    this.viewingOrderLocation.set(order);
+    this.showLocationModal.set(true);
+
+    setTimeout(() => {
+      this.initCustomerMap(order.latitude!, order.longitude!, order.customerName, order.deliveryAddress || 'Customer Delivery Address');
+    }, 200);
+  }
+
+  closeCustomerLocationModal(): void {
+    this.showLocationModal.set(false);
+    this.viewingOrderLocation.set(null);
+    if (this.customerMap) {
+      this.customerMap.remove();
+      this.customerMap = null;
+      this.customerMarker = null;
+    }
+  }
+
+  private initCustomerMap(lat: number, lng: number, customerName: string, address: string): void {
+    if (typeof L === 'undefined') {
+      console.warn('Leaflet library is not available.');
+      return;
+    }
+
+    const container = document.getElementById('customer-delivery-map');
+    if (!container) return;
+
+    if (this.customerMap) {
+      this.customerMap.remove();
+      this.customerMap = null;
+    }
+
+    const customIcon = L.divIcon({
+      className: 'custom-customer-marker',
+      html: `<div style="display:flex;flex-direction:column;align-items:center;transform:translate(-50%, -100%);">
+               <span style="font-size:32px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.6));">📍</span>
+               <span style="background:#212529;color:#fff;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:4px;border:1px solid #ffc107;white-space:nowrap;margin-top:2px;">Customer Destination</span>
+             </div>`,
+      iconSize: [32, 42],
+      iconAnchor: [16, 42]
+    });
+
+    this.customerMap = L.map(container).setView([lat, lng], 15);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(this.customerMap);
+
+    this.customerMarker = L.marker([lat, lng], { icon: customIcon }).addTo(this.customerMap);
+    this.customerMarker.bindPopup(`<strong>${customerName}</strong><br/>${address}`).openPopup();
+
+    setTimeout(() => {
+      if (this.customerMap) {
+        this.customerMap.invalidateSize();
+      }
+    }, 250);
+  }
+
+  navigateToCustomer(order: Order): void {
+    if (order.latitude == null || order.longitude == null) {
+      alert('Customer coordinates are not available for this delivery order.');
+      return;
+    }
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${order.latitude},${order.longitude}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 }

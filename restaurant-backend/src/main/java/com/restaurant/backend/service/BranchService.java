@@ -9,6 +9,9 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.dao.DataIntegrityViolationException;
+
 @Service
 public class BranchService {
 
@@ -107,8 +110,22 @@ public class BranchService {
         return branchRepository.save(existing);
     }
 
+    @Transactional
     public void deleteBranch(Long id) {
         Branch existing = getBranchById(id);
-        branchRepository.delete(existing);
+        try {
+            branchRepository.delete(existing);
+            branchRepository.flush();
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Cannot delete branch \"" + existing.getName() + "\" because existing records (such as orders, reservations, employees, tables, or inventory) depend on it. You can deactivate the branch instead."
+            );
+        } catch (Exception e) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Cannot delete branch \"" + existing.getName() + "\": " + e.getMessage()
+            );
+        }
     }
 }

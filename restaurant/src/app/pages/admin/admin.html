@@ -268,8 +268,9 @@
                       [title]="b.active ? 'Deactivate' : 'Activate'" (click)="toggleBranchStatus(b)">
                       <i [class]="b.active ? 'fas fa-toggle-on text-success' : 'fas fa-toggle-off text-muted'"></i>
                     </button>
-                    <button *ngIf="authService.isAdmin()" class="btn btn-outline-danger" title="Delete Branch" (click)="deleteBranch(b)">
-                      <i class="fas fa-trash-alt"></i>
+                    <button *ngIf="authService.isAdmin()" class="btn btn-outline-danger" title="Delete Branch" (click)="deleteBranch(b)" [disabled]="deletingBranchId === b.id">
+                      <span *ngIf="deletingBranchId === b.id" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      <i *ngIf="deletingBranchId !== b.id" class="fas fa-trash-alt"></i>
                     </button>
                   </div>
                 </td>
@@ -346,8 +347,9 @@
                     <button class="btn btn-outline-warning" title="Edit Employee" (click)="openEditEmployeeModal(emp)">
                       <i class="fas fa-edit"></i>
                     </button>
-                    <button *ngIf="emp.role !== 'ADMIN'" class="btn btn-outline-danger" title="Delete Employee" (click)="deleteEmployee(emp)">
-                      <i class="fas fa-trash-alt"></i>
+                    <button *ngIf="emp.role !== 'ADMIN'" class="btn btn-outline-danger" title="Delete Employee" (click)="deleteEmployee(emp)" [disabled]="deletingEmployeeId === emp.id">
+                      <span *ngIf="deletingEmployeeId === emp.id" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      <i *ngIf="deletingEmployeeId !== emp.id" class="fas fa-trash-alt"></i>
                     </button>
                   </div>
                 </td>
@@ -695,8 +697,9 @@
                 </td>
                 <td>{{ u.branchName || (u.branchId ? 'Branch #' + u.branchId : 'Global System') }}</td>
                 <td class="text-end">
-                  <button *ngIf="u.email !== authService.getUserEmail()" class="btn btn-outline-danger btn-sm" (click)="deleteUserAccount(u)" title="Delete Account">
-                    <i class="fas fa-trash-alt me-1"></i> Delete
+                  <button *ngIf="u.email !== authService.getUserEmail()" class="btn btn-outline-danger btn-sm" (click)="deleteUserAccount(u)" [disabled]="deletingUserId === u.id" title="Delete Account">
+                    <span *ngIf="deletingUserId === u.id" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    <i *ngIf="deletingUserId !== u.id" class="fas fa-trash-alt me-1"></i> Delete
                   </button>
                   <span *ngIf="u.email === authService.getUserEmail()" class="badge bg-dark border border-secondary text-muted">Current Session</span>
                 </td>

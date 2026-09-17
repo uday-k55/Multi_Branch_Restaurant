@@ -172,7 +172,16 @@ public class OrderService {
     public List<OrderDTO> getBranchOrders(User currentUser, Long branchId) {
         branchSecurityUtils.validateBranchAccess(currentUser, branchId);
         List<Order> orders = orderRepository.findByBranchIdOrderByCreatedAtDesc(branchId);
-        return orders.stream().map(this::mapToDTO).collect(Collectors.toList());
+        return orders.stream().map(order -> {
+            OrderDTO dto = this.mapToDTO(order);
+            if (currentUser != null && currentUser.getRole() == Role.EMPLOYEE && order.getOrderType() == OrderType.DELIVERY) {
+                if (order.getAssignedEmployee() == null || !order.getAssignedEmployee().getId().equals(currentUser.getId())) {
+                    dto.setLatitude(null);
+                    dto.setLongitude(null);
+                }
+            }
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     public List<OrderDTO> getAllOrdersForAdmin(User currentUser) {
@@ -191,7 +200,13 @@ public class OrderService {
                 branchId, List.of(OrderStatus.AVAILABLE_FOR_DELIVERY, OrderStatus.READY));
         return orders.stream()
                 .filter(o -> o.getOrderType() == OrderType.DELIVERY && o.getAssignedEmployee() == null)
-                .map(this::mapToDTO)
+                .map(order -> {
+                    OrderDTO dto = this.mapToDTO(order);
+                    // Protect customer delivery coordinates until accepted by the specific handling employee
+                    dto.setLatitude(null);
+                    dto.setLongitude(null);
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 

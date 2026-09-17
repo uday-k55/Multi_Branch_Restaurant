@@ -153,6 +153,36 @@
                 </ul>
               </div>
 
+              <!-- Customer Delivery Location Section for Home Delivery Orders -->
+              <div *ngIf="order.orderType === 'DELIVERY'" class="border rounded-3 p-3 bg-light my-3 shadow-sm">
+                <div class="d-flex align-items-center mb-2">
+                  <h6 class="fw-bold mb-0 text-dark">
+                    <i class="bi bi-geo-alt-fill text-danger me-1"></i>📍 Customer Delivery Location
+                  </h6>
+                </div>
+                <div class="mb-2">
+                  <span class="small text-muted d-block fw-bold">Delivery Address:</span>
+                  <p class="mb-0 text-dark small fw-semibold text-break">{{ order.deliveryAddress || 'No address specified' }}</p>
+                </div>
+                <div class="d-flex gap-2 mt-2">
+                  <button class="btn btn-outline-primary btn-sm flex-fill fw-bold" 
+                          (click)="openCustomerLocationModal(order)"
+                          [disabled]="!order.latitude || !order.longitude"
+                          title="View Customer Location on Map">
+                    <i class="bi bi-map me-1"></i> 🗺️ View Customer Location
+                  </button>
+                  <button class="btn btn-outline-success btn-sm flex-fill fw-bold" 
+                          (click)="navigateToCustomer(order)"
+                          [disabled]="!order.latitude || !order.longitude"
+                          title="Navigate to Customer Location">
+                    <i class="bi bi-compass me-1"></i> 🧭 Navigate to Customer
+                  </button>
+                </div>
+                <div *ngIf="!order.latitude || !order.longitude" class="text-muted small mt-1 fst-italic">
+                  <i class="bi bi-info-circle me-1"></i> Coordinates unavailable for this order.
+                </div>
+              </div>
+
               <!-- Workflow action buttons -->
               <div class="mt-3">
                 <button *ngIf="order.status === 'ACCEPTED'" class="btn btn-warning text-dark w-100 fw-bold" (click)="updateStatus(order.id, 'PICKED_UP')" [disabled]="actionLoadingId() === order.id">
@@ -216,6 +246,46 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- View Customer Location Modal -->
+<div *ngIf="showLocationModal()" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.65); z-index: 1060;">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-dark text-white">
+        <h5 class="modal-title fw-bold">
+          <i class="bi bi-geo-alt-fill text-danger me-2"></i>🗺️ View Customer Location
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeCustomerLocationModal()"></button>
+      </div>
+      <div class="modal-body p-3">
+        <div class="alert alert-light border shadow-sm mb-3">
+          <div class="d-flex align-items-start gap-2">
+            <span class="fs-4 text-danger">📍</span>
+            <div>
+              <strong class="d-block text-dark">Customer Delivery Address:</strong>
+              <p class="mb-1 text-secondary">{{ viewingOrderLocation()?.deliveryAddress }}</p>
+              <div class="small text-muted">
+                <strong>Recipient:</strong> {{ viewingOrderLocation()?.customerName }} &bull; 
+                <strong>Order ID:</strong> #{{ viewingOrderLocation()?.id }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Leaflet Map Container -->
+        <div id="customer-delivery-map" style="height: 380px; width: 100%; border-radius: 8px; border: 1px solid #ced4da;"></div>
+      </div>
+      <div class="modal-footer bg-light d-flex justify-content-between">
+        <button type="button" class="btn btn-outline-secondary" (click)="closeCustomerLocationModal()">
+          Close
+        </button>
+        <button *ngIf="viewingOrderLocation()" type="button" class="btn btn-success fw-bold" (click)="navigateToCustomer(viewingOrderLocation()!)">
+          <i class="bi bi-compass me-1"></i> 🧭 Navigate to Customer
+        </button>
       </div>
     </div>
   </div>

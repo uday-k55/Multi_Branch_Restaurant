@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, ActivatedRoute } from '@angular/router';
@@ -27,6 +27,7 @@ export class AdminComponent implements OnInit {
   protected orderService = inject(OrderService);
   protected themeService = inject(ThemeService);
   private route = inject(ActivatedRoute);
+  protected cdr = inject(ChangeDetectorRef);
 
   activeSection: string = 'dashboard';
   lastAction = '';
@@ -94,6 +95,11 @@ export class AdminComponent implements OnInit {
 
   // Active Selected Branch for branch-scoped management (Menu, Inventory, Tables, Reservations)
   selectedBranchId: number | null = null;
+
+  // Deletion Loading States
+  deletingBranchId: number | null = null;
+  deletingUserId: number | null = null;
+  deletingEmployeeId: number | null = null;
 
   // Users State
   allUsers: Employee[] = [];
@@ -225,6 +231,7 @@ export class AdminComponent implements OnInit {
     }
     this.activeSection = sectionId;
     this.clearMessages();
+    this.cdr.markForCheck();
 
     if (sectionId === 'dashboard') {
       this.fetchDashboardStats();
@@ -236,7 +243,10 @@ export class AdminComponent implements OnInit {
       this.loadEmployees();
       if (this.branches.length === 0) {
         this.adminService.getBranches().subscribe({
-          next: (b) => { this.branches = b || []; }
+          next: (b) => {
+            this.branches = b || [];
+            this.cdr.markForCheck();
+          }
         });
       }
     } else if (sectionId === 'menu') {
@@ -255,6 +265,7 @@ export class AdminComponent implements OnInit {
   clearMessages(): void {
     this.successMessage = '';
     this.errorMessage = '';
+    this.cdr.markForCheck();
   }
 
   initBranchScopedSection(callback: () => void): void {
@@ -284,14 +295,19 @@ export class AdminComponent implements OnInit {
         if (this.branches.length > 0) {
           this.selectedBranchId = this.branches[0].id;
         }
+        this.cdr.markForCheck();
         callback();
       },
-      error: () => callback()
+      error: () => {
+        this.cdr.markForCheck();
+        callback();
+      }
     });
   }
 
   onScopedBranchChange(branchId: number): void {
     this.selectedBranchId = Number(branchId);
+    this.cdr.markForCheck();
     if (this.activeSection === 'menu') {
       this.loadMenuSection();
     } else if (this.activeSection === 'inventory') {
@@ -309,15 +325,22 @@ export class AdminComponent implements OnInit {
   fetchDashboardStats(): void {
     this.adminService.getDashboardOverview().subscribe({
       next: (data) => {
-        if (data) this.stats = data;
+        if (data) {
+          this.stats = data;
+          this.cdr.markForCheck();
+        }
       },
-      error: (err) => console.error('Error loading dashboard stats:', err)
+      error: (err) => {
+        console.error('Error loading dashboard stats:', err);
+        this.cdr.markForCheck();
+      }
     });
   }
 
   // --- BRANCHES ---
   loadBranches(): void {
     this.loading = true;
+    this.cdr.markForCheck();
     this.adminService.getBranches().subscribe({
       next: (data) => {
         this.branches = data || [];
@@ -328,10 +351,12 @@ export class AdminComponent implements OnInit {
         if (['menu', 'inventory', 'reservations', 'tables', 'orders', 'reports'].includes(this.activeSection)) {
           this.setSection(this.activeSection);
         }
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.loading = false;
         console.error('Error loading branches:', err);
+        this.cdr.markForCheck();
       }
     });
   }
@@ -354,6 +379,7 @@ export class AdminComponent implements OnInit {
       active: true
     };
     this.showBranchModal = true;
+    this.cdr.markForCheck();
   }
 
   openEditBranchModal(branch: Branch): void {
@@ -363,6 +389,7 @@ export class AdminComponent implements OnInit {
     this.isEditingBranch = true;
     this.branchForm = { ...branch };
     this.showBranchModal = true;
+    this.cdr.markForCheck();
   }
 
   closeBranchModal(): void {
@@ -383,16 +410,19 @@ export class AdminComponent implements OnInit {
       closingHours: '10:00 PM',
       active: true
     };
+    this.cdr.markForCheck();
   }
 
   showBranchMapPicker = false;
 
   openBranchMapPicker(): void {
     this.showBranchMapPicker = true;
+    this.cdr.markForCheck();
   }
 
   closeBranchMapPicker(): void {
     this.showBranchMapPicker = false;
+    this.cdr.markForCheck();
   }
 
   onBranchLocationChosen(result: LocationSelectedResult): void {
@@ -408,25 +438,30 @@ export class AdminComponent implements OnInit {
     if (result.district && (!this.branchForm.district || !this.branchForm.district.trim())) {
       this.branchForm.district = result.district;
     }
+    this.cdr.markForCheck();
   }
 
   viewBranchDetails(branch: Branch): void {
     this.selectedBranchForDetails = branch;
+    this.cdr.markForCheck();
   }
 
   closeBranchDetails(): void {
     this.selectedBranchForDetails = null;
+    this.cdr.markForCheck();
   }
 
   saveBranch(): void {
     this.clearMessages();
     if (!this.branchForm.name || !this.branchForm.state || !this.branchForm.district) {
       this.branchModalError = 'Branch Name, State, and District are required.';
+      this.cdr.markForCheck();
       return;
     }
 
     this.isBranchSaving = true;
     this.branchModalError = '';
+    this.cdr.markForCheck();
     if (this.isEditingBranch && this.branchForm.id) {
       this.adminService.updateBranch(this.branchForm.id, this.branchForm).subscribe({
         next: (res) => {
@@ -435,10 +470,12 @@ export class AdminComponent implements OnInit {
           this.closeBranchModal();
           this.loadBranches();
           this.fetchDashboardStats();
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.isBranchSaving = false;
           this.branchModalError = err.error?.message || 'Failed to update branch.';
+          this.cdr.markForCheck();
         }
       });
     } else {
@@ -449,10 +486,12 @@ export class AdminComponent implements OnInit {
           this.closeBranchModal();
           this.loadBranches();
           this.fetchDashboardStats();
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.isBranchSaving = false;
           this.branchModalError = err.error?.message || 'Failed to create branch.';
+          this.cdr.markForCheck();
         }
       });
     }
@@ -464,9 +503,11 @@ export class AdminComponent implements OnInit {
       next: (res) => {
         branch.active = res.active;
         this.successMessage = `Branch "${res.name}" is now ${res.active ? 'Active' : 'Inactive'}.`;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to change branch status.';
+        this.cdr.markForCheck();
       }
     });
   }
@@ -474,14 +515,22 @@ export class AdminComponent implements OnInit {
   deleteBranch(branch: Branch): void {
     if (!confirm(`Are you sure you want to delete branch "${branch.name}"?`)) return;
 
+    this.clearMessages();
+    this.deletingBranchId = branch.id;
+    this.cdr.markForCheck();
+
     this.adminService.deleteBranch(branch.id).subscribe({
       next: () => {
+        this.deletingBranchId = null;
         this.successMessage = `Branch "${branch.name}" deleted successfully!`;
         this.loadBranches();
         this.fetchDashboardStats();
+        this.cdr.markForCheck();
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Failed to delete branch.';
+        this.deletingBranchId = null;
+        this.errorMessage = err.error?.message || `Cannot delete branch "${branch.name}" because existing records depend on it.`;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -489,14 +538,17 @@ export class AdminComponent implements OnInit {
   // --- EMPLOYEES ---
   loadEmployees(): void {
     this.loading = true;
+    this.cdr.markForCheck();
     this.adminService.getEmployees().subscribe({
       next: (data) => {
-        this.employees = data;
+        this.employees = data || [];
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.loading = false;
         console.error('Error loading employees:', err);
+        this.cdr.markForCheck();
       }
     });
   }
@@ -520,6 +572,7 @@ export class AdminComponent implements OnInit {
       branchId: firstBranchId
     };
     this.showEmployeeModal = true;
+    this.cdr.markForCheck();
   }
 
   openEditEmployeeModal(emp: Employee): void {
@@ -539,6 +592,7 @@ export class AdminComponent implements OnInit {
       branchId: emp.branchId || (this.branches.length > 0 ? this.branches[0].id : 0)
     };
     this.showEmployeeModal = true;
+    this.cdr.markForCheck();
   }
 
   closeEmployeeModal(): void {
@@ -558,6 +612,7 @@ export class AdminComponent implements OnInit {
       role: 'EMPLOYEE',
       branchId: firstBranchId
     };
+    this.cdr.markForCheck();
   }
 
   get isEmpMinLength(): boolean {
@@ -623,6 +678,7 @@ export class AdminComponent implements OnInit {
 
     this.isEmployeeSaving = true;
     this.employeeModalError = '';
+    this.cdr.markForCheck();
     if (this.isEditingEmployee && this.editingEmployeeId) {
       this.adminService.updateEmployee(this.editingEmployeeId, this.employeeForm).subscribe({
         next: (res) => {
@@ -631,10 +687,12 @@ export class AdminComponent implements OnInit {
           this.closeEmployeeModal();
           this.loadEmployees();
           this.fetchDashboardStats();
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.isEmployeeSaving = false;
           this.employeeModalError = err.error?.message || 'Failed to update employee.';
+          this.cdr.markForCheck();
         }
       });
     } else {
@@ -645,10 +703,12 @@ export class AdminComponent implements OnInit {
           this.closeEmployeeModal();
           this.loadEmployees();
           this.fetchDashboardStats();
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.isEmployeeSaving = false;
           this.employeeModalError = err.error?.message || 'Failed to create employee.';
+          this.cdr.markForCheck();
         }
       });
     }
@@ -657,14 +717,22 @@ export class AdminComponent implements OnInit {
   deleteEmployee(emp: Employee): void {
     if (!confirm(`Are you sure you want to delete employee "${emp.firstName} ${emp.lastName}" (${emp.email})?`)) return;
 
+    this.clearMessages();
+    this.deletingEmployeeId = emp.id;
+    this.cdr.markForCheck();
+
     this.adminService.deleteEmployee(emp.id).subscribe({
       next: () => {
+        this.deletingEmployeeId = null;
         this.successMessage = `Employee "${emp.firstName} ${emp.lastName}" removed successfully!`;
         this.loadEmployees();
         this.fetchDashboardStats();
+        this.cdr.markForCheck();
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Failed to delete employee.';
+        this.deletingEmployeeId = null;
+        this.errorMessage = err.error?.message || `Cannot delete employee "${emp.email}" because existing records depend on this account.`;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -680,6 +748,7 @@ export class AdminComponent implements OnInit {
     }
     this.selectedBranchId = branchId;
     this.loading = true;
+    this.cdr.markForCheck();
 
     this.adminService.getCategories(branchId).subscribe({
       next: (cats) => {
@@ -688,11 +757,18 @@ export class AdminComponent implements OnInit {
           next: (items) => {
             this.foodItems = items || [];
             this.loading = false;
+            this.cdr.markForCheck();
           },
-          error: () => { this.loading = false; }
+          error: () => {
+            this.loading = false;
+            this.cdr.markForCheck();
+          }
         });
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -704,6 +780,7 @@ export class AdminComponent implements OnInit {
     this.editingCategoryId = null;
     this.categoryForm = { name: '', description: '' };
     this.showCategoryModal = true;
+    this.cdr.markForCheck();
   }
 
   openEditCategoryModal(cat: MenuCategory): void {
@@ -714,6 +791,7 @@ export class AdminComponent implements OnInit {
     this.editingCategoryId = cat.id;
     this.categoryForm = { name: cat.name, description: cat.description };
     this.showCategoryModal = true;
+    this.cdr.markForCheck();
   }
 
   closeCategoryModal(): void {
@@ -723,17 +801,20 @@ export class AdminComponent implements OnInit {
     this.isEditingCategory = false;
     this.editingCategoryId = null;
     this.categoryForm = { name: '', description: '' };
+    this.cdr.markForCheck();
   }
 
   saveCategory(): void {
     this.clearMessages();
     if (!this.selectedBranchId || !this.categoryForm.name?.trim()) {
       this.categoryModalError = 'Category name is required.';
+      this.cdr.markForCheck();
       return;
     }
 
     this.isCategorySaving = true;
     this.categoryModalError = '';
+    this.cdr.markForCheck();
     if (this.isEditingCategory && this.editingCategoryId) {
       this.adminService.updateCategory(this.editingCategoryId, this.categoryForm).subscribe({
         next: () => {
@@ -741,10 +822,12 @@ export class AdminComponent implements OnInit {
           this.successMessage = 'Menu category updated successfully!';
           this.closeCategoryModal();
           this.loadMenuSection();
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.isCategorySaving = false;
           this.categoryModalError = err.error?.message || 'Failed to update category.';
+          this.cdr.markForCheck();
         }
       });
     } else {
@@ -754,10 +837,12 @@ export class AdminComponent implements OnInit {
           this.successMessage = 'Menu category created successfully!';
           this.closeCategoryModal();
           this.loadMenuSection();
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.isCategorySaving = false;
           this.categoryModalError = err.error?.message || 'Failed to create category.';
+          this.cdr.markForCheck();
         }
       });
     }
@@ -770,9 +855,11 @@ export class AdminComponent implements OnInit {
       next: () => {
         this.successMessage = 'Category deleted successfully!';
         this.loadMenuSection();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to delete category.';
+        this.cdr.markForCheck();
       }
     });
   }
@@ -795,6 +882,7 @@ export class AdminComponent implements OnInit {
       isSeasonal: false
     };
     this.showFoodItemModal = true;
+    this.cdr.markForCheck();
   }
 
   openEditFoodItemModal(item: FoodItemAdmin): void {
@@ -805,6 +893,7 @@ export class AdminComponent implements OnInit {
     this.editingFoodItemId = item.id;
     this.foodItemForm = { ...item };
     this.showFoodItemModal = true;
+    this.cdr.markForCheck();
   }
 
   closeFoodItemModal(): void {
@@ -823,17 +912,20 @@ export class AdminComponent implements OnInit {
       enabled: true,
       isSeasonal: false
     };
+    this.cdr.markForCheck();
   }
 
   saveFoodItem(): void {
     this.clearMessages();
     if (!this.selectedBranchId || !this.foodItemForm.name?.trim() || !this.foodItemForm.categoryId) {
       this.foodItemModalError = 'Dish Name, Category, and Price are required.';
+      this.cdr.markForCheck();
       return;
     }
 
     this.isFoodItemSaving = true;
     this.foodItemModalError = '';
+    this.cdr.markForCheck();
     if (this.isEditingFoodItem && this.editingFoodItemId) {
       this.adminService.updateFoodItem(this.editingFoodItemId, this.foodItemForm).subscribe({
         next: () => {
@@ -841,10 +933,12 @@ export class AdminComponent implements OnInit {
           this.successMessage = 'Food item updated successfully!';
           this.closeFoodItemModal();
           this.loadMenuSection();
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.isFoodItemSaving = false;
           this.foodItemModalError = err.error?.message || 'Failed to update food item.';
+          this.cdr.markForCheck();
         }
       });
     } else {
@@ -854,10 +948,12 @@ export class AdminComponent implements OnInit {
           this.successMessage = 'Food item created successfully!';
           this.closeFoodItemModal();
           this.loadMenuSection();
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.isFoodItemSaving = false;
           this.foodItemModalError = err.error?.message || 'Failed to add food item.';
+          this.cdr.markForCheck();
         }
       });
     }
@@ -869,9 +965,11 @@ export class AdminComponent implements OnInit {
       next: () => {
         item.enabled = !item.enabled;
         this.successMessage = `Dish "${item.name}" is now ${item.enabled ? 'Available' : 'Disabled'}.`;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.errorMessage = 'Failed to toggle availability.';
+        this.cdr.markForCheck();
       }
     });
   }
@@ -883,9 +981,11 @@ export class AdminComponent implements OnInit {
       next: () => {
         this.successMessage = 'Food item deleted successfully!';
         this.loadMenuSection();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to delete food item.';
+        this.cdr.markForCheck();
       }
     });
   }
@@ -901,6 +1001,7 @@ export class AdminComponent implements OnInit {
     }
     this.selectedBranchId = branchId;
     this.loading = true;
+    this.cdr.markForCheck();
 
     this.adminService.getInventoryCategories(branchId).subscribe({
       next: (cats) => {
@@ -915,17 +1016,30 @@ export class AdminComponent implements OnInit {
                   next: (txs) => {
                     this.inventoryTransactions = txs || [];
                     this.loading = false;
+                    this.cdr.markForCheck();
                   },
-                  error: () => { this.loading = false; }
+                  error: () => {
+                    this.loading = false;
+                    this.cdr.markForCheck();
+                  }
                 });
               },
-              error: () => { this.loading = false; }
+              error: () => {
+                this.loading = false;
+                this.cdr.markForCheck();
+              }
             });
           },
-          error: () => { this.loading = false; }
+          error: () => {
+            this.loading = false;
+            this.cdr.markForCheck();
+          }
         });
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -935,6 +1049,7 @@ export class AdminComponent implements OnInit {
     this.isInventoryCategorySaving = false;
     this.inventoryCategoryForm = { name: '', description: '' };
     this.showInventoryCategoryModal = true;
+    this.cdr.markForCheck();
   }
 
   closeInventoryCategoryModal(): void {
@@ -942,27 +1057,32 @@ export class AdminComponent implements OnInit {
     this.isInventoryCategorySaving = false;
     this.inventoryCategoryModalError = '';
     this.inventoryCategoryForm = { name: '', description: '' };
+    this.cdr.markForCheck();
   }
 
   saveInventoryCategory(): void {
     this.clearMessages();
     if (!this.selectedBranchId || !this.inventoryCategoryForm.name?.trim()) {
       this.inventoryCategoryModalError = 'Inventory category name is required.';
+      this.cdr.markForCheck();
       return;
     }
 
     this.isInventoryCategorySaving = true;
     this.inventoryCategoryModalError = '';
+    this.cdr.markForCheck();
     this.adminService.addInventoryCategory(this.selectedBranchId, this.inventoryCategoryForm).subscribe({
       next: () => {
         this.isInventoryCategorySaving = false;
         this.successMessage = 'Inventory category created successfully!';
         this.closeInventoryCategoryModal();
         this.loadInventorySection();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.isInventoryCategorySaving = false;
         this.inventoryCategoryModalError = err.error?.message || 'Failed to create inventory category.';
+        this.cdr.markForCheck();
       }
     });
   }
@@ -984,6 +1104,7 @@ export class AdminComponent implements OnInit {
       costPerUnit: 0
     };
     this.showInventoryItemModal = true;
+    this.cdr.markForCheck();
   }
 
   openEditInventoryItemModal(item: InventoryItemAdmin): void {
@@ -994,6 +1115,7 @@ export class AdminComponent implements OnInit {
     this.editingInventoryItemId = item.id;
     this.inventoryItemForm = { ...item };
     this.showInventoryItemModal = true;
+    this.cdr.markForCheck();
   }
 
   closeInventoryItemModal(): void {
@@ -1011,17 +1133,20 @@ export class AdminComponent implements OnInit {
       minStockThreshold: 5,
       costPerUnit: 0
     };
+    this.cdr.markForCheck();
   }
 
   saveInventoryItem(): void {
     this.clearMessages();
     if (!this.selectedBranchId || !this.inventoryItemForm.name?.trim() || !this.inventoryItemForm.categoryId) {
       this.inventoryItemModalError = 'Item Name, Category, and Unit are required.';
+      this.cdr.markForCheck();
       return;
     }
 
     this.isInventoryItemSaving = true;
     this.inventoryItemModalError = '';
+    this.cdr.markForCheck();
     if (this.isEditingInventoryItem && this.editingInventoryItemId) {
       this.adminService.updateInventoryItem(this.editingInventoryItemId, this.inventoryItemForm).subscribe({
         next: () => {
@@ -1029,10 +1154,12 @@ export class AdminComponent implements OnInit {
           this.successMessage = 'Inventory item updated successfully!';
           this.closeInventoryItemModal();
           this.loadInventorySection();
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.isInventoryItemSaving = false;
           this.inventoryItemModalError = err.error?.message || 'Failed to update inventory item.';
+          this.cdr.markForCheck();
         }
       });
     } else {
@@ -1042,10 +1169,12 @@ export class AdminComponent implements OnInit {
           this.successMessage = 'Inventory item created successfully!';
           this.closeInventoryItemModal();
           this.loadInventorySection();
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.isInventoryItemSaving = false;
           this.inventoryItemModalError = err.error?.message || 'Failed to add inventory item.';
+          this.cdr.markForCheck();
         }
       });
     }
@@ -1064,6 +1193,7 @@ export class AdminComponent implements OnInit {
       referenceNumber: `REC-${Date.now()}`
     };
     this.showStockAdjustModal = true;
+    this.cdr.markForCheck();
   }
 
   closeStockAdjustModal(): void {
@@ -1078,6 +1208,7 @@ export class AdminComponent implements OnInit {
       reason: 'Routine Restock',
       referenceNumber: ''
     };
+    this.cdr.markForCheck();
   }
 
   saveStockAdjustment(): void {
@@ -1086,16 +1217,19 @@ export class AdminComponent implements OnInit {
 
     this.isStockAdjustSaving = true;
     this.stockAdjustModalError = '';
+    this.cdr.markForCheck();
     this.adminService.adjustStock(this.selectedItemForStock.id, this.stockAdjustForm).subscribe({
       next: () => {
         this.isStockAdjustSaving = false;
         this.successMessage = `Stock adjusted for "${this.selectedItemForStock?.name}" (${this.stockAdjustForm.transactionType}: ${this.stockAdjustForm.quantity} ${this.selectedItemForStock?.unit})`;
         this.closeStockAdjustModal();
         this.loadInventorySection();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.isStockAdjustSaving = false;
         this.stockAdjustModalError = err.error?.message || 'Failed to adjust stock.';
+        this.cdr.markForCheck();
       }
     });
   }
@@ -1107,9 +1241,11 @@ export class AdminComponent implements OnInit {
       next: () => {
         this.successMessage = 'Inventory item deleted successfully!';
         this.loadInventorySection();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to delete inventory item.';
+        this.cdr.markForCheck();
       }
     });
   }
@@ -1125,6 +1261,7 @@ export class AdminComponent implements OnInit {
     }
     this.selectedBranchId = branchId;
     this.loading = true;
+    this.cdr.markForCheck();
 
     this.adminService.getTables(branchId).subscribe({
       next: (tbls) => {
@@ -1133,11 +1270,18 @@ export class AdminComponent implements OnInit {
           next: (resList) => {
             this.reservations = resList || [];
             this.loading = false;
+            this.cdr.markForCheck();
           },
-          error: () => { this.loading = false; }
+          error: () => {
+            this.loading = false;
+            this.cdr.markForCheck();
+          }
         });
       },
-      error: () => { this.loading = false; }
+      error: () => {
+        this.loading = false;
+        this.cdr.markForCheck();
+      }
     });
   }
 
@@ -1153,6 +1297,7 @@ export class AdminComponent implements OnInit {
       active: true
     };
     this.showTableModal = true;
+    this.cdr.markForCheck();
   }
 
   openEditTableModal(table: TableAdmin): void {
@@ -1163,6 +1308,7 @@ export class AdminComponent implements OnInit {
     this.editingTableId = table.id;
     this.tableForm = { ...table };
     this.showTableModal = true;
+    this.cdr.markForCheck();
   }
 
   closeTableModal(): void {
@@ -1176,17 +1322,20 @@ export class AdminComponent implements OnInit {
       capacity: 4,
       active: true
     };
+    this.cdr.markForCheck();
   }
 
   saveTable(): void {
     this.clearMessages();
     if (!this.selectedBranchId || !this.tableForm.tableNumber?.trim()) {
       this.tableModalError = 'Table number is required.';
+      this.cdr.markForCheck();
       return;
     }
 
     this.isTableSaving = true;
     this.tableModalError = '';
+    this.cdr.markForCheck();
     if (this.isEditingTable && this.editingTableId) {
       this.adminService.updateTable(this.editingTableId, this.tableForm).subscribe({
         next: () => {
@@ -1194,10 +1343,12 @@ export class AdminComponent implements OnInit {
           this.successMessage = 'Table updated successfully!';
           this.closeTableModal();
           this.loadReservationsSection();
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.isTableSaving = false;
           this.tableModalError = err.error?.message || 'Failed to update table.';
+          this.cdr.markForCheck();
         }
       });
     } else {
@@ -1207,10 +1358,12 @@ export class AdminComponent implements OnInit {
           this.successMessage = 'Table created successfully!';
           this.closeTableModal();
           this.loadReservationsSection();
+          this.cdr.markForCheck();
         },
         error: (err) => {
           this.isTableSaving = false;
           this.tableModalError = err.error?.message || 'Failed to add table.';
+          this.cdr.markForCheck();
         }
       });
     }
@@ -1223,9 +1376,11 @@ export class AdminComponent implements OnInit {
       next: () => {
         this.successMessage = 'Table deleted successfully!';
         this.loadReservationsSection();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to delete table.';
+        this.cdr.markForCheck();
       }
     });
   }
@@ -1235,9 +1390,11 @@ export class AdminComponent implements OnInit {
       next: () => {
         this.successMessage = `Reservation #${reservationId} marked as ${status}.`;
         this.loadReservationsSection();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.errorMessage = err.error?.message || 'Failed to update reservation status.';
+        this.cdr.markForCheck();
       }
     });
   }
@@ -1245,14 +1402,17 @@ export class AdminComponent implements OnInit {
   // --- USERS MANAGEMENT ---
   loadUsersSection(): void {
     this.loading = true;
+    this.cdr.markForCheck();
     this.adminService.getAllUsers().subscribe({
       next: (users) => {
-        this.allUsers = users;
+        this.allUsers = users || [];
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.loading = false;
         this.errorMessage = err.error?.message || 'Failed to load user accounts.';
+        this.cdr.markForCheck();
       }
     });
   }
@@ -1260,14 +1420,22 @@ export class AdminComponent implements OnInit {
   deleteUserAccount(u: Employee): void {
     if (!confirm(`Are you sure you want to delete user "${u.firstName} ${u.lastName}" (${u.email})?`)) return;
 
+    this.clearMessages();
+    this.deletingUserId = u.id;
+    this.cdr.markForCheck();
+
     this.adminService.deleteUser(u.id).subscribe({
       next: () => {
-        this.successMessage = `User "${u.email}" removed successfully.`;
+        this.deletingUserId = null;
+        this.successMessage = `User "${u.email}" deleted successfully.`;
         this.loadUsersSection();
         this.fetchDashboardStats();
+        this.cdr.markForCheck();
       },
       error: (err) => {
-        this.errorMessage = err.error?.message || 'Failed to delete user account.';
+        this.deletingUserId = null;
+        this.errorMessage = err.error?.message || `Cannot delete user "${u.email}" because existing records depend on this account.`;
+        this.cdr.markForCheck();
       }
     });
   }
@@ -1275,26 +1443,31 @@ export class AdminComponent implements OnInit {
   // --- ORDERS MANAGEMENT ---
   loadOrdersSection(): void {
     this.loading = true;
+    this.cdr.markForCheck();
     if (this.authService.userRoleSignal() === 'BRANCH_MANAGER' && this.selectedBranchId) {
       this.orderService.getBranchOrders(this.selectedBranchId).subscribe({
         next: (orders: any[]) => {
-          this.allOrders = orders;
+          this.allOrders = orders || [];
           this.loading = false;
+          this.cdr.markForCheck();
         },
         error: (err: any) => {
           this.loading = false;
           this.errorMessage = err.error?.message || 'Failed to load branch orders.';
+          this.cdr.markForCheck();
         }
       });
     } else {
       this.adminService.getAllAdminOrders().subscribe({
         next: (orders: any[]) => {
-          this.allOrders = orders;
+          this.allOrders = orders || [];
           this.loading = false;
+          this.cdr.markForCheck();
         },
         error: (err: any) => {
           this.loading = false;
           this.errorMessage = err.error?.message || 'Failed to load orders.';
+          this.cdr.markForCheck();
         }
       });
     }
@@ -1307,24 +1480,29 @@ export class AdminComponent implements OnInit {
 
   viewOrderDetailsModal(order: any): void {
     this.selectedOrderForModal = order;
+    this.cdr.markForCheck();
   }
 
   closeOrderDetailsModal(): void {
     this.selectedOrderForModal = null;
+    this.cdr.markForCheck();
   }
 
   // --- REPORTS & ANALYTICS ---
   loadReportsSection(): void {
     this.loading = true;
+    this.cdr.markForCheck();
     const branchIdParam = (this.authService.userRoleSignal() === 'BRANCH_MANAGER' || this.selectedBranchId) ? (this.selectedBranchId || undefined) : undefined;
     this.adminService.getReports(branchIdParam).subscribe({
       next: (data) => {
         this.reportData = data;
         this.loading = false;
+        this.cdr.markForCheck();
       },
       error: (err) => {
         this.loading = false;
         this.errorMessage = err.error?.message || 'Failed to load reports.';
+        this.cdr.markForCheck();
       }
     });
   }
@@ -1337,6 +1515,7 @@ export class AdminComponent implements OnInit {
       'add-menu': 'Add New Menu'
     };
     this.lastAction = formattedActions[actionType] || actionType;
+    this.cdr.markForCheck();
 
     if (actionType === 'add-branch') {
       this.setSection('branches');
