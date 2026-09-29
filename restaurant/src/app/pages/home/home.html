@@ -14,12 +14,12 @@
                     Enjoy Dine-In, Home Delivery, Takeaway and QR Table Ordering
                     from multiple restaurant branches with one easy platform.
                 </p>
-                <div class="mt-5 animate-buttons">
-                    <a href="#branch-selector" class="btn btn-warning btn-lg me-3">
-                        Scan QR
-                    </a>
-                    <a href="#branch-selector" class="btn btn-outline-light btn-lg">
-                        Explore Menu
+                <div class="mt-5 animate-buttons d-flex gap-3 flex-wrap">
+                    <button type="button" class="btn btn-warning btn-lg fw-bold px-4 shadow-sm" (click)="openQrScanner()">
+                        <i class="fas fa-qrcode me-2"></i>Scan QR
+                    </button>
+                    <a routerLink="/menu" class="btn btn-outline-light btn-lg fw-semibold px-4">
+                        <i class="fas fa-utensils me-2"></i>Explore Menu
                     </a>
                 </div>
             </div>
@@ -39,7 +39,7 @@
         </div>
         <div class="row g-4">
             <div class="col-md-3">
-                <div class="service-card">
+                <div class="service-card cursor-pointer" (click)="openQrScanner()">
                     <i class="fas fa-store fa-3x text-warning"></i>
                     <h4>Dine In</h4>
                     <p>Reserve or scan the QR code on your table and place orders instantly.</p>
@@ -60,7 +60,7 @@
                 </div>
             </div>
             <div class="col-md-3">
-                <div class="service-card">
+                <div class="service-card cursor-pointer" (click)="openQrScanner()">
                     <i class="fas fa-qrcode fa-3x text-warning"></i>
                     <h4>QR Ordering</h4>
                     <p>Scan the QR code at your table and order without calling staff.</p>
@@ -74,3 +74,156 @@
 
 <app-accordion></app-accordion>
 
+<!-- ============================================== -->
+<!-- CAMERA QR SCANNER MODAL -->
+<!-- ============================================== -->
+@if (isScannerOpen()) {
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.85); z-index: 1060;">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+      <div class="modal-content bg-dark text-white border-warning shadow-lg rounded-4 overflow-hidden">
+        
+        <!-- Modal Header -->
+        <div class="modal-header border-secondary">
+          <h5 class="modal-title text-warning fw-bold">
+            <i class="fas fa-qrcode me-2"></i>Scan Restaurant QR Code
+          </h5>
+          <button type="button" class="btn-close btn-close-white" (click)="closeQrScanner()" aria-label="Close"></button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-body p-4 text-center">
+
+          <!-- Success Alert -->
+          @if (successMsg()) {
+            <div class="alert alert-success d-flex align-items-center mb-3 text-start">
+              <i class="fas fa-check-circle fa-2x me-3 text-success"></i>
+              <div>
+                <strong>Success!</strong>
+                <div>{{ successMsg() }}</div>
+              </div>
+            </div>
+          }
+
+          <!-- Validation Error Alert -->
+          @if (validationError()) {
+            <div class="alert alert-danger d-flex align-items-center mb-3 text-start">
+              <i class="fas fa-exclamation-triangle fa-2x me-3 text-danger flex-shrink-0"></i>
+              <div>
+                <strong>QR Code Error:</strong>
+                <div>{{ validationError() }}</div>
+              </div>
+            </div>
+          }
+
+          <!-- Camera Permission Denied Alert -->
+          @if (permissionDenied()) {
+            <div class="alert alert-warning text-start mb-3 p-3 rounded-3">
+              <h6 class="fw-bold mb-1 text-dark">
+                <i class="fas fa-video-slash me-2"></i>Camera Permission Required
+              </h6>
+              <p class="small text-dark mb-2">
+                Camera access was denied by your browser. Camera permission is required for live QR scanning. Please grant permission in your browser or enter the code below.
+              </p>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-dark" (click)="startCamera()">
+                  <i class="fas fa-redo me-1"></i>Try Camera Again
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-dark" (click)="closeQrScanner()">
+                  Return to Home
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- Camera Stream Viewport -->
+          <div class="position-relative bg-black rounded-3 overflow-hidden mb-3" style="min-height: 260px; max-height: 340px;">
+            
+            @if (isCameraLoading()) {
+              <div class="position-absolute top-50 start-50 translate-middle text-center text-warning">
+                <div class="spinner-border mb-2" role="status"></div>
+                <div class="small fw-semibold">Accessing device camera...</div>
+              </div>
+            }
+
+            <video #scannerVideo
+                   class="w-100 h-100 object-fit-cover"
+                   autoplay
+                   playsinline
+                   muted
+                   style="max-height: 320px;">
+            </video>
+
+            <!-- Scanning Viewfinder Box Overlay -->
+            @if (!permissionDenied() && !isCameraLoading()) {
+              <div class="position-absolute top-50 start-50 translate-middle border border-2 border-warning rounded-3 pointer-events-none"
+                   style="width: 200px; height: 200px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.4);">
+                <div class="position-absolute top-0 start-50 translate-middle-x badge bg-warning text-dark small fw-bold px-2 py-1 mt-2">
+                  Align QR Here
+                </div>
+              </div>
+            }
+          </div>
+
+          <p class="text-muted small mb-3">
+            Point your camera at the QR code on your restaurant table (e.g. <code>QR-BRANCH-X-TABLE-Y</code>).
+          </p>
+
+          <!-- Alternative Options: Image Upload & Manual Code -->
+          <div class="accordion accordion-flush bg-dark text-start" id="qrAlternativeOptions">
+            <div class="accordion-item bg-dark border-secondary">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed bg-secondary text-white small py-2" type="button" data-bs-toggle="collapse" data-bs-target="#manualQrCollapse">
+                  <i class="fas fa-keyboard me-2 text-warning"></i>Manual Entry or QR Image Upload
+                </button>
+              </h2>
+              <div id="manualQrCollapse" class="accordion-collapse collapse" data-bs-parent="#qrAlternativeOptions">
+                <div class="accordion-body bg-dark text-white p-3 border-top border-secondary">
+                  
+                  <!-- File Upload -->
+                  <div class="mb-3">
+                    <label class="form-label text-warning small fw-semibold">Upload QR Image File:</label>
+                    <input type="file"
+                           accept="image/*"
+                           class="form-control form-control-sm bg-dark text-white border-secondary"
+                           (change)="onImageUploaded($event)">
+                  </div>
+
+                  <!-- Direct Code Input -->
+                  <label class="form-label text-warning small fw-semibold">Or Enter QR Code Text:</label>
+                  <div class="input-group input-group-sm">
+                    <input type="text"
+                           class="form-control bg-dark text-white border-secondary"
+                           placeholder="e.g. QR-BRANCH-1-TABLE-2"
+                           [ngModel]="manualQrCode()"
+                           (ngModelChange)="manualQrCode.set($event)"
+                           (keyup.enter)="submitManualQr()">
+                    <button class="btn btn-warning fw-bold"
+                            type="button"
+                            [disabled]="validatingQr() || !manualQrCode().trim()"
+                            (click)="submitManualQr()">
+                      @if (validatingQr()) {
+                        <span class="spinner-border spinner-border-sm"></span>
+                      } @else {
+                        Submit
+                      }
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer border-secondary justify-content-between">
+          <small class="text-muted">Compatible with mobile & desktop browsers</small>
+          <button type="button" class="btn btn-outline-secondary" (click)="closeQrScanner()">
+            Close
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+}

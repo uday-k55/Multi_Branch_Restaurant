@@ -54,82 +54,85 @@
     <!-- SECTION 1: DASHBOARD STATS OVERVIEW -->
     <!-- ========================================== -->
     <div *ngIf="activeSection === 'dashboard'">
-      <h3 class="h4 text-warning mb-4"><i class="fas fa-chart-pie me-2"></i>Live System Metrics</h3>
-      <div class="row g-4 mb-5">
-        <!-- Total Branches -->
-        <div class="col-md-6 col-lg-3">
-          <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3" (click)="setSection('branches')" style="cursor: pointer;">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <p class="text-muted mb-1 text-uppercase small fw-bold">Total Branches</p>
-                <h2 class="fw-bold mb-0 text-warning">{{ stats.totalBranches }}</h2>
+      <!-- Live System Metrics (Admin Only) -->
+      <div *ngIf="authService.isAdmin()">
+        <h3 class="h4 text-warning mb-4"><i class="fas fa-chart-pie me-2"></i>Live System Metrics</h3>
+        <div class="row g-4 mb-5">
+          <!-- Total Branches -->
+          <div class="col-md-6 col-lg-3">
+            <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3" (click)="setSection('branches')" style="cursor: pointer;">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <p class="text-muted mb-1 text-uppercase small fw-bold">Total Branches</p>
+                  <h2 class="fw-bold mb-0 text-warning">{{ stats.totalBranches }}</h2>
+                </div>
+                <i class="fas fa-store fa-2x text-warning opacity-75"></i>
               </div>
-              <i class="fas fa-store fa-2x text-warning opacity-75"></i>
             </div>
           </div>
-        </div>
 
-        <!-- Today's Orders -->
-        <div class="col-md-6 col-lg-3">
-          <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <p class="text-muted mb-1 text-uppercase small fw-bold">Today's Orders</p>
-                <h2 class="fw-bold mb-0 text-info">{{ stats.todaysOrders }}</h2>
+          <!-- Today's Orders -->
+          <div class="col-md-6 col-lg-3">
+            <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <p class="text-muted mb-1 text-uppercase small fw-bold">Today's Orders</p>
+                  <h2 class="fw-bold mb-0 text-info">{{ stats.todaysOrders }}</h2>
+                </div>
+                <i class="fas fa-shopping-bag fa-2x text-info opacity-75"></i>
               </div>
-              <i class="fas fa-shopping-bag fa-2x text-info opacity-75"></i>
             </div>
           </div>
-        </div>
 
-        <!-- Today's Sales -->
-        <div class="col-md-6 col-lg-3">
-          <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <p class="text-muted mb-1 text-uppercase small fw-bold">Today's Sales</p>
-                <h2 class="fw-bold mb-0 text-success">₹{{ stats.todaysSales | number:'1.2-2' }}</h2>
+          <!-- Today's Sales -->
+          <div class="col-md-6 col-lg-3">
+            <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <p class="text-muted mb-1 text-uppercase small fw-bold">Today's Sales</p>
+                  <h2 class="fw-bold mb-0 text-success">₹{{ stats.todaysSales | number:'1.2-2' }}</h2>
+                </div>
+                <i class="fas fa-rupee-sign fa-2x text-success opacity-75"></i>
               </div>
-              <i class="fas fa-rupee-sign fa-2x text-success opacity-75"></i>
             </div>
           </div>
-        </div>
 
-        <!-- Active Employees -->
-        <div class="col-md-6 col-lg-3">
-          <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3" (click)="setSection('employees')" style="cursor: pointer;">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <p class="text-muted mb-1 text-uppercase small fw-bold">Active Employees</p>
-                <h2 class="fw-bold mb-0 text-primary">{{ stats.activeEmployees }}</h2>
+          <!-- Active Employees -->
+          <div class="col-md-6 col-lg-3">
+            <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3" (click)="setSection('employees')" style="cursor: pointer;">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <p class="text-muted mb-1 text-uppercase small fw-bold">Active Employees</p>
+                  <h2 class="fw-bold mb-0 text-primary">{{ stats.activeEmployees }}</h2>
+                </div>
+                <i class="fas fa-users fa-2x text-primary opacity-75"></i>
               </div>
-              <i class="fas fa-users fa-2x text-primary opacity-75"></i>
             </div>
           </div>
-        </div>
 
-        <!-- Low Stock Items -->
-        <div class="col-md-6 col-lg-3">
-          <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3" (click)="setSection('inventory')" style="cursor: pointer;">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <p class="text-muted mb-1 text-uppercase small fw-bold">Low-Stock Items</p>
-                <h2 class="fw-bold mb-0 text-danger">{{ stats.lowStockItemsCount }}</h2>
+          <!-- Low Stock Items -->
+          <div class="col-md-6 col-lg-3">
+            <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3" (click)="setSection('inventory')" style="cursor: pointer;">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <p class="text-muted mb-1 text-uppercase small fw-bold">Low-Stock Items</p>
+                  <h2 class="fw-bold mb-0 text-danger">{{ stats.lowStockItemsCount }}</h2>
+                </div>
+                <i class="fas fa-exclamation-triangle fa-2x text-danger opacity-75"></i>
               </div>
-              <i class="fas fa-exclamation-triangle fa-2x text-danger opacity-75"></i>
             </div>
           </div>
-        </div>
 
-        <!-- Reservations -->
-        <div class="col-md-6 col-lg-3">
-          <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3" (click)="setSection('reservations')" style="cursor: pointer;">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <p class="text-muted mb-1 text-uppercase small fw-bold">Total Reservations</p>
-                <h2 class="fw-bold mb-0 text-info">{{ stats.totalReservations }}</h2>
+          <!-- Reservations -->
+          <div class="col-md-6 col-lg-3">
+            <div class="card bg-secondary text-white border-0 shadow-sm p-3 rounded-3" (click)="setSection('reservations')" style="cursor: pointer;">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <p class="text-muted mb-1 text-uppercase small fw-bold">Total Reservations</p>
+                  <h2 class="fw-bold mb-0 text-info">{{ stats.totalReservations }}</h2>
+                </div>
+                <i class="fas fa-calendar-alt fa-2x text-info opacity-75"></i>
               </div>
-              <i class="fas fa-calendar-alt fa-2x text-info opacity-75"></i>
             </div>
           </div>
         </div>
@@ -290,10 +293,28 @@
           <h3 class="h4 text-warning mb-1"><i class="fas fa-users-cog me-2"></i>Employee Onboarding & Management</h3>
           <p class="text-muted mb-0">Onboard branch managers, chefs, and staff with real database records.</p>
         </div>
-        <button *ngIf="authService.isAdmin()" class="btn btn-warning fw-bold px-4 py-2 rounded-pill shadow-sm" (click)="openAddEmployeeModal()">
-          <i class="fas fa-user-plus me-1"></i> Onboard Employee
+        <button *ngIf="authService.isAdmin() || authService.isBranchManager()" class="btn btn-warning fw-bold px-4 py-2 rounded-pill shadow-sm" (click)="openAddEmployeeModal()">
+          <i class="fas fa-user-plus me-1"></i> {{ authService.isAdmin() ? 'Onboard Employee' : 'Add Employee' }}
         </button>
       </div>
+
+      <!-- Branch Filter for Employees (Admin) -->
+      <div *ngIf="authService.isAdmin()" class="card bg-secondary text-white p-3 mb-4 rounded-3 border-0 shadow-sm">
+        <div class="row align-items-center g-2">
+          <div class="col-auto">
+            <label class="fw-semibold text-warning mb-0"><i class="fas fa-filter me-1"></i> Branch:</label>
+          </div>
+          <div class="col-sm-6 col-md-4 col-lg-3">
+            <select class="form-select bg-dark text-white border-secondary form-select-sm"
+                    [(ngModel)]="employeeBranchFilter"
+                    (ngModelChange)="onEmployeeBranchFilterChange()">
+              <option value="ALL">All Branches</option>
+              <option *ngFor="let b of branches" [value]="b.id">{{ b.name }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
 
       <div *ngIf="loading" class="text-center py-5">
         <div class="spinner-border text-warning" role="status">
@@ -371,11 +392,14 @@
           <h3 class="h4 text-warning mb-1"><i class="fas fa-utensils me-2"></i>Menu Categories & Dishes</h3>
           <p class="text-muted mb-0">Configure menu categories and food items for the selected branch.</p>
         </div>
-        <div class="d-flex gap-2">
-          <button class="btn btn-outline-warning fw-bold rounded-pill px-3" (click)="openAddCategoryModal()">
+        <div class="d-flex gap-2 align-items-center">
+          <span *ngIf="!authService.isAdmin()" class="badge bg-dark border border-secondary text-info px-3 py-2">
+            <i class="fas fa-eye me-1"></i>View Only Mode
+          </span>
+          <button *ngIf="authService.isAdmin()" class="btn btn-outline-warning fw-bold rounded-pill px-3" (click)="openAddCategoryModal()">
             <i class="fas fa-folder-plus me-1"></i> Add Category
           </button>
-          <button class="btn btn-warning fw-bold rounded-pill px-3" (click)="openAddFoodItemModal()">
+          <button *ngIf="authService.isAdmin()" class="btn btn-warning fw-bold rounded-pill px-3" (click)="openAddFoodItemModal()">
             <i class="fas fa-plus me-1"></i> Add Dish
           </button>
         </div>
@@ -387,10 +411,10 @@
         <div class="d-flex flex-wrap gap-2">
           <div *ngFor="let cat of menuCategories" class="badge bg-dark border border-secondary p-2 d-flex align-items-center gap-2">
             <span class="fs-6 text-white">{{ cat.name }}</span>
-            <button class="btn btn-sm text-warning p-0" title="Edit Category" (click)="openEditCategoryModal(cat)"><i class="fas fa-edit"></i></button>
-            <button class="btn btn-sm text-danger p-0" title="Delete Category" (click)="deleteCategory(cat)"><i class="fas fa-trash-alt"></i></button>
+            <button *ngIf="authService.isAdmin()" class="btn btn-sm text-warning p-0" title="Edit Category" (click)="openEditCategoryModal(cat)"><i class="fas fa-edit"></i></button>
+            <button *ngIf="authService.isAdmin()" class="btn btn-sm text-danger p-0" title="Delete Category" (click)="deleteCategory(cat)"><i class="fas fa-trash-alt"></i></button>
           </div>
-          <span *ngIf="menuCategories.length === 0" class="text-muted small">No categories created yet. Click "Add Category" above.</span>
+          <span *ngIf="menuCategories.length === 0" class="text-muted small">No categories created yet.</span>
         </div>
       </div>
 
@@ -406,7 +430,7 @@
                 <th>Price</th>
                 <th>Seasonal</th>
                 <th>Availability</th>
-                <th class="text-end">Actions</th>
+                <th *ngIf="authService.isAdmin()" class="text-end">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -423,18 +447,22 @@
                   <span *ngIf="!item.isSeasonal" class="text-muted small">Standard</span>
                 </td>
                 <td>
-                  <button class="btn btn-sm" [ngClass]="item.enabled ? 'btn-outline-success' : 'btn-outline-secondary'" (click)="toggleFoodItemStatus(item)">
+                  <button *ngIf="authService.isAdmin()" class="btn btn-sm" [ngClass]="item.enabled ? 'btn-outline-success' : 'btn-outline-secondary'" (click)="toggleFoodItemStatus(item)">
                     <i [class]="item.enabled ? 'fas fa-check-circle text-success' : 'fas fa-ban text-muted'"></i>
                     <span class="ms-1">{{ item.enabled ? 'Available' : 'Disabled' }}</span>
                   </button>
+                  <span *ngIf="!authService.isAdmin()" class="badge" [ngClass]="item.enabled ? 'bg-success' : 'bg-secondary'">
+                    <i [class]="item.enabled ? 'fas fa-check-circle me-1' : 'fas fa-ban me-1'"></i>{{ item.enabled ? 'Available' : 'Disabled' }}
+                  </span>
                 </td>
-                <td class="text-end">
+                <td class="text-end" *ngIf="authService.isAdmin()">
                   <div class="btn-group btn-group-sm">
                     <button class="btn btn-outline-warning" title="Edit Dish" (click)="openEditFoodItemModal(item)"><i class="fas fa-edit"></i></button>
                     <button class="btn btn-outline-danger" title="Delete Dish" (click)="deleteFoodItem(item)"><i class="fas fa-trash-alt"></i></button>
                   </div>
                 </td>
               </tr>
+
               <tr *ngIf="foodItems.length === 0">
                 <td colspan="7" class="text-center py-4 text-muted">No food items added for this branch yet.</td>
               </tr>
@@ -662,8 +690,8 @@
     <!-- ========================================== -->
     <div *ngIf="activeSection === 'users'">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="h4 text-warning mb-0"><i class="fas fa-user-shield me-2"></i>User & Customer Accounts</h3>
-        <span class="badge bg-warning text-dark px-3 py-2 fs-6">Total Users: {{ allUsers.length }}</span>
+        <h3 class="h4 text-warning mb-0"><i class="fas fa-user-shield me-2"></i>Customer Accounts</h3>
+        <span class="badge bg-warning text-dark px-3 py-2 fs-6">Total Customers: {{ allUsers.length }}</span>
       </div>
 
       <div class="card bg-secondary text-white border-0 rounded-3 shadow-lg overflow-hidden">
@@ -675,9 +703,8 @@
                 <th>Full Name</th>
                 <th>Email</th>
                 <th>Phone</th>
-                <th>Role</th>
-                <th>Branch Assignment</th>
-                <th class="text-end">Actions</th>
+                <th>Account Status</th>
+                <th class="text-end">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -687,31 +714,39 @@
                 <td>{{ u.email }}</td>
                 <td>{{ u.phoneNumber || 'N/A' }}</td>
                 <td>
-                  <span class="badge px-3 py-1 rounded-pill" [ngClass]="{
-                    'bg-danger': u.role === 'ADMIN',
-                    'bg-warning text-dark': u.role === 'BRANCH_MANAGER',
-                    'bg-info text-dark': u.role === 'CHEF',
-                    'bg-primary': u.role === 'EMPLOYEE',
-                    'bg-secondary': u.role === 'CUSTOMER'
-                  }">{{ u.role }}</span>
+                  <span class="badge px-3 py-1 rounded-pill" [ngClass]="u.blacklisted ? 'bg-danger' : 'bg-success'">
+                    <i [class]="u.blacklisted ? 'fas fa-user-slash me-1' : 'fas fa-check-circle me-1'"></i>
+                    {{ u.blacklisted ? 'BLACKLISTED' : 'ACTIVE' }}
+                  </span>
                 </td>
-                <td>{{ u.branchName || (u.branchId ? 'Branch #' + u.branchId : 'Global System') }}</td>
                 <td class="text-end">
-                  <button *ngIf="u.email !== authService.getUserEmail()" class="btn btn-outline-danger btn-sm" (click)="deleteUserAccount(u)" [disabled]="deletingUserId === u.id" title="Delete Account">
+                  <button *ngIf="!u.blacklisted"
+                          class="btn btn-outline-danger btn-sm fw-semibold"
+                          (click)="toggleCustomerBlacklist(u)"
+                          [disabled]="deletingUserId === u.id"
+                          title="Blacklist Customer">
                     <span *ngIf="deletingUserId === u.id" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
-                    <i *ngIf="deletingUserId !== u.id" class="fas fa-trash-alt me-1"></i> Delete
+                    <i *ngIf="deletingUserId !== u.id" class="fas fa-user-slash me-1"></i> Blacklist
                   </button>
-                  <span *ngIf="u.email === authService.getUserEmail()" class="badge bg-dark border border-secondary text-muted">Current Session</span>
+                  <button *ngIf="u.blacklisted"
+                          class="btn btn-outline-success btn-sm fw-semibold"
+                          (click)="toggleCustomerBlacklist(u)"
+                          [disabled]="deletingUserId === u.id"
+                          title="Unblacklist Customer">
+                    <span *ngIf="deletingUserId === u.id" class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+                    <i *ngIf="deletingUserId !== u.id" class="fas fa-user-check me-1"></i> Unblacklist
+                  </button>
                 </td>
               </tr>
               <tr *ngIf="allUsers.length === 0">
-                <td colspan="7" class="text-center py-4 text-muted">No users found.</td>
+                <td colspan="6" class="text-center py-4 text-muted">No customer accounts registered in system.</td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
     </div>
+
 
     <!-- ========================================== -->
     <!-- SECTION: ORDERS MANAGEMENT -->
@@ -851,31 +886,141 @@
     <!-- SECTION: SETTINGS -->
     <!-- ========================================== -->
     <div *ngIf="activeSection === 'settings'">
-      <h3 class="h4 text-warning mb-4"><i class="fas fa-cog me-2"></i>System & Operations Settings</h3>
-      <div class="row g-4">
-        <div class="col-md-6">
-          <div class="card bg-secondary text-white border-0 p-4 rounded-3 shadow-sm">
-            <h5 class="text-warning mb-3"><i class="fas fa-paint-brush me-2"></i>Appearance & Theme Preference</h5>
-            <p class="text-muted">Toggle application visual theme mode (Dark/Light) across all components.</p>
-            <button (click)="themeService.toggleTheme()" class="btn btn-warning fw-bold w-50">
-              <i [class]="themeService.isDark() ? 'fas fa-sun me-2' : 'fas fa-moon me-2'"></i>
-              Switch to {{ themeService.isDark() ? 'Light Mode' : 'Dark Mode' }}
-            </button>
-          </div>
+      
+      <!-- Settings Header & Tab Navigation -->
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+          <h3 class="h4 text-warning mb-1"><i class="fas fa-cog me-2"></i>Settings & Website Management</h3>
+          <p class="text-muted mb-0">Manage system settings, active sessions, and website attraction images.</p>
         </div>
-        <div class="col-md-6">
-          <div class="card bg-secondary text-white border-0 p-4 rounded-3 shadow-sm">
-            <h5 class="text-warning mb-3"><i class="fas fa-user-circle me-2"></i>Current Active Session</h5>
-            <p class="mb-1"><strong>Authenticated User:</strong> {{ authService.getUserEmail() }}</p>
-            <p class="mb-1"><strong>Role Privilege:</strong> <span class="badge bg-warning text-dark">{{ authService.userRoleSignal() }}</span></p>
-            <p class="mb-3"><strong>Assigned Branch ID:</strong> {{ authService.getBranchId() || 'Global System' }}</p>
-            <button (click)="authService.logout()" class="btn btn-outline-danger fw-bold w-50">
-              <i class="fas fa-sign-out-alt me-2"></i> Log Out Session
-            </button>
+        <div class="btn-group shadow-sm" role="group">
+          <button type="button" class="btn px-4 py-2 fw-semibold"
+                  [ngClass]="settingsTab === 'general' ? 'btn-warning text-dark' : 'btn-dark border-secondary text-white'"
+                  (click)="settingsTab = 'general'">
+            <i class="fas fa-sliders-h me-1"></i> System Settings
+          </button>
+          <button type="button" class="btn px-4 py-2 fw-semibold"
+                  [ngClass]="settingsTab === 'images' ? 'btn-warning text-dark' : 'btn-dark border-secondary text-white'"
+                  (click)="settingsTab = 'images'; loadWebsiteImages()">
+            <i class="fas fa-images me-1"></i> Image Management
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB 1: SYSTEM SETTINGS -->
+      <div *ngIf="settingsTab === 'general'">
+        <div class="row g-4">
+          <div class="col-md-6">
+            <div class="card bg-secondary text-white border-0 p-4 rounded-3 shadow-sm">
+              <h5 class="text-warning mb-3"><i class="fas fa-paint-brush me-2"></i>Appearance & Theme Preference</h5>
+              <p class="text-muted">Toggle application visual theme mode (Dark/Light) across all components.</p>
+              <button (click)="themeService.toggleTheme()" class="btn btn-warning fw-bold w-50">
+                <i [class]="themeService.isDark() ? 'fas fa-sun me-2' : 'fas fa-moon me-2'"></i>
+                Switch to {{ themeService.isDark() ? 'Light Mode' : 'Dark Mode' }}
+              </button>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="card bg-secondary text-white border-0 p-4 rounded-3 shadow-sm">
+              <h5 class="text-warning mb-3"><i class="fas fa-user-circle me-2"></i>Current Active Session</h5>
+              <p class="mb-1"><strong>Authenticated User:</strong> {{ authService.getUserEmail() }}</p>
+              <p class="mb-1"><strong>Role Privilege:</strong> <span class="badge bg-warning text-dark">{{ authService.userRoleSignal() }}</span></p>
+              <p class="mb-3"><strong>Assigned Branch ID:</strong> {{ authService.getBranchId() || 'Global System' }}</p>
+              <button (click)="authService.logout()" class="btn btn-outline-danger fw-bold w-50">
+                <i class="fas fa-sign-out-alt me-2"></i> Log Out Session
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      <!-- TAB 2: WEBSITE IMAGE MANAGEMENT -->
+      <div *ngIf="settingsTab === 'images'">
+        
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+          <div>
+            <h5 class="text-warning mb-0"><i class="fas fa-photo-video me-2"></i>Website Attraction & Promotional Images</h5>
+            <small class="text-muted">Manage promotional banners, hero images, chef photos, and attraction cards across pages.</small>
+          </div>
+          <button class="btn btn-warning fw-bold px-3 py-2 rounded-pill shadow-sm" (click)="openAddImageModal()">
+            <i class="fas fa-plus me-1"></i> Upload / Add Image
+          </button>
+        </div>
+
+        <div *ngIf="loadingImages" class="text-center py-5">
+          <div class="spinner-border text-warning" role="status">
+            <span class="visually-hidden">Loading website images...</span>
+          </div>
+        </div>
+
+        <div *ngIf="!loadingImages && websiteImages.length === 0" class="card bg-secondary text-white p-5 text-center rounded-3">
+          <i class="fas fa-images fa-4x text-warning mb-3"></i>
+          <h4>No Website Images Configured</h4>
+          <p class="text-muted">Click "Upload / Add Image" to register attraction and promotional images.</p>
+        </div>
+
+        <!-- Image Management Table matching requirements -->
+        <div *ngIf="!loadingImages && websiteImages.length > 0" class="card bg-secondary text-white border-0 rounded-3 shadow-lg overflow-hidden">
+          <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0 align-middle">
+              <thead class="table-dark text-warning border-bottom border-warning">
+                <tr>
+                  <th style="width: 100px;">Preview</th>
+                  <th>Page</th>
+                  <th>Section</th>
+                  <th>Current Image / Title</th>
+                  <th>Description</th>
+                  <th class="text-end" style="width: 220px;">Available Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let img of websiteImages">
+                  <td>
+                    <img [src]="img.imageUrl"
+                         alt="{{ img.title }}"
+                         class="rounded border border-secondary shadow-sm cursor-pointer"
+                         style="width: 75px; height: 50px; object-fit: cover;"
+                         (click)="openViewImage(img)"
+                         title="Click to view full size">
+                  </td>
+                  <td>
+                    <span class="badge bg-warning text-dark px-2 py-1 fw-bold">{{ img.page }}</span>
+                  </td>
+                  <td>
+                    <strong class="text-white">{{ img.section }}</strong>
+                  </td>
+                  <td>
+                    <div class="text-light fw-bold">{{ img.title }}</div>
+                    <small class="text-muted text-truncate d-block" style="max-width: 220px;">
+                      {{ img.imageUrl }}
+                    </small>
+                  </td>
+                  <td class="small text-muted">
+                    {{ img.description || 'Promotional display image' }}
+                  </td>
+                  <td class="text-end">
+                    <div class="btn-group btn-group-sm">
+                      <button class="btn btn-outline-info" title="View Full Image" (click)="openViewImage(img)">
+                        <i class="fas fa-eye me-1"></i> View
+                      </button>
+                      <button class="btn btn-outline-warning" title="Replace Image" (click)="openEditImageModal(img)">
+                        <i class="fas fa-sync-alt me-1"></i> Replace
+                      </button>
+                      <button class="btn btn-outline-danger" title="Delete Image" (click)="deleteWebsiteImage(img)">
+                        <i class="fas fa-trash-alt me-1"></i> Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
     </div>
+
 
   </div>
 </section>
@@ -1003,7 +1148,7 @@
   <div class="modal-dialog modal-dialog-centered modal-lg">
     <div class="modal-content bg-dark text-white border-warning">
       <div class="modal-header border-secondary">
-        <h5 class="modal-title text-warning"><i class="fas fa-user-plus me-2"></i>{{ isEditingEmployee ? 'Edit Employee' : 'Onboard Employee' }}</h5>
+        <h5 class="modal-title text-warning"><i class="fas fa-user-plus me-2"></i>{{ isEditingEmployee ? 'Edit Employee' : (authService.isAdmin() ? 'Onboard Employee' : 'Add Employee') }}</h5>
         <button type="button" class="btn-close btn-close-white" (click)="closeEmployeeModal()"></button>
       </div>
       <div class="modal-body">
@@ -1101,16 +1246,26 @@
             <div class="col-md-6">
               <label class="form-label text-warning fw-semibold">Role *</label>
               <select class="form-select bg-secondary text-white border-0" [(ngModel)]="employeeForm.role" name="role" required>
-                <option value="BRANCH_MANAGER">Branch Manager</option>
+                <option *ngIf="authService.isAdmin()" value="BRANCH_MANAGER">Branch Manager</option>
                 <option value="CHEF">Chef</option>
                 <option value="EMPLOYEE">General Staff / Employee</option>
               </select>
             </div>
             <div class="col-md-12">
               <label class="form-label text-warning fw-semibold">Assigned Branch *</label>
-              <select class="form-select bg-secondary text-white border-0" [(ngModel)]="employeeForm.branchId" name="branchId" required>
+              <select *ngIf="authService.isAdmin()" class="form-select bg-secondary text-white border-0" [(ngModel)]="employeeForm.branchId" name="branchId" required>
                 <option *ngFor="let b of branches" [value]="b.id">{{ b.name }} ({{ b.district }}, {{ b.state }})</option>
               </select>
+              <div *ngIf="!authService.isAdmin()" class="input-group">
+                <input type="text"
+                       class="form-control bg-secondary text-white border-0"
+                       [value]="getAssignedBranchName()"
+                       readonly
+                       disabled>
+                <span class="input-group-text bg-dark text-warning border-0 small">
+                  <i class="fas fa-lock me-1"></i> Read Only
+                </span>
+              </div>
             </div>
           </div>
           <div class="modal-footer border-secondary mt-4 px-0 pb-0">
@@ -1406,4 +1561,136 @@
   (confirmed)="onBranchLocationChosen($event)"
   (cancelled)="closeBranchMapPicker()">
 </app-location-picker-modal>
+
+<!-- Modal: Add / Edit Website Image -->
+<div *ngIf="isImageModalOpen" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.75); z-index: 1055;">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark text-white border-warning shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header border-secondary">
+        <h5 class="modal-title text-warning fw-bold">
+          <i class="fas fa-images me-2"></i>{{ isEditingImage ? 'Replace / Update Website Image' : 'Upload / Add Website Image' }}
+        </h5>
+        <button type="button" class="btn-close btn-close-white" (click)="closeImageModal()"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div *ngIf="imageModalError" class="alert alert-danger py-2 px-3 small mb-3">
+          <i class="fas fa-exclamation-triangle me-2"></i>{{ imageModalError }}
+        </div>
+
+        <form (ngSubmit)="saveWebsiteImage()">
+          <div class="row g-3">
+            
+            <!-- Page Selection -->
+            <div class="col-md-6">
+              <label class="form-label text-warning small fw-semibold">Page *</label>
+              <select class="form-select bg-secondary text-white border-0" [(ngModel)]="imageForm.page" name="imgPage" required>
+                <option value="Home">Home</option>
+                <option value="About">About</option>
+                <option value="Menu">Menu</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <!-- Section Selection -->
+            <div class="col-md-6">
+              <label class="form-label text-warning small fw-semibold">Section *</label>
+              <input type="text"
+                     class="form-control bg-secondary text-white border-0"
+                     [(ngModel)]="imageForm.section"
+                     name="imgSection"
+                     placeholder="e.g. Hero / Carousel, Chef Section, Food Section"
+                     required>
+            </div>
+
+            <!-- Image Title / Label -->
+            <div class="col-12">
+              <label class="form-label text-warning small fw-semibold">Image Title / Role *</label>
+              <input type="text"
+                     class="form-control bg-secondary text-white border-0"
+                     [(ngModel)]="imageForm.title"
+                     name="imgTitle"
+                     placeholder="e.g. Main promotional image, Chef image, Food image"
+                     required>
+            </div>
+
+            <!-- Image Source: File Upload or Direct URL -->
+            <div class="col-12">
+              <label class="form-label text-warning small fw-semibold">Image URL or Local File *</label>
+              <div class="input-group mb-2">
+                <input type="text"
+                       class="form-control bg-secondary text-white border-0"
+                       [(ngModel)]="imageForm.imageUrl"
+                       name="imgUrl"
+                       placeholder="https://... or img/filename.png"
+                       required>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <span class="text-muted small">Or upload file:</span>
+                <input type="file"
+                       accept="image/*"
+                       class="form-control form-control-sm bg-dark text-white border-secondary w-auto"
+                       (change)="onImageFileChosen($event)">
+              </div>
+            </div>
+
+            <!-- Live Image Preview Box -->
+            <div class="col-12" *ngIf="imageForm.imageUrl">
+              <label class="form-label text-muted small fw-semibold">Image Preview:</label>
+              <div class="p-2 border border-secondary rounded bg-black text-center" style="max-height: 220px; overflow: hidden;">
+                <img [src]="imageForm.imageUrl" alt="Preview" class="img-fluid rounded" style="max-height: 200px; object-fit: contain;">
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="col-12">
+              <label class="form-label text-warning small fw-semibold">Display Context / Description</label>
+              <textarea class="form-control bg-secondary text-white border-0"
+                        rows="2"
+                        [(ngModel)]="imageForm.description"
+                        name="imgDesc"
+                        placeholder="Where and how this image is displayed to users..."></textarea>
+            </div>
+
+          </div>
+
+          <div class="modal-footer border-secondary px-0 pb-0 mt-4">
+            <button type="button" class="btn btn-outline-secondary text-white" (click)="closeImageModal()" [disabled]="isImageSaving">
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-warning fw-bold px-4" [disabled]="isImageSaving">
+              <span *ngIf="isImageSaving" class="spinner-border spinner-border-sm me-2" role="status"></span>
+              {{ isImageSaving ? 'Saving...' : (isEditingImage ? 'Update Image' : 'Save Image') }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: View Full Website Image -->
+<div *ngIf="viewingImage" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.85); z-index: 1060;">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark text-white border-warning shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header border-secondary">
+        <div>
+          <h5 class="modal-title text-warning fw-bold mb-0">{{ viewingImage.title }}</h5>
+          <span class="badge bg-warning text-dark me-2">{{ viewingImage.page }}</span>
+          <span class="text-muted small">{{ viewingImage.section }}</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white" (click)="closeViewImage()"></button>
+      </div>
+      <div class="modal-body p-0 text-center bg-black">
+        <img [src]="viewingImage.imageUrl" [alt]="viewingImage.title" class="img-fluid" style="max-height: 500px; object-fit: contain;">
+      </div>
+      <div class="modal-footer border-secondary justify-content-between">
+        <div class="small text-muted text-truncate" style="max-width: 450px;">
+          <code>{{ viewingImage.imageUrl }}</code>
+        </div>
+        <button type="button" class="btn btn-outline-secondary" (click)="closeViewImage()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 

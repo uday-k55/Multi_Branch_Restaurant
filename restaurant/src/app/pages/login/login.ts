@@ -1,7 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { finalize } from 'rxjs/operators';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -14,6 +15,7 @@ import { AuthService } from '../../services/auth.service';
 export class LoginComponent {
   private authService = inject(AuthService);
   private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
 
   credentials = {
     email: '',
@@ -27,17 +29,31 @@ export class LoginComponent {
   onSubmit(): void {
     this.errorMessage = '';
     this.loading = true;
+    this.cdr.detectChanges();
 
     this.authService.login({ email: this.credentials.email, password: this.credentials.password })
+      .pipe(
+        finalize(() => {
+          this.loading = false;
+          this.cdr.detectChanges();
+        })
+      )
       .subscribe({
         next: (response) => {
-          this.loading = false;
           const targetUrl = this.authService.getPermittedUrlForRole(response.role);
           this.router.navigate([targetUrl]);
         },
         error: (err) => {
-          this.loading = false;
-          this.errorMessage = err.error?.message || 'Invalid email or password. Please try again.';
+          if (err.status === 403) {
+            this.errorMessage = err.error?.message || 'Your account has been blacklisted. Please contact the restaurant administrator.';
+          } else if (err.status === 401) {
+            this.errorMessage = 'Invalid email or password. Please try again.';
+          } else if (err.status === 0) {
+            this.errorMessage = 'Unable to connect to the server. Please try again later.';
+          } else {
+            this.errorMessage = err.error?.message || 'Invalid email or password. Please try again.';
+          }
+          this.cdr.detectChanges();
         }
       });
   }

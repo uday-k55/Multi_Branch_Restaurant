@@ -1,43 +1,122 @@
 <section class="payment-section py-5 min-vh-100 bg-dark text-white d-flex align-items-center">
   <div class="container">
     <div class="row justify-content-center">
-      <div class="col-md-8 col-lg-6">
-        <div class="card bg-secondary text-white border-0 shadow-lg rounded-4 p-4 p-md-5">
-          
-          <div class="text-center mb-4">
-            <span class="badge bg-warning text-dark px-3 py-2 mb-2 text-uppercase fw-bold">Demo Payment Gateway</span>
-            <h2 class="fw-bold text-white mb-1">Complete Your Payment</h2>
-            <p class="text-muted small">Simulation sandbox mode — no actual charge will be made.</p>
-          </div>
+      <div class="col-md-9 col-lg-7">
 
-          @if (errorMsg()) {
-            <div class="alert alert-danger shadow-sm mb-4" role="alert">
-              <i class="fas fa-times-circle me-2"></i> {{ errorMsg() }}
+        <!-- ============================================== -->
+        <!-- VIEW 1: PAYMENT RESULT PAGE (SUCCESS OR FAILED) -->
+        <!-- ============================================== -->
+        @if (paymentResult()) {
+          @if (isSuccessResult()) {
+            <!-- SUCCESS RESULT CARD -->
+            <div class="card bg-secondary text-white border-0 shadow-lg rounded-4 p-4 p-md-5 text-center">
+              <div class="mb-3">
+                <span class="d-inline-flex p-3 rounded-circle bg-success bg-opacity-25 border border-success">
+                  <i class="fas fa-check-circle fa-4x text-success"></i>
+                </span>
+              </div>
+              <h2 class="fw-bold text-white mb-2">Payment Successful</h2>
+              <p class="text-light mb-4">{{ resultMessage() }}</p>
+
+              <!-- Order & Payment Details -->
+              <div class="card bg-dark border-secondary p-3 rounded-3 mb-4 text-start">
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+                  <span class="text-muted">Order ID</span>
+                  <span class="text-warning fw-bold">#{{ orderId() || paymentResult()?.orderId || 'N/A' }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+                  <span class="text-muted">Amount Paid</span>
+                  <span class="text-success fw-bold fs-5">₹{{ amount() | number:'1.2-2' }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+                  <span class="text-muted">Payment Method</span>
+                  <span class="badge bg-warning text-dark text-uppercase px-2 py-1">{{ selectedMethod() }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+                  <span class="text-muted">Transaction ID</span>
+                  <code class="text-info">{{ transactionId() || paymentResult()?.transactionId }}</code>
+                </div>
+                <div class="d-flex justify-content-between align-items-center pt-2">
+                  <span class="text-muted">Payment Status</span>
+                  <span class="badge bg-success px-3 py-1">PAID</span>
+                </div>
+              </div>
+
+              <!-- Navigation Actions -->
+              <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <a routerLink="/" class="btn btn-outline-light px-4 py-2 fw-semibold">
+                  <i class="fas fa-home me-2"></i>Go to Home
+                </a>
+                <a routerLink="/my-orders" class="btn btn-warning px-4 py-2 fw-bold text-dark">
+                  <i class="fas fa-receipt me-2"></i>My Orders
+                </a>
+              </div>
+            </div>
+          } @else {
+            <!-- FAILED RESULT CARD -->
+            <div class="card bg-secondary text-white border-0 shadow-lg rounded-4 p-4 p-md-5 text-center">
+              <div class="mb-3">
+                <span class="d-inline-flex p-3 rounded-circle bg-danger bg-opacity-25 border border-danger">
+                  <i class="fas fa-times-circle fa-4x text-danger"></i>
+                </span>
+              </div>
+              <h2 class="fw-bold text-white mb-2">Payment Failed</h2>
+              <p class="text-danger mb-4 fw-semibold">{{ resultMessage() || 'Your payment transaction was declined.' }}</p>
+
+              <!-- Transaction Information -->
+              <div class="card bg-dark border-secondary p-3 rounded-3 mb-4 text-start">
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+                  <span class="text-muted">Order ID</span>
+                  <span class="text-warning fw-bold">#{{ orderId() || 'N/A' }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+                  <span class="text-muted">Attempted Amount</span>
+                  <span class="text-danger fw-bold fs-5">₹{{ amount() | number:'1.2-2' }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+                  <span class="text-muted">Selected Method</span>
+                  <span class="badge bg-secondary text-uppercase">{{ selectedMethod() }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom border-secondary">
+                  <span class="text-muted">Reference ID</span>
+                  <code class="text-muted">{{ transactionId() || 'TXN-FAILED' }}</code>
+                </div>
+                <div class="d-flex justify-content-between align-items-center pt-2">
+                  <span class="text-muted">Status</span>
+                  <span class="badge bg-danger px-3 py-1">DECLINED</span>
+                </div>
+              </div>
+
+              <!-- Navigation Actions -->
+              <div class="d-flex justify-content-center gap-3 flex-wrap">
+                <button type="button" class="btn btn-warning px-4 py-2 fw-bold text-dark" (click)="tryAgain()">
+                  <i class="fas fa-redo me-2"></i>Try Again
+                </button>
+                <a routerLink="/" class="btn btn-outline-light px-4 py-2 fw-semibold">
+                  <i class="fas fa-home me-2"></i>Go to Home
+                </a>
+                <a routerLink="/my-orders" class="btn btn-outline-secondary px-4 py-2">
+                  <i class="fas fa-receipt me-2"></i>My Orders
+                </a>
+              </div>
             </div>
           }
+        } @else {
 
-          @if (paymentResult()) {
-            @if (paymentResult()?.status === 'PAID') {
-              <div class="alert alert-success text-center py-4 rounded-3 mb-4 shadow">
-                <i class="fas fa-check-circle fa-3x text-success mb-2"></i>
-                <h4 class="fw-bold mb-1">Payment Successful!</h4>
-                <p class="mb-1 small">Transaction Reference: <code>{{ paymentResult()?.transactionId }}</code></p>
-                <p class="mb-0 small text-muted">Redirecting to order confirmation...</p>
-              </div>
-            } @else {
-              <div class="alert alert-danger text-center py-4 rounded-3 mb-4 shadow">
-                <i class="fas fa-times-circle fa-3x text-danger mb-2"></i>
-                <h4 class="fw-bold mb-1">Payment Failed</h4>
-                <p class="mb-2 small">Your simulated payment transaction was declined.</p>
-                <button class="btn btn-outline-light btn-sm" (click)="paymentResult.set(null)">
-                  <i class="fas fa-redo me-1"></i> Try Again
-                </button>
-              </div>
-            }
-          } @else {
+          <!-- ============================================== -->
+          <!-- VIEW 2: CHOOSE PAYMENT METHOD FORM -->
+          <!-- ============================================== -->
+          <div class="card bg-secondary text-white border-0 shadow-lg rounded-4 p-4 p-md-5">
+
+            <!-- Title as specified in requirements -->
+            <div class="text-center mb-4">
+              <span class="badge bg-warning text-dark px-3 py-1 mb-2 text-uppercase fw-bold">Secure Checkout</span>
+              <h2 class="fw-bold text-white mb-1">Choose Payment Method</h2>
+              <p class="text-muted small">Select your preferred payment option below to complete your order.</p>
+            </div>
 
             <!-- Amount Due Banner -->
-            <div class="card bg-dark border-secondary p-3 rounded-3 mb-4">
+            <div class="card bg-dark border-secondary p-3 rounded-3 mb-4 shadow-sm">
               <div class="d-flex justify-content-between align-items-center mb-1">
                 <span class="text-muted">Order Reference:</span>
                 <strong class="text-warning">Order #{{ orderId() || 'N/A' }}</strong>
@@ -48,53 +127,278 @@
               </div>
             </div>
 
-            <!-- Demo Card Form -->
-            <form>
-              <div class="row g-3">
-                <div class="col-12">
-                  <label class="form-label text-warning fw-semibold small">Cardholder Name</label>
-                  <input type="text" class="form-control bg-dark text-white border-secondary" [ngModel]="cardHolder()" (ngModelChange)="cardHolder.set($event)" name="cardHolder">
-                </div>
+            @if (errorMsg()) {
+              <div class="alert alert-danger shadow-sm mb-4" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i> {{ errorMsg() }}
+              </div>
+            }
 
-                <div class="col-12">
-                  <label class="form-label text-warning fw-semibold small">Demo Card Number</label>
-                  <div class="input-group">
-                    <span class="input-group-text bg-dark border-secondary text-warning"><i class="far fa-credit-card"></i></span>
-                    <input type="text" class="form-control bg-dark text-white border-secondary" [ngModel]="cardNumber()" (ngModelChange)="cardNumber.set($event)" name="cardNumber">
+            <!-- Radio Button Options -->
+            <div class="payment-methods-list mb-4">
+              <div class="row g-3">
+
+                <!-- 1. UPI Radio Option -->
+                <div class="col-6 col-md-3">
+                  <div class="card bg-dark border h-100 p-3 text-center cursor-pointer position-relative rounded-3 transition-card"
+                       [ngClass]="selectedMethod() === 'UPI' ? 'border-warning shadow' : 'border-secondary opacity-75'"
+                       (click)="onMethodChange('UPI')">
+                    <input type="radio" name="paymentMethodRadio" id="methodUpi" value="UPI"
+                           [checked]="selectedMethod() === 'UPI'" class="form-check-input position-absolute top-0 end-0 m-2">
+                    <i class="fas fa-mobile-alt fa-2x mb-2 text-warning"></i>
+                    <h6 class="fw-bold mb-0 text-white">UPI</h6>
+                    <small class="text-muted">GPay, PhonePe</small>
                   </div>
                 </div>
 
-                <div class="col-6">
-                  <label class="form-label text-warning fw-semibold small">Expiry (MM/YY)</label>
-                  <input type="text" class="form-control bg-dark text-white border-secondary" [ngModel]="expiryDate()" (ngModelChange)="expiryDate.set($event)" name="expiryDate">
+                <!-- 2. Card Radio Option -->
+                <div class="col-6 col-md-3">
+                  <div class="card bg-dark border h-100 p-3 text-center cursor-pointer position-relative rounded-3 transition-card"
+                       [ngClass]="selectedMethod() === 'CARD' ? 'border-warning shadow' : 'border-secondary opacity-75'"
+                       (click)="onMethodChange('CARD')">
+                    <input type="radio" name="paymentMethodRadio" id="methodCard" value="CARD"
+                           [checked]="selectedMethod() === 'CARD'" class="form-check-input position-absolute top-0 end-0 m-2">
+                    <i class="fas fa-credit-card fa-2x mb-2 text-warning"></i>
+                    <h6 class="fw-bold mb-0 text-white">Card</h6>
+                    <small class="text-muted">Debit / Credit</small>
+                  </div>
                 </div>
 
-                <div class="col-6">
-                  <label class="form-label text-warning fw-semibold small">CVV</label>
-                  <input type="password" maxlength="4" class="form-control bg-dark text-white border-secondary" [ngModel]="cvv()" (ngModelChange)="cvv.set($event)" name="cvv">
+                <!-- 3. Cash Radio Option -->
+                <div class="col-6 col-md-3">
+                  <div class="card bg-dark border h-100 p-3 text-center cursor-pointer position-relative rounded-3 transition-card"
+                       [ngClass]="selectedMethod() === 'CASH' ? 'border-warning shadow' : 'border-secondary opacity-75'"
+                       (click)="onMethodChange('CASH')">
+                    <input type="radio" name="paymentMethodRadio" id="methodCash" value="CASH"
+                           [checked]="selectedMethod() === 'CASH'" class="form-check-input position-absolute top-0 end-0 m-2">
+                    <i class="fas fa-money-bill-wave fa-2x mb-2 text-warning"></i>
+                    <h6 class="fw-bold mb-0 text-white">Cash</h6>
+                    <small class="text-muted">Pay at Counter</small>
+                  </div>
                 </div>
 
-                <div class="col-12 mt-4">
-                  <div class="d-grid gap-2">
-                    <button type="button" class="btn btn-success btn-lg fw-bold py-3 shadow" [disabled]="processing()" (click)="processDemoPayment(true)">
-                      @if (processing()) {
-                        <span class="spinner-border spinner-border-sm me-1"></span> Authorizing Payment...
+                <!-- 4. Wallet Radio Option -->
+                <div class="col-6 col-md-3">
+                  <div class="card bg-dark border h-100 p-3 text-center cursor-pointer position-relative rounded-3 transition-card"
+                       [ngClass]="selectedMethod() === 'WALLET' ? 'border-warning shadow' : 'border-secondary opacity-75'"
+                       (click)="onMethodChange('WALLET')">
+                    <input type="radio" name="paymentMethodRadio" id="methodWallet" value="WALLET"
+                           [checked]="selectedMethod() === 'WALLET'" class="form-check-input position-absolute top-0 end-0 m-2">
+                    <i class="fas fa-wallet fa-2x mb-2 text-warning"></i>
+                    <h6 class="fw-bold mb-0 text-white">Wallet</h6>
+                    <small class="text-muted">Demo Balance</small>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- EXPANDABLE SECTION: UPI -->
+            <!-- ========================================== -->
+            @if (selectedMethod() === 'UPI') {
+              <div class="card bg-dark border border-secondary p-4 rounded-3 mb-4 shadow-sm">
+                <div class="d-flex align-items-center mb-3">
+                  <i class="fas fa-qrcode text-warning me-2 fs-5"></i>
+                  <h5 class="fw-bold mb-0 text-white">UPI Payment Details</h5>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label text-warning small fw-semibold">UPI ID / VPA</label>
+                  <div class="input-group">
+                    <span class="input-group-text bg-secondary border-secondary text-warning">
+                      <i class="fas fa-at"></i>
+                    </span>
+                    <input type="text"
+                           class="form-control bg-dark text-white border-secondary"
+                           placeholder="username@bank (e.g. rahul@okhdfcbank)"
+                           [ngModel]="upiId()"
+                           (ngModelChange)="upiId.set($event); onUpiInput()"
+                           name="upiId">
+                    <button class="btn btn-warning fw-bold px-3"
+                            type="button"
+                            [disabled]="upiVerifying() || !upiId().trim()"
+                            (click)="verifyUpiId()">
+                      @if (upiVerifying()) {
+                        <span class="spinner-border spinner-border-sm me-1"></span> Verifying...
                       } @else {
-                        <i class="fas fa-lock me-2"></i> Pay ₹{{ amount() | number:'1.2-2' }} (Simulate Success)
+                        Verify UPI ID
                       }
                     </button>
+                  </div>
 
-                    <button type="button" class="btn btn-outline-danger py-2" [disabled]="processing()" (click)="processDemoPayment(false)">
-                      <i class="fas fa-ban me-1"></i> Simulate Payment Failure
-                    </button>
+                  @if (upiError()) {
+                    <div class="text-danger small mt-2">
+                      <i class="fas fa-times-circle me-1"></i> {{ upiError() }}
+                    </div>
+                  }
+
+                  @if (upiVerified()) {
+                    <div class="alert alert-success d-flex align-items-center py-2 px-3 mt-3 mb-0 rounded-2">
+                      <i class="fas fa-check-circle me-2 text-success fs-5"></i>
+                      <div>
+                        <strong>UPI ID Verified:</strong> <code>{{ upiId() }}</code>
+                        <div class="small text-muted">Ready to proceed with payment authorization.</div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- ========================================== -->
+            <!-- EXPANDABLE SECTION: CARD -->
+            <!-- ========================================== -->
+            @if (selectedMethod() === 'CARD') {
+              <div class="card bg-dark border border-secondary p-4 rounded-3 mb-4 shadow-sm">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <div class="d-flex align-items-center">
+                    <i class="far fa-credit-card text-warning me-2 fs-5"></i>
+                    <h5 class="fw-bold mb-0 text-white">Card Payment Details</h5>
+                  </div>
+                  <!-- Detected Card Type Badge -->
+                  @if (cardType() !== 'Unknown') {
+                    <span class="badge bg-warning text-dark px-3 py-2 fw-bold">
+                      <i class="fas fa-credit-card me-1"></i> {{ cardType() }}
+                    </span>
+                  }
+                </div>
+
+                @if (cardError()) {
+                  <div class="alert alert-danger py-2 px-3 small mb-3">
+                    <i class="fas fa-exclamation-triangle me-1"></i> {{ cardError() }}
+                  </div>
+                }
+
+                <div class="row g-3">
+                  <!-- Cardholder Name -->
+                  <div class="col-12">
+                    <label class="form-label text-warning small fw-semibold">Cardholder Name</label>
+                    <input type="text"
+                           class="form-control bg-dark text-white border-secondary"
+                           placeholder="Name as printed on card"
+                           [ngModel]="cardHolder()"
+                           (ngModelChange)="cardHolder.set($event)"
+                           name="cardHolder">
+                  </div>
+
+                  <!-- Card Number with Live Type Detection -->
+                  <div class="col-12">
+                    <label class="form-label text-warning small fw-semibold">Card Number</label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-secondary border-secondary text-warning">
+                        <i class="far fa-credit-card"></i>
+                      </span>
+                      <input type="text"
+                             maxlength="19"
+                             class="form-control bg-dark text-white border-secondary"
+                             placeholder="XXXX XXXX XXXX XXXX"
+                             [value]="cardNumber()"
+                             (input)="formatCardNumber($event)"
+                             name="cardNumber">
+                      @if (cardType() !== 'Unknown') {
+                        <span class="input-group-text bg-secondary border-secondary text-info fw-bold">
+                          {{ cardType() }}
+                        </span>
+                      }
+                    </div>
+                  </div>
+
+                  <!-- Expiry Month -->
+                  <div class="col-6 col-md-4">
+                    <label class="form-label text-warning small fw-semibold">Expiry Month</label>
+                    <select class="form-select bg-dark text-white border-secondary"
+                            [ngModel]="expiryMonth()"
+                            (ngModelChange)="expiryMonth.set($event)"
+                            name="expiryMonth">
+                      <option value="">Month</option>
+                      @for (m of months; track m) {
+                        <option [value]="m">{{ m }}</option>
+                      }
+                    </select>
+                  </div>
+
+                  <!-- Expiry Year -->
+                  <div class="col-6 col-md-4">
+                    <label class="form-label text-warning small fw-semibold">Expiry Year</label>
+                    <select class="form-select bg-dark text-white border-secondary"
+                            [ngModel]="expiryYear()"
+                            (ngModelChange)="expiryYear.set($event)"
+                            name="expiryYear">
+                      <option value="">Year</option>
+                      @for (y of years; track y) {
+                        <option [value]="y">{{ y }}</option>
+                      }
+                    </select>
+                  </div>
+
+                  <!-- CVV -->
+                  <div class="col-12 col-md-4">
+                    <label class="form-label text-warning small fw-semibold">CVV</label>
+                    <input type="password"
+                           maxlength="4"
+                           class="form-control bg-dark text-white border-secondary"
+                           placeholder="3 or 4 digits"
+                           [ngModel]="cvv()"
+                           (ngModelChange)="cvv.set($event)"
+                           name="cvv">
                   </div>
                 </div>
               </div>
-            </form>
+            }
 
-          }
+            <!-- ========================================== -->
+            <!-- SECTION: CASH (NO ACCORDION, CONTINUE CASH FLOW) -->
+            <!-- ========================================== -->
+            @if (selectedMethod() === 'CASH') {
+              <div class="card bg-dark border border-secondary p-4 rounded-3 mb-4 text-center">
+                <i class="fas fa-hand-holding-usd fa-3x text-warning mb-2"></i>
+                <h5 class="fw-bold text-white mb-1">Cash On Delivery / Counter Payment</h5>
+                <p class="text-muted small mb-0">
+                  No advance card or digital details required. You can pay with cash upon receiving your order.
+                </p>
+              </div>
+            }
 
-        </div>
+            <!-- ========================================== -->
+            <!-- SECTION: WALLET (SIMULATED FAILURE DEMONSTRATION) -->
+            <!-- ========================================== -->
+            @if (selectedMethod() === 'WALLET') {
+              <div class="card bg-dark border border-secondary p-4 rounded-3 mb-4">
+                <div class="d-flex align-items-center mb-2">
+                  <i class="fas fa-wallet text-warning me-2 fs-5"></i>
+                  <h5 class="fw-bold mb-0 text-white">Digital Wallet Sandbox</h5>
+                </div>
+                <p class="text-muted small mb-2">
+                  Demonstration mode: Wallet payments simulate declined transactions or insufficient balance.
+                </p>
+                <div class="d-flex justify-content-between align-items-center p-2 rounded bg-secondary bg-opacity-25 border border-secondary">
+                  <span class="text-muted small">Available Demo Balance:</span>
+                  <span class="text-danger fw-bold">₹0.00</span>
+                </div>
+              </div>
+            }
+
+            <!-- ========================================== -->
+            <!-- PAY BUTTON -->
+            <!-- ========================================== -->
+            <div class="d-grid mt-4">
+              <button type="button"
+                      class="btn btn-warning btn-lg fw-bold py-3 shadow text-dark"
+                      [disabled]="processing() || (selectedMethod() === 'UPI' && !upiVerified())"
+                      (click)="processPayment()">
+                @if (processing()) {
+                  <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                  Processing Payment...
+                } @else {
+                  <i class="fas fa-lock me-2"></i>
+                  Pay ₹{{ amount() | number:'1.2-2' }}
+                }
+              </button>
+            </div>
+
+          </div>
+        }
+
       </div>
     </div>
   </div>

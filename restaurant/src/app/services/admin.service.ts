@@ -13,7 +13,18 @@ export interface Employee {
   role: 'ADMIN' | 'BRANCH_MANAGER' | 'CHEF' | 'EMPLOYEE' | 'CUSTOMER';
   branchId?: number;
   branchName?: string;
+  blacklisted?: boolean;
 }
+
+export interface WebsiteImage {
+  id: number;
+  page: string;
+  section: string;
+  title: string;
+  imageUrl: string;
+  description?: string;
+}
+
 
 export interface CreateEmployeeRequest {
   firstName: string;
@@ -311,6 +322,28 @@ export class AdminService {
   deleteUser(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/admin/users/${id}`);
   }
+
+  setCustomerBlacklistStatus(id: number, blacklisted: boolean): Observable<Employee> {
+    return this.http.patch<Employee>(`${this.apiUrl}/admin/users/${id}/blacklist?blacklisted=${blacklisted}`, {});
+  }
+
+  // --- Website Image Management APIs ---
+  getWebsiteImages(): Observable<WebsiteImage[]> {
+    return this.http.get<WebsiteImage[]>(`${this.apiUrl}/admin/website-images`);
+  }
+
+  addWebsiteImage(image: Partial<WebsiteImage>): Observable<WebsiteImage> {
+    return this.http.post<WebsiteImage>(`${this.apiUrl}/admin/website-images`, image);
+  }
+
+  updateWebsiteImage(id: number, image: Partial<WebsiteImage>): Observable<WebsiteImage> {
+    return this.http.put<WebsiteImage>(`${this.apiUrl}/admin/website-images/${id}`, image);
+  }
+
+  deleteWebsiteImage(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/admin/website-images/${id}`);
+  }
+
 
   getAllAdminOrders(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/admin/orders`);

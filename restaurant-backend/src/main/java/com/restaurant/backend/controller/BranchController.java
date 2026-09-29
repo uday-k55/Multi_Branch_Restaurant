@@ -17,11 +17,28 @@ public class BranchController {
     @Autowired
     private BranchService branchService;
 
+    @Autowired
+    private com.restaurant.backend.util.BranchSecurityUtils branchSecurityUtils;
+
     @GetMapping
     public ResponseEntity<List<Branch>> getAllBranches(
+            org.springframework.security.core.Authentication authentication,
             @RequestParam(required = false) String state,
             @RequestParam(required = false) String district,
             @RequestParam(required = false) Boolean activeOnly) {
+        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
+            try {
+                com.restaurant.backend.model.User currentUser = branchSecurityUtils.getAuthenticatedUser(authentication);
+                if (currentUser != null && currentUser.getRole() == com.restaurant.backend.model.Role.BRANCH_MANAGER) {
+                    Long managerBranchId = currentUser.getBranch() != null ? currentUser.getBranch().getId() : null;
+                    if (managerBranchId == null) {
+                        return ResponseEntity.ok(List.of());
+                    }
+                    Branch branch = branchService.getBranchById(managerBranchId);
+                    return ResponseEntity.ok(branch != null ? List.of(branch) : List.of());
+                }
+            } catch (Exception ignored) {}
+        }
         List<Branch> branches = branchService.getAllBranches(state, district, activeOnly);
         return ResponseEntity.ok(branches);
     }
@@ -37,10 +54,23 @@ public class BranchController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Branch> getBranchById(@PathVariable Long id) {
+    public ResponseEntity<Branch> getBranchById(
+            org.springframework.security.core.Authentication authentication,
+            @PathVariable Long id) {
+        if (authentication != null && authentication.isAuthenticated() && !"anonymousUser".equals(authentication.getPrincipal())) {
+            try {
+                com.restaurant.backend.model.User currentUser = branchSecurityUtils.getAuthenticatedUser(authentication);
+                if (currentUser != null && currentUser.getRole() == com.restaurant.backend.model.Role.BRANCH_MANAGER) {
+                    branchSecurityUtils.validateBranchAccess(currentUser, id);
+                }
+            } catch (org.springframework.web.server.ResponseStatusException rse) {
+                throw rse;
+            } catch (Exception ignored) {}
+        }
         Branch branch = branchService.getBranchById(id);
         return ResponseEntity.ok(branch);
     }
+
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")

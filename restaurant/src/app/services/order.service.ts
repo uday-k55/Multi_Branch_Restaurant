@@ -109,8 +109,10 @@ export interface PaymentResponse {
 export interface PaymentProcessRequest {
   status: 'PAID' | 'FAILED';
   transactionId?: string;
+  paymentMethod?: string;
   failureReason?: string;
 }
+
 
 @Injectable({
   providedIn: 'root'

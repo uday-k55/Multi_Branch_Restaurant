@@ -18,4 +18,5 @@ public class EmployeeDTO {
     private Role role;
     private Long branchId;
     private String branchName;
+    private Boolean blacklisted = false;
 }

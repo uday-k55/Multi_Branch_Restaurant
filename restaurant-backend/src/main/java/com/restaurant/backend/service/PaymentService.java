@@ -56,6 +56,9 @@ public class PaymentService {
 
         PaymentStatus newStatus = dto.getStatus() != null ? dto.getStatus() : PaymentStatus.PAID;
         payment.setStatus(newStatus);
+        if (dto.getPaymentMethod() != null) {
+            payment.setPaymentMethod(dto.getPaymentMethod());
+        }
         if (dto.getTransactionId() != null && !dto.getTransactionId().isBlank()) {
             payment.setTransactionId(dto.getTransactionId());
         }

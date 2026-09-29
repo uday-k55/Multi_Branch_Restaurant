@@ -20,24 +20,26 @@ public class UserController {
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<EmployeeDTO>> getAllUsers() {
-        List<EmployeeDTO> users = employeeService.getAllUsers();
-        return ResponseEntity.ok(users);
+        List<EmployeeDTO> customers = employeeService.getAllCustomers();
+        return ResponseEntity.ok(customers);
     }
 
-    @DeleteMapping("/{id}")
+    @PatchMapping("/{id}/blacklist")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteUser(
+    public ResponseEntity<EmployeeDTO> toggleBlacklist(
             @PathVariable Long id,
-            Authentication authentication) {
-        String currentAdminEmail = "";
-        if (authentication != null) {
-            if (authentication.getPrincipal() instanceof User u) {
-                currentAdminEmail = u.getEmail();
-            } else {
-                currentAdminEmail = authentication.getName();
-            }
-        }
-        employeeService.deleteEmployee(id, currentAdminEmail);
-        return ResponseEntity.noContent().build();
+            @RequestParam boolean blacklisted) {
+        EmployeeDTO updated = employeeService.setCustomerBlacklistStatus(id, blacklisted);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PutMapping("/{id}/blacklist")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<EmployeeDTO> updateBlacklist(
+            @PathVariable Long id,
+            @RequestParam boolean blacklisted) {
+        EmployeeDTO updated = employeeService.setCustomerBlacklistStatus(id, blacklisted);
+        return ResponseEntity.ok(updated);
     }
 }
+

@@ -6,7 +6,7 @@ import {
   AdminService, DashboardStats, Employee, CreateEmployeeRequest,
   MenuCategory, FoodItemAdmin, InventoryCategory, InventoryItemAdmin,
   InventoryTransaction, StockAdjustment, TableAdmin, ReservationAdmin,
-  ReportData
+  ReportData, WebsiteImage
 } from '../../services/admin.service';
 import { Branch } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
@@ -63,10 +63,13 @@ export class AdminComponent implements OnInit {
 
   get visibleSections() {
     if (this.authService.isStrictBranchManager()) {
-      return this.sections.filter(s => s.id !== 'branches' && s.id !== 'users' && s.id !== 'settings');
+      return this.sections
+        .filter(s => s.id !== 'users' && s.id !== 'settings')
+        .map(s => s.id === 'branches' ? { ...s, label: 'Branch Details' } : s);
     }
     return this.sections;
   }
+
 
   // Modal Loading & Specific Error States
   isBranchSaving = false;
@@ -225,7 +228,7 @@ export class AdminComponent implements OnInit {
   }
 
   setSection(sectionId: string): void {
-    if (this.authService.isStrictBranchManager() && (sectionId === 'branches' || sectionId === 'users' || sectionId === 'settings')) {
+    if (this.authService.isStrictBranchManager() && (sectionId === 'users' || sectionId === 'settings')) {
       this.activeSection = 'dashboard';
       return;
     }
@@ -259,8 +262,11 @@ export class AdminComponent implements OnInit {
       this.initBranchScopedSection(() => this.loadReservationsSection());
     } else if (sectionId === 'reports') {
       this.initBranchScopedSection(() => this.loadReportsSection());
+    } else if (sectionId === 'settings') {
+      this.loadWebsiteImages();
     }
   }
+
 
   clearMessages(): void {
     this.successMessage = '';
@@ -343,7 +349,15 @@ export class AdminComponent implements OnInit {
     this.cdr.markForCheck();
     this.adminService.getBranches().subscribe({
       next: (data) => {
-        this.branches = data || [];
+        let list = data || [];
+        if (this.authService.isStrictBranchManager()) {
+          const mgrBranchId = this.authService.getBranchId();
+          if (mgrBranchId) {
+            list = list.filter(b => b.id === mgrBranchId);
+          }
+          this.selectedBranchId = mgrBranchId;
+        }
+        this.branches = list;
         if (!this.selectedBranchId && this.branches.length > 0) {
           this.selectedBranchId = this.branches[0].id;
         }
@@ -360,6 +374,7 @@ export class AdminComponent implements OnInit {
       }
     });
   }
+
 
   openAddBranchModal(): void {
     this.clearMessages();
@@ -536,10 +551,20 @@ export class AdminComponent implements OnInit {
   }
 
   // --- EMPLOYEES ---
+  employeeBranchFilter: string | number = 'ALL';
+
   loadEmployees(): void {
     this.loading = true;
     this.cdr.markForCheck();
-    this.adminService.getEmployees().subscribe({
+
+    let branchIdToQuery: number | undefined = undefined;
+    if (this.authService.isStrictBranchManager()) {
+      branchIdToQuery = this.authService.getBranchId() || undefined;
+    } else if (this.employeeBranchFilter !== 'ALL') {
+      branchIdToQuery = Number(this.employeeBranchFilter);
+    }
+
+    this.adminService.getEmployees(branchIdToQuery).subscribe({
       next: (data) => {
         this.employees = data || [];
         this.loading = false;
@@ -553,13 +578,40 @@ export class AdminComponent implements OnInit {
     });
   }
 
+  onEmployeeBranchFilterChange(): void {
+    this.loadEmployees();
+  }
+
+
+  getAssignedBranchName(): string {
+    const mgrBranchId = this.authService.getBranchId();
+    if (this.branches && this.branches.length > 0) {
+      const match = this.branches.find(b => b.id === mgrBranchId);
+      if (match) {
+        return match.name + (match.district ? ` (${match.district})` : '');
+      }
+      return this.branches[0].name + (this.branches[0].district ? ` (${this.branches[0].district})` : '');
+    }
+    return mgrBranchId ? `Branch #${mgrBranchId}` : 'Assigned Branch';
+  }
+
   openAddEmployeeModal(defaultRole?: 'BRANCH_MANAGER' | 'CHEF' | 'EMPLOYEE'): void {
     this.clearMessages();
     this.employeeModalError = '';
     this.isEmployeeSaving = false;
     this.isEditingEmployee = false;
     this.editingEmployeeId = null;
-    const firstBranchId = this.branches.length > 0 ? this.branches[0].id : 0;
+
+    let branchId = 0;
+    if (this.authService.isStrictBranchManager()) {
+      branchId = this.authService.getBranchId() || (this.branches.length > 0 ? this.branches[0].id : 0);
+    } else {
+      branchId = this.branches.length > 0 ? this.branches[0].id : 0;
+    }
+
+    const selectedRole = this.authService.isStrictBranchManager()
+      ? (defaultRole === 'CHEF' ? 'CHEF' : 'EMPLOYEE')
+      : (defaultRole || 'EMPLOYEE');
 
     this.employeeForm = {
       firstName: '',
@@ -568,8 +620,8 @@ export class AdminComponent implements OnInit {
       phoneNumber: '',
       gender: 'male',
       password: '',
-      role: defaultRole || 'EMPLOYEE',
-      branchId: firstBranchId
+      role: selectedRole,
+      branchId: branchId
     };
     this.showEmployeeModal = true;
     this.cdr.markForCheck();
@@ -674,6 +726,16 @@ export class AdminComponent implements OnInit {
     } else if (this.employeeForm.password && !this.isEmpPasswordValid) {
       this.employeeModalError = 'Password does not meet all required criteria.';
       return;
+    }
+
+    if (this.authService.isStrictBranchManager()) {
+      const mgrBranchId = this.authService.getBranchId() || (this.branches.length > 0 ? this.branches[0].id : null);
+      if (mgrBranchId) {
+        this.employeeForm.branchId = mgrBranchId;
+      }
+      if (this.employeeForm.role !== 'EMPLOYEE' && this.employeeForm.role !== 'CHEF') {
+        this.employeeForm.role = 'EMPLOYEE';
+      }
     }
 
     this.isEmployeeSaving = true;
@@ -1399,46 +1461,49 @@ export class AdminComponent implements OnInit {
     });
   }
 
-  // --- USERS MANAGEMENT ---
+  // --- USERS & CUSTOMERS MANAGEMENT ---
   loadUsersSection(): void {
     this.loading = true;
     this.cdr.markForCheck();
     this.adminService.getAllUsers().subscribe({
       next: (users) => {
-        this.allUsers = users || [];
+        // Exclusively show CUSTOMER role
+        this.allUsers = (users || []).filter(u => u.role === 'CUSTOMER');
         this.loading = false;
         this.cdr.markForCheck();
       },
       error: (err) => {
         this.loading = false;
-        this.errorMessage = err.error?.message || 'Failed to load user accounts.';
+        this.errorMessage = err.error?.message || 'Failed to load customer accounts.';
         this.cdr.markForCheck();
       }
     });
   }
 
-  deleteUserAccount(u: Employee): void {
-    if (!confirm(`Are you sure you want to delete user "${u.firstName} ${u.lastName}" (${u.email})?`)) return;
+  toggleCustomerBlacklist(u: Employee): void {
+    const nextStatus = !u.blacklisted;
+    const actionLabel = nextStatus ? 'blacklist' : 'unblacklist';
 
     this.clearMessages();
     this.deletingUserId = u.id;
     this.cdr.markForCheck();
 
-    this.adminService.deleteUser(u.id).subscribe({
-      next: () => {
+    this.adminService.setCustomerBlacklistStatus(u.id, nextStatus).subscribe({
+      next: (updated) => {
         this.deletingUserId = null;
-        this.successMessage = `User "${u.email}" deleted successfully.`;
+        u.blacklisted = updated.blacklisted;
+        this.successMessage = `Customer "${u.firstName} ${u.lastName}" (${u.email}) has been ${nextStatus ? 'blacklisted' : 'unblacklisted'} successfully.`;
         this.loadUsersSection();
-        this.fetchDashboardStats();
         this.cdr.markForCheck();
       },
       error: (err) => {
         this.deletingUserId = null;
-        this.errorMessage = err.error?.message || `Cannot delete user "${u.email}" because existing records depend on this account.`;
+        this.errorMessage = err.error?.message || `Failed to ${actionLabel} customer account.`;
         this.cdr.markForCheck();
       }
     });
   }
+
 
   // --- ORDERS MANAGEMENT ---
   loadOrdersSection(): void {
@@ -1531,4 +1596,187 @@ export class AdminComponent implements OnInit {
       this.openAddFoodItemModal();
     }
   }
+
+  // ==========================================
+  // WEBSITE IMAGE MANAGEMENT (ADMIN -> SETTINGS -> IMAGE MANAGEMENT)
+  // ==========================================
+  settingsTab: 'general' | 'images' = 'images';
+  websiteImages: WebsiteImage[] = [];
+  loadingImages = false;
+  isImageModalOpen = false;
+  isEditingImage = false;
+  editingImageId: number | null = null;
+  isImageSaving = false;
+  imageModalError = '';
+  viewingImage: WebsiteImage | null = null;
+
+  imageForm: {
+    page: string;
+    section: string;
+    title: string;
+    imageUrl: string;
+    description: string;
+  } = {
+    page: 'Home',
+    section: 'Hero / Carousel',
+    title: '',
+    imageUrl: '',
+    description: ''
+  };
+
+  loadWebsiteImages(): void {
+    this.loadingImages = true;
+    this.cdr.markForCheck();
+    this.adminService.getWebsiteImages().subscribe({
+      next: (images) => {
+        this.websiteImages = images || [];
+        this.loadingImages = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.loadingImages = false;
+        console.error('Failed to load website images:', err);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  openAddImageModal(): void {
+    this.clearMessages();
+    this.isEditingImage = false;
+    this.editingImageId = null;
+    this.imageModalError = '';
+    this.isImageSaving = false;
+    this.imageForm = {
+      page: 'Home',
+      section: 'Hero / Carousel',
+      title: '',
+      imageUrl: '',
+      description: ''
+    };
+    this.isImageModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  openEditImageModal(img: WebsiteImage): void {
+    this.clearMessages();
+    this.isEditingImage = true;
+    this.editingImageId = img.id;
+    this.imageModalError = '';
+    this.isImageSaving = false;
+    this.imageForm = {
+      page: img.page,
+      section: img.section,
+      title: img.title,
+      imageUrl: img.imageUrl,
+      description: img.description || ''
+    };
+    this.isImageModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  closeImageModal(): void {
+    this.isImageModalOpen = false;
+    this.editingImageId = null;
+    this.imageModalError = '';
+    this.cdr.markForCheck();
+  }
+
+  saveWebsiteImage(): void {
+    this.imageModalError = '';
+    if (!this.imageForm.page.trim() || !this.imageForm.section.trim()) {
+      this.imageModalError = 'Page and Section association are required.';
+      this.cdr.markForCheck();
+      return;
+    }
+    if (!this.imageForm.imageUrl.trim()) {
+      this.imageModalError = 'Image URL or file upload is required.';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.isImageSaving = true;
+    this.cdr.markForCheck();
+
+    const payload = {
+      page: this.imageForm.page.trim(),
+      section: this.imageForm.section.trim(),
+      title: this.imageForm.title.trim() || 'Promotional Image',
+      imageUrl: this.imageForm.imageUrl.trim(),
+      description: this.imageForm.description.trim()
+    };
+
+    if (this.isEditingImage && this.editingImageId) {
+      this.adminService.updateWebsiteImage(this.editingImageId, payload).subscribe({
+        next: () => {
+          this.isImageSaving = false;
+          this.isImageModalOpen = false;
+          this.successMessage = 'Website image updated successfully.';
+          this.loadWebsiteImages();
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.isImageSaving = false;
+          this.imageModalError = err.error?.message || 'Failed to update image.';
+          this.cdr.markForCheck();
+        }
+      });
+    } else {
+      this.adminService.addWebsiteImage(payload).subscribe({
+        next: () => {
+          this.isImageSaving = false;
+          this.isImageModalOpen = false;
+          this.successMessage = 'New website image added successfully.';
+          this.loadWebsiteImages();
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.isImageSaving = false;
+          this.imageModalError = err.error?.message || 'Failed to add image.';
+          this.cdr.markForCheck();
+        }
+      });
+    }
+  }
+
+  deleteWebsiteImage(img: WebsiteImage): void {
+    if (!confirm(`Are you sure you want to delete the image "${img.title}" for ${img.page} (${img.section})?`)) {
+      return;
+    }
+
+    this.clearMessages();
+    this.adminService.deleteWebsiteImage(img.id).subscribe({
+      next: () => {
+        this.successMessage = `Image "${img.title}" removed successfully.`;
+        this.loadWebsiteImages();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || 'Failed to delete image.';
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  onImageFileChosen(event: any): void {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.imageForm.imageUrl = e.target.result;
+      this.cdr.markForCheck();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  openViewImage(img: WebsiteImage): void {
+    this.viewingImage = img;
+    this.cdr.markForCheck();
+  }
+
+  closeViewImage(): void {
+    this.viewingImage = null;
+    this.cdr.markForCheck();
+  }
 }
+

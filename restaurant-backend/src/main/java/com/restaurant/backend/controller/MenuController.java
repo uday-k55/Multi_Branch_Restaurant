@@ -38,7 +38,7 @@ public class MenuController {
     // --- Category Endpoints ---
 
     @PostMapping("/branches/{branchId}/categories")
-    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_MANAGER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MenuCategoryDTO> addCategory(
             Authentication authentication,
             @PathVariable Long branchId,
@@ -50,7 +50,7 @@ public class MenuController {
     }
 
     @PutMapping("/categories/{categoryId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_MANAGER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MenuCategoryDTO> updateCategory(
             Authentication authentication,
             @PathVariable Long categoryId,
@@ -65,7 +65,7 @@ public class MenuController {
     }
 
     @DeleteMapping("/categories/{categoryId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_MANAGER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteCategory(
             Authentication authentication,
             @PathVariable Long categoryId) {
@@ -87,7 +87,7 @@ public class MenuController {
     // --- Food Item Endpoints ---
 
     @PostMapping("/branches/{branchId}/categories/{categoryId}/items")
-    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_MANAGER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<FoodItemDTO> addFoodItem(
             Authentication authentication,
             @PathVariable Long branchId,
@@ -100,7 +100,7 @@ public class MenuController {
     }
 
     @PutMapping("/items/{itemId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_MANAGER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<FoodItemDTO> updateFoodItem(
             Authentication authentication,
             @PathVariable Long itemId,
@@ -115,7 +115,7 @@ public class MenuController {
     }
 
     @DeleteMapping("/items/{itemId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'BRANCH_MANAGER')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteFoodItem(
             Authentication authentication,
             @PathVariable Long itemId) {

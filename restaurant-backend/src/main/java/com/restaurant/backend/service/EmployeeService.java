@@ -153,6 +153,25 @@ public class EmployeeService {
         return userRepository.findAll().stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
+    public List<EmployeeDTO> getAllCustomers() {
+        return userRepository.findByRole(Role.CUSTOMER).stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public EmployeeDTO setCustomerBlacklistStatus(Long id, boolean blacklisted) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with ID: " + id));
+
+        if (user.getRole() != Role.CUSTOMER) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Only customer accounts can be blacklisted or unblacklisted");
+        }
+
+        user.setBlacklisted(blacklisted);
+        User saved = userRepository.save(user);
+        return mapToDTO(saved);
+    }
+
     public void deleteEmployee(Long id, String currentAdminEmail) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found with ID: " + id));
@@ -183,6 +202,7 @@ public class EmployeeService {
         dto.setPhoneNumber(user.getPhoneNumber());
         dto.setGender(user.getGender());
         dto.setRole(user.getRole());
+        dto.setBlacklisted(Boolean.TRUE.equals(user.getBlacklisted()));
         if (user.getBranch() != null) {
             dto.setBranchId(user.getBranch().getId());
             dto.setBranchName(user.getBranch().getName());
@@ -190,3 +210,4 @@ public class EmployeeService {
         return dto;
     }
 }
+

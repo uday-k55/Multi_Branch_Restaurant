@@ -41,4 +41,7 @@ public class User {
     @ManyToOne
     @JoinColumn(name = "branch_id")
     private Branch branch;
+
+    @Column(name = "blacklisted", nullable = false)
+    private Boolean blacklisted = false;
 }

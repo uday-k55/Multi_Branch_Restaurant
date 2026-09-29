@@ -39,6 +39,11 @@ public class AuthController {
                     .body(Map.of("message", "Invalid email or password"));
         }
 
+        if (Boolean.TRUE.equals(user.getBlacklisted())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "Your account has been blacklisted. Please contact the restaurant administrator."));
+        }
+
         String token = jwtUtils.generateToken(user);
         Long branchId = user.getBranch() != null ? user.getBranch().getId() : null;
 

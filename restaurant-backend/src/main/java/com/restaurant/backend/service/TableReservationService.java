@@ -8,6 +8,7 @@ import com.restaurant.backend.repository.BranchRepository;
 import com.restaurant.backend.repository.ReservationRepository;
 import com.restaurant.backend.repository.RestaurantTableRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -77,10 +78,42 @@ public class TableReservationService {
     }
 
     public RestaurantTableDTO getTableByQrCode(String qrCode) {
-        RestaurantTable table = tableRepository.findByQrCode(qrCode)
-                .orElseThrow(() -> new IllegalArgumentException("Table not found for QR code: " + qrCode));
+        if (qrCode == null || qrCode.trim().isEmpty()) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "QR code cannot be empty");
+        }
+
+        String cleanCode = qrCode.trim();
+        // Support URL input: e.g., http://localhost:4200/qr/QR-BRANCH-1-TABLE-2
+        if (cleanCode.contains("/qr/")) {
+            cleanCode = cleanCode.substring(cleanCode.lastIndexOf("/qr/") + 4);
+        }
+
+        RestaurantTable table = tableRepository.findByQrCode(cleanCode).orElse(null);
+
+        // Fallback: parse QR-BRANCH-X-TABLE-Y
+        if (table == null && cleanCode.toUpperCase().startsWith("QR-BRANCH-")) {
+            try {
+                String[] parts = cleanCode.split("-");
+                if (parts.length >= 5 && "BRANCH".equalsIgnoreCase(parts[1]) && "TABLE".equalsIgnoreCase(parts[3])) {
+                    Long branchId = Long.parseLong(parts[2]);
+                    Long tableId = Long.parseLong(parts[4]);
+                    RestaurantTable candidate = tableRepository.findById(tableId).orElse(null);
+                    if (candidate != null && candidate.getBranch() != null && candidate.getBranch().getId().equals(branchId)) {
+                        table = candidate;
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
+        if (table == null) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    HttpStatus.NOT_FOUND, "Invalid or unassigned table QR code: " + qrCode);
+        }
+
         return mapTableToDTO(table);
     }
+
 
     // --- Reservation Flow ---
 
