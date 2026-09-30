@@ -172,7 +172,14 @@ public class OrderService {
     public List<OrderDTO> getBranchOrders(User currentUser, Long branchId) {
         branchSecurityUtils.validateBranchAccess(currentUser, branchId);
         List<Order> orders = orderRepository.findByBranchIdOrderByCreatedAtDesc(branchId);
-        return orders.stream().map(order -> {
+        return orders.stream()
+                .filter(order -> {
+                    if (currentUser != null && currentUser.getRole() == Role.CHEF) {
+                        return order.getStatus() != OrderStatus.CANCELLED;
+                    }
+                    return true;
+                })
+                .map(order -> {
             OrderDTO dto = this.mapToDTO(order);
             if (currentUser != null && currentUser.getRole() == Role.EMPLOYEE && order.getOrderType() == OrderType.DELIVERY) {
                 if (order.getAssignedEmployee() == null || !order.getAssignedEmployee().getId().equals(currentUser.getId())) {

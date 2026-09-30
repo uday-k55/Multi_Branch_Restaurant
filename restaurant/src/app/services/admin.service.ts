@@ -149,6 +149,10 @@ export class AdminService {
     return this.http.get<DashboardStats>(`${this.apiUrl}/admin/dashboard`);
   }
 
+  getBranchDashboardOverview(branchId: number): Observable<DashboardStats> {
+    return this.http.get<DashboardStats>(`${this.apiUrl}/admin/dashboard/branch/${branchId}`);
+  }
+
   // --- Branch APIs ---
   getBranches(state?: string, district?: string, activeOnly?: boolean): Observable<Branch[]> {
     let params = new HttpParams();

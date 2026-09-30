@@ -22,6 +22,9 @@ public class PaymentService {
     @Autowired
     private OrderRepository orderRepository;
 
+    @Autowired(required = false)
+    private NotificationService notificationService;
+
     @Transactional
     public PaymentResponseDTO initiatePayment(PaymentRequestDTO dto) {
         Order order = orderRepository.findById(dto.getOrderId())
@@ -64,12 +67,21 @@ public class PaymentService {
         }
         payment.setUpdatedAt(LocalDateTime.now());
 
-        // Update associated order status if payment succeeded
+        // Update associated order status based on payment outcome
         if (newStatus == PaymentStatus.PAID) {
             Order order = payment.getOrder();
             if (order != null) {
                 order.setStatus(OrderStatus.PLACED); // Order confirmed & placed upon payment completion
                 orderRepository.save(order);
+            }
+        } else if (newStatus == PaymentStatus.FAILED) {
+            Order order = payment.getOrder();
+            if (order != null) {
+                order.setStatus(OrderStatus.CANCELLED);
+                orderRepository.save(order);
+                if (notificationService != null) {
+                    notificationService.deleteNotificationsByOrderId(order.getId());
+                }
             }
         }
 

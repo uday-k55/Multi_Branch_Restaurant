@@ -29,7 +29,7 @@ public class Payment {
     private PaymentStatus status = PaymentStatus.PENDING;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "payment_method", nullable = false)
+    @Column(name = "payment_method", nullable = false, length = 50)
     private PaymentMethod paymentMethod = PaymentMethod.DEMO;
 
     @Column(name = "transaction_id", unique = true)

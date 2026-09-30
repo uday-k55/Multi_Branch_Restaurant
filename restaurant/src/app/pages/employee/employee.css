@@ -1,3 +1,14 @@
+:host {
+  display: block;
+}
+
+.employee-layout-container {
+  padding-top: 100px !important;
+  min-height: calc(100vh - 100px);
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
 .nav-pills .nav-link {
   border-radius: 20px;
 }

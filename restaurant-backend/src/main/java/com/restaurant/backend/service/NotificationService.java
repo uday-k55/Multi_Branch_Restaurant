@@ -185,6 +185,14 @@ public class NotificationService {
         }
     }
 
+    @Transactional
+    public void deleteNotificationsByOrderId(Long orderId) {
+        if (orderId == null) return;
+        try {
+            notificationRepository.deleteByOrderId(orderId);
+        } catch (Exception ignored) {}
+    }
+
     // --- Query & Read Operations ---
 
     public List<NotificationDTO> getNotificationsForBranchAndRole(Long branchId, Role role) {

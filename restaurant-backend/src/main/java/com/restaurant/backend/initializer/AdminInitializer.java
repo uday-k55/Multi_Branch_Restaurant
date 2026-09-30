@@ -28,6 +28,20 @@ public class AdminInitializer implements CommandLineRunner {
                 jdbcTemplate.execute("ALTER TABLE notifications MODIFY COLUMN notification_type VARCHAR(100) NOT NULL");
             } catch (Exception ignored) {}
         }
+        try {
+            jdbcTemplate.execute("ALTER TABLE payments MODIFY COLUMN payment_method ENUM('CARD','UPI','CASH','NET_BANKING','WALLET','DEMO') NOT NULL");
+        } catch (Exception e) {
+            try {
+                jdbcTemplate.execute("ALTER TABLE payments MODIFY COLUMN payment_method VARCHAR(50) NOT NULL");
+            } catch (Exception ignored) {}
+        }
+        try {
+            jdbcTemplate.execute("ALTER TABLE orders MODIFY COLUMN status ENUM('PLACED','CONFIRMED','PREPARING','READY','AVAILABLE_FOR_DELIVERY','ACCEPTED','PICKED_UP','OUT_FOR_DELIVERY','DELIVERED','COMPLETED','CANCELLED') NOT NULL");
+        } catch (Exception e) {
+            try {
+                jdbcTemplate.execute("ALTER TABLE orders MODIFY COLUMN status VARCHAR(50) NOT NULL");
+            } catch (Exception ignored) {}
+        }
         userRepository.findByEmail("admin1@gmail.com").ifPresentOrElse(admin -> {
             if (admin.getRole() == null || admin.getRole() != com.restaurant.backend.model.Role.ADMIN) {
                 admin.setRole(com.restaurant.backend.model.Role.ADMIN);

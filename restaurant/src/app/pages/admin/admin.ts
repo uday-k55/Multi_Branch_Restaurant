@@ -217,7 +217,9 @@ export class AdminComponent implements OnInit {
     this.fetchDashboardStats();
     this.loadBranches();
     this.loadEmployees();
-    this.loadUsersSection();
+    if (!this.authService.isStrictBranchManager()) {
+      this.loadUsersSection();
+    }
 
     this.route.queryParams.subscribe(params => {
       const section = params['section'] || params['tab'];
@@ -329,6 +331,25 @@ export class AdminComponent implements OnInit {
 
   // --- STATS ---
   fetchDashboardStats(): void {
+    if (this.authService.isStrictBranchManager()) {
+      const branchId = this.authService.getBranchId() || this.selectedBranchId;
+      if (branchId) {
+        this.adminService.getBranchDashboardOverview(branchId).subscribe({
+          next: (data) => {
+            if (data) {
+              this.stats = data;
+              this.cdr.markForCheck();
+            }
+          },
+          error: (err) => {
+            console.error('Error loading branch dashboard stats:', err);
+            this.cdr.markForCheck();
+          }
+        });
+      }
+      return;
+    }
+
     this.adminService.getDashboardOverview().subscribe({
       next: (data) => {
         if (data) {
