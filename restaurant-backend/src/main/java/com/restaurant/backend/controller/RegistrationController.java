@@ -12,7 +12,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = {"https://whimsical-sopapillas-78c574.netlify.app", "http://localhost:4200"})
 public class RegistrationController {
 
     private final UserService userService;
