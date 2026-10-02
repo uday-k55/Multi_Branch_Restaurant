@@ -55,7 +55,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     const userId = this.authService.getUserId();
     if (!userId) return;
 
-    this.http.get<NotificationItem[]>(`http://localhost:8080/api/notifications/user/${userId}`).subscribe({
+    this.http.get<NotificationItem[]>(`https://multi-branch-restaurant.onrender.com/api/notifications/user/${userId}`).subscribe({
       next: (data) => {
         this.notifications.set(data || []);
       },
@@ -73,7 +73,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   markRead(id: number, event: Event): void {
     event.stopPropagation();
-    this.http.patch<NotificationItem>(`http://localhost:8080/api/notifications/${id}/read`, {}).subscribe({
+    this.http.patch<NotificationItem>(`https://multi-branch-restaurant.onrender.com/api/notifications/${id}/read`, {}).subscribe({
       next: () => this.loadNotifications()
     });
   }

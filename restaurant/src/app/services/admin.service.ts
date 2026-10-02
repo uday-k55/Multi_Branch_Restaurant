@@ -143,7 +143,7 @@ export interface ReservationAdmin {
 })
 export class AdminService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api';
+  private apiUrl = 'https://multi-branch-restaurant.onrender.com/api';
 
   getDashboardOverview(): Observable<DashboardStats> {
     return this.http.get<DashboardStats>(`${this.apiUrl}/admin/dashboard`);

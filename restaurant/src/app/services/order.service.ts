@@ -119,7 +119,7 @@ export interface PaymentProcessRequest {
 })
 export class OrderService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api';
+  private apiUrl = 'https://multi-branch-restaurant.onrender.com/api';
 
   getBranches(): Observable<Branch[]> {
     return this.http.get<Branch[]>(`${this.apiUrl}/branches`);

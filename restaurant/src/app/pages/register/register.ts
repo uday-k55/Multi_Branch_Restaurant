@@ -59,7 +59,7 @@ export class RegisterComponent {
     this.message = '';
     this.errorMessage = '';
 
-    this.http.post<any>('http://localhost:8080/api/register', this.user)
+    this.http.post<any>('https://multi-branch-restaurant.onrender.com/api/register', this.user)
       .subscribe({
         next: (response) => {
           console.log('Registration success:', response);

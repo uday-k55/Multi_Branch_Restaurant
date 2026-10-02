@@ -68,7 +68,7 @@ export class ChefComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.http.get<Order[]>(`http://localhost:8080/api/orders/branch/${branchId}`).subscribe({
+    this.http.get<Order[]>(`https://multi-branch-restaurant.onrender.com/api/orders/branch/${branchId}`).subscribe({
       next: (data) => {
         this.orders.set(data || []);
         this.isLoading.set(false);
@@ -86,7 +86,7 @@ export class ChefComponent implements OnInit, OnDestroy {
 
   updateStatus(orderId: number, nextStatus: string): void {
     this.actionLoadingId.set(orderId);
-    this.http.patch<Order>(`http://localhost:8080/api/orders/${orderId}/status?status=${nextStatus}`, {}).subscribe({
+    this.http.patch<Order>(`https://multi-branch-restaurant.onrender.com/api/orders/${orderId}/status?status=${nextStatus}`, {}).subscribe({
       next: () => {
         this.actionLoadingId.set(null);
         this.loadOrders();

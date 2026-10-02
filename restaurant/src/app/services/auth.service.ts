@@ -27,7 +27,7 @@ export interface UserProfile {
 })
 export class AuthService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8080/api/auth';
+  private apiUrl = 'https://multi-branch-restaurant.onrender.com/api/auth';
 
   isLoggedInSignal = signal<boolean>(!!localStorage.getItem('token'));
   userRoleSignal = signal<string>(localStorage.getItem('userRole') || '');
