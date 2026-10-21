@@ -44,4 +44,11 @@ public class User {
 
     @Column(name = "blacklisted", nullable = false)
     private Boolean blacklisted = false;
+
+    @Column(name = "wallet_balance", nullable = false)
+    private Double walletBalance = 0.0;
+
+    public Double getWalletBalance() {
+        return walletBalance != null ? walletBalance : 0.0;
+    }
 }

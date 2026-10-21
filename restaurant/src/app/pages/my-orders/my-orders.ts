@@ -121,7 +121,7 @@ export class MyOrdersComponent implements OnInit, OnDestroy {
       next: () => {
         this.cancellingOrderId.set(null);
         this.confirmCancelOrder.set(null);
-        this.successMsg.set(`Order #${order.id} has been cancelled successfully.`);
+        this.successMsg.set(`Order #${order.id} has been cancelled successfully. Any eligible refund has been credited to your customer wallet.`);
         this.loadOrders();
       },
       error: (err) => {

@@ -178,7 +178,35 @@ CREATE TABLE IF NOT EXISTS `password_reset_otps` (
 
 ---
 
-## 10. Manual Checklist Before Running
+## 10. WAMP MySQL Schema for Customer Wallet and Refunds (Optional for Local)
+
+In production on Render, Hibernate automatically adds `wallet_balance` to `users` and creates `wallet_transactions` because `ddl-auto=update`.
+For local WAMP execution with `ddl-auto=none`, run the following SQL commands in phpMyAdmin (`restaurant_db`):
+
+```sql
+-- 1. Add wallet_balance column to users table if not already present
+ALTER TABLE `users` ADD COLUMN `wallet_balance` DOUBLE NOT NULL DEFAULT 0.0;
+
+-- 2. Create wallet_transactions table
+CREATE TABLE IF NOT EXISTS `wallet_transactions` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT NOT NULL,
+  `order_id` BIGINT NULL,
+  `amount` DOUBLE NOT NULL,
+  `type` VARCHAR(30) NOT NULL,
+  `description` VARCHAR(255) NOT NULL,
+  `created_at` DATETIME(6) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_wallet_order_type` (`order_id`, `type`),
+  INDEX `idx_wallet_user_id` (`user_id`),
+  CONSTRAINT `fk_wallet_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_wallet_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+---
+
+## 11. Manual Checklist Before Running
 
 Before starting both applications locally, verify:
 

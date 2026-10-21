@@ -98,7 +98,8 @@ public class AuthController {
                 user.getGender(),
                 user.getRole(),
                 user.getBranch() != null ? user.getBranch().getId() : null,
-                user.getBranch() != null ? user.getBranch().getName() : null
+                user.getBranch() != null ? user.getBranch().getName() : null,
+                user.getWalletBalance()
         );
         return ResponseEntity.ok(dto);
     }
@@ -134,7 +135,8 @@ public class AuthController {
                 saved.getGender(),
                 saved.getRole(),
                 saved.getBranch() != null ? saved.getBranch().getId() : null,
-                saved.getBranch() != null ? saved.getBranch().getName() : null
+                saved.getBranch() != null ? saved.getBranch().getName() : null,
+                saved.getWalletBalance()
         );
         return ResponseEntity.ok(dto);
     }

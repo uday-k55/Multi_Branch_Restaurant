@@ -21,6 +21,7 @@ export interface UserProfile {
   role: string;
   branchId?: number;
   branchName?: string;
+  walletBalance?: number;
 }
 
 @Injectable({

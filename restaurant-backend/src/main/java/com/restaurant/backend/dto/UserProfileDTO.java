@@ -18,4 +18,9 @@ public class UserProfileDTO {
     private Role role;
     private Long branchId;
     private String branchName;
+    private Double walletBalance = 0.0;
+
+    public UserProfileDTO(Long id, String firstName, String lastName, String email, String phoneNumber, String gender, Role role, Long branchId, String branchName) {
+        this(id, firstName, lastName, email, phoneNumber, gender, role, branchId, branchName, 0.0);
+    }
 }

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { AuthService, UserProfile } from '../../services/auth.service';
+import { WalletService, WalletData } from '../../services/wallet.service';
 import { LocationPickerModalComponent, LocationSelectedResult } from '../../components/location-picker-modal/location-picker-modal';
 
 @Component({
@@ -14,9 +15,14 @@ import { LocationPickerModalComponent, LocationSelectedResult } from '../../comp
 })
 export class ProfileComponent implements OnInit {
   protected authService = inject(AuthService);
+  private walletService = inject(WalletService);
   private router = inject(Router);
 
   profile = signal<UserProfile | null>(null);
+  wallet = signal<WalletData | null>(null);
+  loadingWallet = signal<boolean>(false);
+  walletError = signal<string>('');
+
   loading = signal<boolean>(true);
   saving = signal<boolean>(false);
   editMode = signal<boolean>(false);
@@ -71,10 +77,31 @@ export class ProfileComponent implements OnInit {
         this.phoneNumber.set(data.phoneNumber || '');
         this.gender.set(data.gender || 'male');
         this.loading.set(false);
+        if (data.role === 'CUSTOMER') {
+          this.loadWallet();
+        }
       },
       error: () => {
         this.loading.set(false);
         this.errorMsg.set('Failed to load user profile.');
+      }
+    });
+  }
+
+  loadWallet(): void {
+    if (this.profile()?.role !== 'CUSTOMER') {
+      return;
+    }
+    this.loadingWallet.set(true);
+    this.walletError.set('');
+    this.walletService.getMyWallet().subscribe({
+      next: (data) => {
+        this.wallet.set(data);
+        this.loadingWallet.set(false);
+      },
+      error: (err) => {
+        this.loadingWallet.set(false);
+        this.walletError.set(err.error?.message || 'Failed to load wallet data.');
       }
     });
   }

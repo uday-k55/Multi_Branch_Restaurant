@@ -38,6 +38,9 @@ public class OrderService {
     @Autowired
     private com.restaurant.backend.util.BranchSecurityUtils branchSecurityUtils;
 
+    @Autowired(required = false)
+    private WalletService walletService;
+
     @Transactional
     public OrderDTO createOrder(User currentUser, CreateOrderRequestDTO dto) {
         if (currentUser == null) {
@@ -341,6 +344,17 @@ public class OrderService {
         if (notificationService != null) {
             notificationService.onOrderStatusChanged(updated.getId(), OrderStatus.CANCELLED);
         }
+
+        // Process customer wallet refund for eligible paid orders
+        if (walletService != null) {
+            try {
+                walletService.processOrderCancellationRefund(updated);
+            } catch (Exception e) {
+                // If refund throws (e.g. duplicate constraint or DB issue), let transaction handle it or log error
+                throw e;
+            }
+        }
+
         return mapToDTO(updated);
     }
 

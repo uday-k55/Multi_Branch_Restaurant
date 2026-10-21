@@ -3,6 +3,8 @@ package com.restaurant.backend.repository;
 import com.restaurant.backend.model.Role;
 import com.restaurant.backend.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -18,4 +20,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findByBranchId(Long branchId);
     List<User> findByBranchIdAndRoleIn(Long branchId, List<Role> roles);
     List<User> findByRole(Role role);
+
+    @Query(value = "SELECT * FROM users WHERE id = :id FOR UPDATE", nativeQuery = true)
+    Optional<User> findByIdWithLock(@Param("id") Long id);
 }

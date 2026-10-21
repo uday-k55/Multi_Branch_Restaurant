@@ -180,6 +180,112 @@
 
           </div>
 
+          <!-- Customer Wallet Section (Accessible strictly to CUSTOMER role) -->
+          @if (profile()?.role === 'CUSTOMER') {
+            <div class="card bg-secondary text-white border-0 shadow-lg rounded-4 p-4 p-md-5 mb-4">
+              <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-dark flex-wrap gap-2">
+                <div>
+                  <h3 class="fw-bold text-warning mb-1">
+                    <i class="fas fa-wallet me-2"></i>My Customer Wallet
+                  </h3>
+                  <p class="text-muted mb-0 small">View your available store credit and order refund history</p>
+                </div>
+                <button type="button" class="btn btn-outline-warning btn-sm px-3 fw-semibold" (click)="loadWallet()" [disabled]="loadingWallet()">
+                  <i class="fas fa-sync-alt me-1" [class.fa-spin]="loadingWallet()"></i> Refresh
+                </button>
+              </div>
+
+              <!-- Balance Display Card -->
+              <div class="bg-dark rounded-4 p-4 mb-4 border border-secondary d-flex align-items-center justify-content-between flex-wrap gap-3">
+                <div>
+                  <span class="text-muted small text-uppercase fw-semibold d-block">Available Wallet Balance</span>
+                  <h2 class="fw-bold text-white mb-0 display-6">
+                    <span class="text-warning">₹</span>{{ (wallet()?.balance ?? profile()?.walletBalance ?? 0).toFixed(2) }}
+                  </h2>
+                </div>
+                <div>
+                  <span class="badge bg-success-subtle text-success border border-success px-3 py-2 rounded-pill fs-6">
+                    <i class="fas fa-shield-alt me-1"></i> Active Refund Credit
+                  </span>
+                </div>
+              </div>
+
+              <!-- Transaction History -->
+              <div>
+                <h5 class="fw-bold text-white mb-3">
+                  <i class="fas fa-history me-2 text-warning"></i>Transaction History
+                </h5>
+
+                @if (loadingWallet()) {
+                  <div class="text-center py-4 bg-dark rounded-3 border border-secondary">
+                    <div class="spinner-border spinner-border-sm text-warning" role="status"></div>
+                    <span class="text-muted ms-2 small">Loading transaction history...</span>
+                  </div>
+                } @else if (walletError()) {
+                  <div class="alert alert-danger py-2 small mb-3">
+                    <i class="fas fa-exclamation-triangle me-1"></i> {{ walletError() }}
+                    <button type="button" class="btn btn-link btn-sm text-warning p-0 ms-2" (click)="loadWallet()">Try again</button>
+                  </div>
+                } @else if (!wallet() || wallet()!.transactions.length === 0) {
+                  <div class="text-center py-4 bg-dark rounded-3 border border-secondary">
+                    <i class="fas fa-receipt fa-2x text-muted mb-2"></i>
+                    <p class="text-muted mb-1 small">No wallet transactions found.</p>
+                    <small class="text-muted">Refunds for eligible cancelled paid orders will appear here automatically.</small>
+                  </div>
+                } @else {
+                  <div class="table-responsive rounded-3 overflow-hidden border border-secondary">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                      <thead class="table-dark text-muted small text-uppercase border-bottom border-secondary">
+                        <tr>
+                          <th scope="col">Date & Time</th>
+                          <th scope="col">Type</th>
+                          <th scope="col">Description</th>
+                          <th scope="col">Order Ref</th>
+                          <th scope="col" class="text-end">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (tx of wallet()?.transactions; track tx.id) {
+                          <tr>
+                            <td class="text-nowrap small text-light">
+                              <i class="far fa-clock me-1 text-muted"></i>{{ tx.createdAt | date:'medium' }}
+                            </td>
+                            <td>
+                              <span class="badge" [ngClass]="{
+                                'bg-success': tx.type === 'REFUND' || tx.type === 'CREDIT',
+                                'bg-danger': tx.type === 'DEBIT'
+                              }">
+                                {{ tx.type }}
+                              </span>
+                            </td>
+                            <td class="small text-white">
+                              {{ tx.description }}
+                            </td>
+                            <td class="small">
+                              @if (tx.orderId) {
+                                <a [routerLink]="['/my-orders']" class="text-warning text-decoration-none fw-semibold">
+                                  #{{ tx.orderId }}
+                                </a>
+                              } @else {
+                                <span class="text-muted">-</span>
+                              }
+                            </td>
+                            <td class="text-end fw-bold" [ngClass]="{
+                              'text-success': tx.type === 'REFUND' || tx.type === 'CREDIT',
+                              'text-danger': tx.type === 'DEBIT'
+                            }">
+                              {{ (tx.type === 'REFUND' || tx.type === 'CREDIT') ? '+' : '-' }}₹{{ tx.amount.toFixed(2) }}
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
           <!-- Quick Navigation Links -->
           <div class="row g-3">
             <div class="col-md-4">

@@ -44,6 +44,9 @@ public class AdminInitializer implements CommandLineRunner {
                 jdbcTemplate.execute("ALTER TABLE orders MODIFY COLUMN status VARCHAR(50) NOT NULL");
             } catch (Exception ignored) {}
         }
+        try {
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN wallet_balance DOUBLE NOT NULL DEFAULT 0.0");
+        } catch (Exception ignored) {}
         userRepository.findByEmail("admin1@gmail.com").ifPresentOrElse(admin -> {
             if (admin.getRole() == null || admin.getRole() != com.restaurant.backend.model.Role.ADMIN) {
                 admin.setRole(com.restaurant.backend.model.Role.ADMIN);
