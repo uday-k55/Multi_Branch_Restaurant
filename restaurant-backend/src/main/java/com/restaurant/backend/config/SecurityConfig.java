@@ -36,7 +36,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/branches", "/api/branches/**").permitAll()
-                .requestMatchers("/api/auth/login", "/api/register", "/api/delivery/validate/**", "/api/tables/qr/**", "/api/tables/branches/**", "/api/menu/branches/*/customer-menu", "/api/reservations/available-tables", "/error").permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/forgot-password", "/api/auth/verify-otp", "/api/auth/reset-password", "/api/register", "/api/delivery/validate/**", "/api/tables/qr/**", "/api/tables/branches/**", "/api/menu/branches/*/customer-menu", "/api/reservations/available-tables", "/error").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

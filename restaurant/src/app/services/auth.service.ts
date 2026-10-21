@@ -1,6 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface AuthResponse {
   token: string;
@@ -27,7 +28,7 @@ export interface UserProfile {
 })
 export class AuthService {
   private http = inject(HttpClient);
-  private apiUrl = 'https://multi-branch-restaurant.onrender.com/api/auth';
+  private apiUrl = `${environment.apiUrl}/auth`;
 
   isLoggedInSignal = signal<boolean>(!!localStorage.getItem('token'));
   userRoleSignal = signal<string>(localStorage.getItem('userRole') || '');
@@ -150,5 +151,17 @@ export class AuthService {
 
   updateProfile(profile: Partial<UserProfile>): Observable<UserProfile> {
     return this.http.put<UserProfile>(`${this.apiUrl}/me`, profile);
+  }
+
+  forgotPassword(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/forgot-password`, { email });
+  }
+
+  verifyOtp(email: string, otp: string): Observable<{ message: string; resetToken: string }> {
+    return this.http.post<{ message: string; resetToken: string }>(`${this.apiUrl}/verify-otp`, { email, otp });
+  }
+
+  resetPassword(payload: { resetToken: string; newPassword: string }): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/reset-password`, payload);
   }
 }

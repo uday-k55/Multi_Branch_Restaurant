@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 export interface OrderItem {
   id: number;
@@ -68,7 +69,7 @@ export class ChefComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.http.get<Order[]>(`https://multi-branch-restaurant.onrender.com/api/orders/branch/${branchId}`).subscribe({
+    this.http.get<Order[]>(`${environment.apiUrl}/orders/branch/${branchId}`).subscribe({
       next: (data) => {
         this.orders.set(data || []);
         this.isLoading.set(false);
@@ -86,7 +87,7 @@ export class ChefComponent implements OnInit, OnDestroy {
 
   updateStatus(orderId: number, nextStatus: string): void {
     this.actionLoadingId.set(orderId);
-    this.http.patch<Order>(`https://multi-branch-restaurant.onrender.com/api/orders/${orderId}/status?status=${nextStatus}`, {}).subscribe({
+    this.http.patch<Order>(`${environment.apiUrl}/orders/${orderId}/status?status=${nextStatus}`, {}).subscribe({
       next: () => {
         this.actionLoadingId.set(null);
         this.loadOrders();

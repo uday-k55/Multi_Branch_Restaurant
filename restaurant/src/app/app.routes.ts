@@ -4,6 +4,7 @@ import { AboutComponent } from './pages/about/about';
 import { ContactComponent } from './pages/contact/contact';
 import { LoginComponent } from './pages/login/login';
 import { RegisterComponent } from './pages/register/register';
+import { ForgotPasswordComponent } from './pages/forgot-password/forgot-password';
 import { AdminComponent } from './pages/admin/admin';
 import { MenuComponent } from './pages/menu/menu';
 import { CheckoutComponent } from './pages/checkout/checkout';
@@ -39,6 +40,7 @@ export const routes: Routes = [
   { path: 'about', component: AboutComponent, canActivate: [customerGuard] },
   { path: 'contact', component: ContactComponent, canActivate: [customerGuard] },
   { path: 'login', component: LoginComponent },
+  { path: 'forgot-password', component: ForgotPasswordComponent },
   { path: 'register', component: RegisterComponent },
   { path: 'admin', component: AdminComponent, canActivate: [adminGuard] },
   { path: '**', redirectTo: '' }

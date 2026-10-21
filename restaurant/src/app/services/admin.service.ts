@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Branch } from './cart.service';
+import { environment } from '../../environments/environment';
 
 export interface Employee {
   id: number;
@@ -143,7 +144,7 @@ export interface ReservationAdmin {
 })
 export class AdminService {
   private http = inject(HttpClient);
-  private apiUrl = 'https://multi-branch-restaurant.onrender.com/api';
+  private apiUrl = environment.apiUrl;
 
   getDashboardOverview(): Observable<DashboardStats> {
     return this.http.get<DashboardStats>(`${this.apiUrl}/admin/dashboard`);

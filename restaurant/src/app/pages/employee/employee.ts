@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 declare const L: any;
 
@@ -82,7 +83,7 @@ export class EmployeeComponent implements OnInit, OnDestroy {
     }
 
     // Load available deliveries
-    this.http.get<Order[]>(`https://multi-branch-restaurant.onrender.com/api/orders/branches/${branchId}/available-deliveries`).subscribe({
+    this.http.get<Order[]>(`${environment.apiUrl}/orders/branches/${branchId}/available-deliveries`).subscribe({
       next: (data) => {
         this.availableDeliveries.set(data || []);
         this.isLoading.set(false);
@@ -94,7 +95,7 @@ export class EmployeeComponent implements OnInit, OnDestroy {
     });
 
     // Load my deliveries
-    this.http.get<Order[]>(`https://multi-branch-restaurant.onrender.com/api/orders/my-deliveries`).subscribe({
+    this.http.get<Order[]>(`${environment.apiUrl}/orders/my-deliveries`).subscribe({
       next: (data) => {
         this.myDeliveries.set(data || []);
       },
@@ -104,7 +105,7 @@ export class EmployeeComponent implements OnInit, OnDestroy {
     });
 
     // Load ready dine-in orders for table serving
-    this.http.get<Order[]>(`https://multi-branch-restaurant.onrender.com/api/orders/branch/${branchId}`).subscribe({
+    this.http.get<Order[]>(`${environment.apiUrl}/orders/branch/${branchId}`).subscribe({
       next: (data) => {
         const readyDineIn = (data || []).filter(o => o.orderType === 'DINE_IN' && o.status === 'READY');
         this.readyDineInOrders.set(readyDineIn);
@@ -119,7 +120,7 @@ export class EmployeeComponent implements OnInit, OnDestroy {
 
   acceptDelivery(orderId: number): void {
     this.actionLoadingId.set(orderId);
-    this.http.post<Order>(`https://multi-branch-restaurant.onrender.com/api/orders/${orderId}/accept-delivery`, {}).subscribe({
+    this.http.post<Order>(`${environment.apiUrl}/orders/${orderId}/accept-delivery`, {}).subscribe({
       next: () => {
         this.actionLoadingId.set(null);
         this.activeTab.set('my');
@@ -135,7 +136,7 @@ export class EmployeeComponent implements OnInit, OnDestroy {
 
   updateStatus(orderId: number, nextStatus: string): void {
     this.actionLoadingId.set(orderId);
-    this.http.patch<Order>(`https://multi-branch-restaurant.onrender.com/api/orders/${orderId}/status?status=${nextStatus}`, {}).subscribe({
+    this.http.patch<Order>(`${environment.apiUrl}/orders/${orderId}/status?status=${nextStatus}`, {}).subscribe({
       next: () => {
         this.actionLoadingId.set(null);
         this.loadAllData();

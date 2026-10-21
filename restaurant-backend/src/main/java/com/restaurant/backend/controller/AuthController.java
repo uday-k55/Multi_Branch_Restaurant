@@ -1,10 +1,11 @@
 package com.restaurant.backend.controller;
 
-import com.restaurant.backend.dto.AuthRequest;
-import com.restaurant.backend.dto.AuthResponse;
+import com.restaurant.backend.dto.*;
 import com.restaurant.backend.model.User;
 import com.restaurant.backend.repository.UserRepository;
+import com.restaurant.backend.service.PasswordResetService;
 import com.restaurant.backend.util.JwtUtils;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,9 @@ public class AuthController {
 
     @Autowired
     private JwtUtils jwtUtils;
+
+    @Autowired
+    private PasswordResetService passwordResetService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
@@ -56,6 +60,28 @@ public class AuthController {
         );
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.requestPasswordReset(request);
+        return ResponseEntity.ok(Map.of(
+                "message", "If an account with that email exists, a verification code has been sent."
+        ));
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<VerifyOtpResponse> verifyOtp(@Valid @RequestBody VerifyOtpRequest request) {
+        VerifyOtpResponse response = passwordResetService.verifyOtp(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request);
+        return ResponseEntity.ok(Map.of(
+                "message", "Password reset successfully. You can now log in with your new password."
+        ));
     }
 
     @GetMapping("/me")

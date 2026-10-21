@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 import { ThemeService } from '../../services/theme.service';
 import { CartService } from '../../services/cart.service';
+import { environment } from '../../../environments/environment';
 
 export interface NotificationItem {
   id: number;
@@ -55,7 +56,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     const userId = this.authService.getUserId();
     if (!userId) return;
 
-    this.http.get<NotificationItem[]>(`https://multi-branch-restaurant.onrender.com/api/notifications/user/${userId}`).subscribe({
+    this.http.get<NotificationItem[]>(`${environment.apiUrl}/notifications/user/${userId}`).subscribe({
       next: (data) => {
         this.notifications.set(data || []);
       },
@@ -73,7 +74,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   markRead(id: number, event: Event): void {
     event.stopPropagation();
-    this.http.patch<NotificationItem>(`https://multi-branch-restaurant.onrender.com/api/notifications/${id}/read`, {}).subscribe({
+    this.http.patch<NotificationItem>(`${environment.apiUrl}/notifications/${id}/read`, {}).subscribe({
       next: () => this.loadNotifications()
     });
   }

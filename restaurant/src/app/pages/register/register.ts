@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-register',
@@ -59,7 +60,7 @@ export class RegisterComponent {
     this.message = '';
     this.errorMessage = '';
 
-    this.http.post<any>('https://multi-branch-restaurant.onrender.com/api/register', this.user)
+    this.http.post<any>(`${environment.apiUrl}/register`, this.user)
       .subscribe({
         next: (response) => {
           console.log('Registration success:', response);
